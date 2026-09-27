@@ -1,0 +1,1 @@
+{"x0": -21235.12107803361, "y0": -86155.05898799995, "size": 159226.56000000014, "n": 2048, "enc": "h = (R*256+G)/6 - 6000", "hmin": -5595.106843053771, "hmax": 4195.170996599663, "sources": ["AWS Terrain Tiles (terrarium) z11", "ESRI World Imagery z11 (dev only; licence needed for launch)"]}

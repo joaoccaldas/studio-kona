@@ -1,0 +1,132 @@
+{
+ "hawi": {
+  "q": "Hawi, Hawaii",
+  "lat": 20.239006,
+  "lon": -155.831451,
+  "type": "locality",
+  "name": "Hawi, Hawai\u02bbi County, Hawaii, United States"
+ },
+ "nelha": {
+  "q": "Natural Energy Laboratory",
+  "lat": 19.7174904,
+  "lon": -156.0380702,
+  "type": "industrial",
+  "name": "Natural Energy Laboratory of Hawaii, K\u0113ahole, Kalaoa, Hawai\u02bbi County, Hawaii, Un"
+ },
+ "airport": {
+  "q": "Kona International Airport",
+  "lat": 19.743906,
+  "lon": -156.042296,
+  "type": "aerodrome",
+  "name": "Ellison Onizuka Kona International Airport at Ke\u0101hole, 73-200, Queen Kaahumanu H"
+ },
+ "kawaihae": {
+  "q": "Kawaihae, Hawaii",
+  "lat": 20.0397244,
+  "lon": -155.829133,
+  "type": "village",
+  "name": "Kawaihae, Hawai\u02bbi County, Hawaii, United States"
+ },
+ "waikoloa": {
+  "q": "Waikoloa Beach Drive",
+  "lat": 19.9252001,
+  "lon": -155.8820401,
+  "type": "tertiary",
+  "name": "Waikoloa Beach Drive, Kapalaoa, Hawai\u02bbi County, Hawaii, 96738, United States"
+ },
+ "hulihee": null,
+ "mokuaikaua": {
+  "q": "Mokuaikaua Church",
+  "lat": 19.6396149,
+  "lon": -155.9937126,
+  "type": "place_of_worship",
+  "name": "Mokuaikaua Church, 75-5713, Ali\u02bbi Drive, Hillcrest, Kailua, Hawai\u02bbi County, Hawa"
+ },
+ "royal_kona": {
+  "q": "Royal Kona Resort",
+  "lat": 19.632117,
+  "lon": -155.99039,
+  "type": "hotel",
+  "name": "Royal Kona Resort, 75-5852, Ali\u02bbi Drive, Hillcrest, Kailua, Hawai\u02bbi County, Hawa"
+ },
+ "kahaluu": {
+  "q": "Kahaluu Beach Park",
+  "lat": 19.5792921,
+  "lon": -155.966673,
+  "type": "park",
+  "name": "Kahaluu Beach Park, Kahalu\u02bbu, Kahaluu-Keauhou, Hawai\u02bbi County, Hawaii, United St"
+ },
+ "keauhou": {
+  "q": "Keauhou Bay",
+  "lat": 19.5613059,
+  "lon": -155.9642957,
+  "type": "bay",
+  "name": "Keauhou Bay, Keauhou, Kahaluu-Keauhou, Hawai\u02bbi County, Hawaii, United States"
+ },
+ "mauna_kea": {
+  "q": "Mauna Kea",
+  "lat": 19.8206673,
+  "lon": -155.468071,
+  "type": "volcano",
+  "name": "Mauna Kea, Hawai\u02bbi County, Hawaii, United States"
+ },
+ "mauna_loa": {
+  "q": "Mauna Loa",
+  "lat": 19.4755277,
+  "lon": -155.6057028,
+  "type": "volcano",
+  "name": "Mauna Loa, Hawai\u02bbi County, Hawaii, United States"
+ },
+ "hualalai": {
+  "q": "Hualalai",
+  "lat": 19.6910737,
+  "lon": -155.866647,
+  "type": "volcano",
+  "name": "Hual\u0101lai, Hawai\u02bbi County, Hawaii, United States"
+ },
+ "kona_inn": {
+  "q": "Kona Inn Shopping Village",
+  "lat": 19.6382065,
+  "lon": -155.9935801,
+  "type": "yes",
+  "name": "Kona Inn Shopping Village, 75-5744, Ali\u02bbi Drive, Hillcrest, Kailua, Hawai\u02bbi Coun"
+ },
+ "king_kam": null,
+ "old_airport": {
+  "q": "Old Kona Airport State Recreation Area",
+  "lat": 19.6439007,
+  "lon": -156.0091339,
+  "type": "park",
+  "name": "Old Kona Airport State Recreation Area, Lani\u0101kea, Kailua, Hawai\u02bbi County, Hawaii"
+ },
+ "makala": {
+  "q": "Makala Boulevard, Kailua-Kona",
+  "lat": 19.650098,
+  "lon": -156.0044364,
+  "type": "mall",
+  "name": "Kona Commons Shopping Center, 74-5444, Makala Boulevard, Lani\u0101kea, Kailua, Hawai"
+ },
+ "queen_k_palani": null,
+ "alii_palani": null,
+ "hilo": {
+  "q": "Hilo, Hawaii",
+  "lat": 19.7073734,
+  "lon": -155.08158,
+  "type": "census",
+  "name": "Hilo, Hawai\u02bbi County, Hawaii, 96720, United States"
+ },
+ "waimea": {
+  "q": "Waimea, Hawaii County",
+  "lat": 20.021702,
+  "lon": -155.6685878,
+  "type": "village",
+  "name": "Waimea/Kamuela, Hawai\u02bbi County, Hawaii, United States"
+ },
+ "kilauea": {
+  "q": "Halemaumau",
+  "lat": 19.4064949,
+  "lon": -155.2820958,
+  "type": "cliff",
+  "name": "Halema\u02bbuma\u02bbu Crater, Hawai\u02bbi County, Hawaii, United States"
+ }
+}

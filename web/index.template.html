@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kona World</title>
+<style>
+:root{--ink:#f5f1e8;--mute:#b9c3c8;--accent:#ffcc33;--panel:rgba(6,20,30,.66)}
+html,body{margin:0;height:100%;background:#061520;color:var(--ink);font:14px/1.4 system-ui,-apple-system,sans-serif;overflow:hidden}
+canvas{display:block;width:100vw;height:100vh;touch-action:none}
+.top{position:fixed;top:14px;left:16px;letter-spacing:.2em;text-transform:uppercase;pointer-events:none}
+.top b{display:block;font-size:22px;letter-spacing:.3em;color:var(--accent)}.top span{font-size:10px;color:var(--mute)}
+#nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;background:var(--panel);backdrop-filter:blur(8px);padding:8px;border-radius:14px;max-width:calc(100vw - 24px)}
+#nav button{font:inherit;color:var(--ink);background:transparent;border:1px solid rgba(255,204,51,.35);border-radius:999px;padding:7px 12px;cursor:pointer}
+#nav button:hover{border-color:var(--accent)}
+#cap{position:fixed;left:16px;bottom:78px;max-width:min(460px,calc(100vw - 32px));text-shadow:0 1px 10px rgba(0,0,0,.7)}
+#cap b{display:block;font-size:24px}#cap span{opacity:.85}
+.tr{position:fixed;top:14px;right:16px;text-align:right;font-size:12px;color:var(--mute)}
+.tr input{accent-color:var(--accent);width:160px}
+#loading{position:fixed;inset:0;display:grid;place-items:center;background:#061520;transition:opacity .6s}#loading.done{opacity:0;pointer-events:none}
+.trk{width:220px;height:2px;background:rgba(255,255,255,.12);margin:14px auto}#bar{height:100%;width:0;background:var(--accent)}
+#loading h1{font-weight:500;letter-spacing:.5em;color:var(--accent);margin:0;text-align:center}#loading p{color:var(--mute);text-align:center;font-size:12px}
+#VRButton{bottom:auto!important;top:60px!important;right:16px!important;left:auto!important}
+#day{position:fixed;top:120px;right:16px;width:250px;background:var(--panel);backdrop-filter:blur(8px);border-radius:12px;padding:12px 14px;font-size:13px}
+#day b{color:var(--accent);letter-spacing:.12em;text-transform:uppercase}#day span{display:block;color:var(--mute);font-size:11px;margin-bottom:6px}
+#day ol{list-style:none;margin:0;padding:0}#day li{padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer}#day li:hover{color:var(--accent)}
+#day li i{font-style:normal;color:var(--mute);margin-right:6px;font-variant-numeric:tabular-nums}#day li.done{opacity:.5;text-decoration:line-through}
+#day em{display:block;margin-top:8px;font-size:10px;color:var(--mute)}
+@media (max-width:760px){#day{top:auto;bottom:130px;right:8px;width:200px;font-size:12px;max-height:40vh;overflow:auto}}
+#toast{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);background:var(--panel);padding:14px 20px;border-radius:12px;opacity:0;transition:.4s;pointer-events:none;max-width:80vw;text-align:center;font-size:16px}
+#toast.on{opacity:1}#mode{position:fixed;top:64px;left:16px;color:var(--accent);font-size:12px;letter-spacing:.2em;text-transform:uppercase;display:none}
+body.walking #mode{display:block}#stick{position:fixed;left:22px;bottom:150px;width:110px;height:110px;border-radius:50%;border:1px solid rgba(255,204,51,.4);background:rgba(0,0,0,.2);display:none;touch-action:none}
+@media (pointer:coarse){body.walking #stick{display:block}}
+</style></head><body><canvas id="c"></canvas>
+<div class="top"><b>KONA</b><span>IRONMAN World Championship · Kailua Bay</span></div>
+<div class="tr"><div id="clock"></div><input id="hour" type="range" min="5.8" max="19" step=".05" value="7.25" aria-label="Time of day"><div id="fps"></div></div>
+<div id="cap"></div><div id="toast"></div><div id="mode"></div><div id="stick"></div><div id="nav"></div>
+<div id="day"><b>The Day Before</b><span>Friday 9 Oct 2026</span><ol></ol><em>Typical race-week routine; the 2026 schedule will replace it.</em></div>
+<div id="loading"><div><h1>KONA</h1><div class="trk"><div id="bar"></div></div><p>Loading Kailua Bay</p></div></div>
+<script>__APP__</script></body></html>

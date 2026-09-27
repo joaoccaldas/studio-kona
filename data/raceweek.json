@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "build": "test-2026-09-27",
+  "schedule_updated": "2026-09-15",
+  "source": "https://www.ironman.com/races/im-world-championship-kona/schedule",
+  "underpants_source": "https://www.ironman.com/races/im-world-championship-kona/underpants-run",
+  "trademark": "Event names identify the public schedule. No logos or official marks are shown.",
+  "attribution": "© OpenStreetMap contributors · Terrain AWS · Imagery Esri, development only",
+  "alii": [[16, 142], [80, 40], [200, 10], [320, -90], [500, -350], [673, -700], [820, -860], [980, -980]],
+  "places": {
+    "kbr": {"x": -89.5, "y": 132.7, "evidence": "M", "note": "Courtyard King Kamehameha, OpenStreetMap"},
+    "kbr_lot": {"x": 40, "y": 168, "evidence": "M", "note": "OpenStreetMap parking beside the hotel"},
+    "kamakahonu": {"x": -30, "y": -22, "evidence": "M", "note": "Kamakahonu, OpenStreetMap"},
+    "swim_out": {"x": -4.3, "y": -97.8, "evidence": "I", "note": "80 m from Kamakahonu along the fitted swim axis"},
+    "hale": {"x": 219, "y": 8, "evidence": "I", "note": "Aliʻi seawall east of the pier. The pavilion was outside the local OSM extract."},
+    "pier": {"x": 2, "y": 8, "evidence": "M", "note": "Kailua Pier deck"},
+    "start": {"x": 48, "y": -55, "evidence": "P", "note": "Deep-water start east of the pier"},
+    "upr_turn": {"x": 980, "y": -980, "evidence": "I", "note": "Staged on Aliʻi, 1.52 km from the lot. Round trip is inside the published 1.5–2 miles."}
+  },
+  "dressing": {
+    "coffee": [["2026-10-05", 7, 10], ["2026-10-06", 7, 10], ["2026-10-07", 7, 10], ["2026-10-08", 7, 10]],
+    "parade": [["2026-10-06", 16, 18.5]],
+    "underpants": [["2026-10-08", 7.2, 8.3]],
+    "village": [["2026-10-06", 12, 19], ["2026-10-07", 10, 16], ["2026-10-08", 10, 16], ["2026-10-09", 10, 14]],
+    "checkin": [["2026-10-06", 9, 16], ["2026-10-07", 9, 16], ["2026-10-08", 9, 14]],
+    "banquet": [["2026-10-08", 17.75, 21]],
+    "race": [["2026-10-10", 6.15, 6.85]]
+  },
+  "days": [
+    {"id": "fri2", "date": "2026-10-02", "short": "Fri 2", "also": ["IRONInfo booth 6:30–10:00, Kailua Pier"]},
+    {"id": "sat3", "date": "2026-10-03", "short": "Sat 3", "also": ["Kona Town Fun Run check-in 6:00, Hale Hālāwai", "Fun run 7:30", "Hoʻāla packet pick-up 14:00–16:00, KBR"]},
+    {"id": "sun4", "date": "2026-10-04", "short": "Sun 4", "also": ["Packet pick-up 5:30–6:45, Honu’s Lawn", "IRONInfo 6:30–11:00, pier"], "play": [
+      {"id": "hoala", "start": 7, "end": 9.5, "title": "Hoʻāla training swim", "where": "Kamakahonu Beach", "evidence": "P", "mode": "swim", "note": "2.4 miles at 7:00. Swim out from the beach.", "cam": {"x": -48, "y": -6, "z": 1.6, "lx": 20, "ly": -80, "lz": 0.2}, "checks": [{"id": "out", "place": "swim_out", "r": 16}]}
+    ]},
+    {"id": "mon5", "date": "2026-10-05", "short": "Mon 5", "also": ["Practice-swim bag drop 6:00–9:00, pier", "Heroes of Hawaiʻi 18:00–20:00, KBR lūʻau grounds"], "play": [
+      {"id": "coffee", "start": 7, "end": 10, "title": "AG1 Live Aloha Coffee Boat", "where": "Kailua Bay", "evidence": "P", "mode": "swim", "note": "7:00–10:00 in the bay. The mooring sits inshore of the swim buoys.", "cam": {"x": -20, "y": -8, "z": 1.5, "lx": 180, "ly": -400, "lz": 0.3}, "checks": [{"id": "boat", "type": "coffee", "r": 14}]}
+    ]},
+    {"id": "tue6", "date": "2026-10-06", "short": "Tue 6", "also": ["Coffee boat 7:00–10:00", "IRONKIDS 16:00, Kaʻahumanu Place", "Village and UPR registration 12:00–19:00, Hale Hālāwai"], "play": [
+      {"id": "checkin", "start": 9, "end": 16, "title": "Athlete check-in", "where": "KBR Ballrooms 2, 3, 4", "evidence": "P", "mode": "walk", "note": "Check-in opens today, 9:00–16:00.", "cam": {"x": -20, "y": 55, "z": 3, "lx": -89, "ly": 130, "lz": 2}, "checks": [{"id": "desk", "place": "kbr", "r": 18}]},
+      {"id": "parade", "start": 17, "end": 18.5, "title": "Parade of Nations", "where": "KBR to Hale Hālāwai via Aliʻi", "evidence": "P", "mode": "walk", "note": "Athletes gather at 16:00. The parade steps off at 17:00.", "cam": {"x": -70, "y": 110, "z": 2.4, "lx": 180, "ly": 20, "lz": 1}, "checks": [{"id": "hale", "place": "hale", "r": 22}]}
+    ]},
+    {"id": "wed7", "date": "2026-10-07", "short": "Wed 7", "also": ["Coffee boat 7:00–10:00", "Insider swim tips 8:00, pier", "Athlete check-in 9:00–16:00", "Briefings 9:00 German through 13:00 Japanese, lūʻau grounds"], "play": [
+      {"id": "village", "start": 10, "end": 16, "title": "IRONMAN Village", "where": "Hale Hālāwai, Aliʻi Drive", "evidence": "P", "mode": "walk", "note": "Open 10:00–16:00. The pavilion pin is on the seawall.", "cam": {"x": 140, "y": 55, "z": 4, "lx": 219, "ly": 8, "lz": 1.5}, "checks": [{"id": "in", "place": "hale", "r": 20}]}
+    ]},
+    {"id": "thu8", "date": "2026-10-08", "short": "Thu 8", "also": ["Coffee boat 7:00–10:00", "Athlete check-in 9:00–14:00", "Village 10:00–16:00", "English race briefing 20:00–21:00, KBR lot"], "play": [
+      {"id": "underpants", "start": 7.25, "end": 8.25, "title": "Underpants Run", "where": "KBR parking lot, out and back on Aliʻi", "evidence": "P", "mode": "walk", "note": "7:15 from the King Kamehameha lot. About 1.5–2 miles.", "cam": {"x": 16, "y": 142, "z": 2.2, "lx": 200, "ly": 10, "lz": 1}, "checks": [{"id": "turn", "place": "upr_turn", "r": 40}, {"id": "home", "place": "kbr_lot", "r": 28}]},
+      {"id": "welcome", "start": 18, "end": 21, "title": "E Komo Mai welcome banquet", "where": "KBR parking lot", "evidence": "P", "mode": "walk", "note": "18:00 on the lot. English briefing follows at 20:00.", "cam": {"x": -15, "y": 80, "z": 3, "lx": 40, "ly": 168, "lz": 1.5}, "checks": [{"id": "lot", "place": "kbr_lot", "r": 24}]}
+    ]},
+    {"id": "fri9", "date": "2026-10-09", "short": "Fri 9", "also": ["Village 10:00–14:00", "Pro bike check-in 11:00–18:00", "PlayTri on the pier 11:30–18:00"], "play": [
+      {"id": "bike", "start": 11.5, "end": 18, "title": "Bike, helmet and gear check-in", "where": "Bike compound, Kailua Pier", "evidence": "P", "mode": "walk", "note": "Age-group 11:30–18:00. Pros from 11:00.", "cam": {"x": -36, "y": 48, "z": 3.2, "lx": 4, "ly": 6, "lz": 2.4}, "checks": [{"id": "rack", "place": "pier", "r": 16}]}
+    ]},
+    {"id": "sat10", "date": "2026-10-10", "short": "Sat 10", "also": ["Transition opens 4:30–6:15, KBR lot", "Pro women 6:30", "Para and handcycle 6:33", "Age group 6:38", "Hawaiʻi Aloha 23:45, finish"], "play": [
+      {"id": "start", "start": 6.333, "end": 6.75, "title": "Race start", "where": "Kailua Bay, off the pier", "evidence": "P", "mode": "swim", "note": "Pro men 6:20. Pro women 6:30. Age group 6:38.", "cam": {"x": 8, "y": -8, "z": 1.3, "lx": 80, "ly": -180, "lz": 0.2}, "checks": [{"id": "line", "place": "start", "r": 20}]}
+    ]},
+    {"id": "sun11", "date": "2026-10-11", "short": "Sun 11", "also": ["Banquet of Champions 18:00, KBR lot"]},
+    {"id": "mon12", "date": "2026-10-12", "short": "Mon 12", "also": ["Volunteer mahalo 17:00, KBR lot"]}
+  ]
+}
