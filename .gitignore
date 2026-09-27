@@ -1,0 +1,16 @@
+# OS and Editors
+.DS_Store
+.vscode/
+.idea/
+
+# Dependencies
+node_modules/
+web/node_modules
+
+# Python
+__pycache__/
+*.pyc
+
+# Local server logs
+*.log
+.system_generated/
