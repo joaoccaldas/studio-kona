@@ -8,10 +8,20 @@ import { computeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { TileStreamer } from './tiles.js';
 import { createLocomotion } from './locomotion.js';
 import { RACE_WEEK_QUESTS, loadGameSave, saveGameProgress } from './gameQuests.js';
+import { applyOfficialWeek, courseOpen } from './weekCampaign.js';
 import { createEchoMarkers } from './echoMarkers.js';
 import { createPierMuseumStudio } from './pierMuseumStudio.js';
 import { createHawaiianScavengerHunt } from './hawaiianScavengerHunt.js';
 import { playMemoryChime, playUnlockFanfare } from './audio.js';
+import { createProgress } from './progress.js';
+import { initMuseumDrawer } from './museumDrawer.js';
+import { initArtifactModal } from './artifactModal.js';
+import { KOA, loadPlayer, savePlayer, createExplorer, buildAirport } from './explore.js';
+import { mountFlights } from './flights.js';
+import { createWinnersHall } from './winnersHall.js';
+import { createIslandLife, PHASES } from './islandLife.js';
+import { createRewards, XP_FOR, CREDITS_FOR } from './rewards.js';
+import { createLifeHud } from './lifeHud.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -167,6 +177,10 @@ function makeOcean() {
 
 // ------------------------------------------------------------------ Materials & Helpers
 const grounds = new Set();
+let farIsland = null;
+let highwayStart = null;
+let highwayAim = null;
+const briefings = [];
 function addGround(m) {
   if (!m || !m.isMesh) return;
   m.geometry.computeBoundsTree();
@@ -197,12 +211,15 @@ let locomotion = null;
 let echoMarkers = null;
 let pierMuseumStudio = null;
 let hawaiianHunt = null;
+let progress = null, drawer = null, artifactViewer = null;
 let saveData = loadGameSave();
 let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
 let pierBikesMesh = null;
+let living = null, rewards = null, lifeHud = null, geocodes = {}, raceWeekData = null, roaming = false;
 let streamer = null;
 let man = null;
+let explorer = null;
 
 // ------------------------------------------------------------------ Load Assets
 async function load() {
@@ -271,6 +288,9 @@ async function load() {
       o.renderOrder = -1;
     }
   });
+  // Whole-island DEM must exist before anything samples heightAt (routes, POIs, locomotion, markers).
+  console.log('[Kona] Loading island DEM...');
+  await island().catch(e => console.warn('Island DEM load error; terrain falls back to sea level:', e));
   console.log('[Kona] Loading routes and pois...');
   routes();
   pois();
@@ -296,21 +316,218 @@ async function load() {
   setHour(hour);
 
   // Initialize Locomotion, Echo Markers, Canyon Studio Pier Museum & Hawaiian Heritage Hunt
-  locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast });
+  locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast, onModeRequest: m => setLocomotionMode(m) });
   echoMarkers = createEchoMarkers({ scene, W, heightAt });
-  pierMuseumStudio = createPierMuseumStudio({ scene, camera, W, heightAt });
+  pierMuseumStudio = createPierMuseumStudio({ scene, camera, W, heightAt, toast, progress: () => progress });
+  createWinnersHall({ scene, W, heightAt, addGround, progress: () => progress, base: A, explorer, grounds }).then(hall => { window.__winners = hall; }).catch(e => console.warn('Winners hall failed', e));
   hawaiianHunt = createHawaiianScavengerHunt({ scene, camera, W, heightAt, toast });
+  progress = createProgress(saveData, { heritage: () => hawaiianHunt?.progress, save: () => saveGameProgress(saveData), toast, quests: RACE_WEEK_QUESTS });
+  artifactViewer = initArtifactModal(() => saveGameProgress(saveData));
+  drawer = initMuseumDrawer(art => artifactViewer.show(art, false), idx => jumpToDay(idx));
 
+  console.log('[Kona] Loading the official race week...');
+  raceWeekData = await applyOfficialWeek(RACE_WEEK_QUESTS, A).catch(e => { console.warn('Official week failed; scripted days remain.', e); return null; });
   console.log('[Kona] Initializing game loop...');
   initGameLoop();
 
+  console.log('[Kona] Bringing the island to life...');
+  await initIslandLife().catch(e => console.warn('Island life failed', e));
+
   console.log('[Kona] Load completed successfully!');
   $('#loading').classList.add('done');
-  go('pier', 0);
+  arrive();
+}
+
+function arrive() {
+  const player = loadPlayer();
+  const koa = toLocal(KOA.lat, KOA.lon);
+  const airport = buildAirport(scene, W, heightAt, koa);
+  const sx = player?.last?.x ?? highwayStart?.[0] ?? airport.stand[0];
+  const sy = player?.last?.y ?? highwayStart?.[1] ?? airport.stand[1];
+  const face = player?.last ? [0, 0] : (highwayAim || airport.look);
+  explorer?.stamp(koa[0], koa[1], 2800);
+  explorer?.stamp(sx, sy, 800);
+  const h = Math.max(heightAt(sx, sy), airport.h, 0);
+  const look = W(face[0], face[1], h);
+  const here = W(sx, sy, h);
+  const yaw = Math.atan2(-(look.x - here.x), -(look.z - here.z));
+  setLocomotionMode(player?.last ? 'walk' : 'bike');
+  locomotion.teleport(here.x, h + 1.7, here.z, yaw, -0.15);
+  const who = player?.name ? player.name : 'Athlete';
+  const ord = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th'));
+  const times = player?.visits > 1 ? `${ord(player.visits)} time in Kona` : 'first time in Kona';
+  if (player?.last) toast(`${who}, welcome back. Ride south. The island opens as you go.`);
+  $('#cap').innerHTML = `<b>${KOA.short}</b><span>${KOA.name}. Ride toward Kailua-Kona.</span>`;
+  const sub = document.querySelector('.top-sub');
+  if (sub && player?.name) sub.textContent = `${player.name} · ${times}`;
+  mountFlights({ open: false });
+  if (rewards) setTimeout(() => welcomeDispatch(), player?.last ? 600 : 2400);
+}
+
+// ------------------------------------------------------------------ Living island + rewards
+async function initIslandLife() {
+  rewards = createRewards({ onChange: () => lifeHud?.wallet() });
+  lifeHud = createLifeHud({ rewards });
+  geocodes = await (await fetch(A + 'geocodes.json')).json().catch(() => ({}));
+  const player = loadPlayer();
+  living = await createIslandLife({
+    scene, W, heightAt, man, toLocal, coarse,
+    places: raceWeekData?.places || {},
+    playerName: player?.name,
+    setPierBikes: v => { if (pierBikesMesh) pierBikesMesh.visible = v; },
+    base: A,
+  });
+  window.__island = living;
+  const rr = await (await fetch(A + 'routes.json')).json();
+  const run = rr.run.map(([lon, lat]) => toLocal(lat, lon));
+  runLocal = d => { let acc = 0; for (let i = 1; i < run.length; i++) { const l = Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]); if (acc + l >= d) { const t = (d - acc) / l; return [run[i - 1][0] + (run[i][0] - run[i - 1][0]) * t, run[i - 1][1] + (run[i][1] - run[i - 1][1]) * t]; } acc += l; } return null; };
+  placeShells();
+}
+
+// Shells sit on open ground: beaches, the seawall, the lot, the finish and Aliʻi Drive itself (never inside buildings).
+let runLocal = null;
+function shellSpots() {
+  const P = raceWeekData?.places || {};
+  const spots = [];
+  const add = (name, xy, spread = 12) => { if (xy) spots.push({ name, x: xy[0], y: xy[1], spread }); };
+  add('Kamakahonu beach', P.kamakahonu && [P.kamakahonu.x, P.kamakahonu.y], 20);
+  add('the Aliʻi seawall', P.hale && [P.hale.x, P.hale.y], 8);
+  add('the King Kamehameha lot', P.kbr_lot && [P.kbr_lot.x, P.kbr_lot.y], 16);
+  add('the Underpants Run turn', P.upr_turn && [P.upr_turn.x, P.upr_turn.y], 4);
+  if (living) add('the finish line', [living.finish.x, living.finish.y], 6);
+  const g = geocodes.kahaluu;
+  if (g) add('Kahaluʻu Beach', toLocal(g.lat, g.lon), 30);
+  for (const km of [2.5, 4, 5.5, 7, 9]) {
+    const p = runLocal?.(km * 1000);
+    if (p) add(`Aliʻi Drive, run km ${km}`, p, 3);
+  }
+  return spots.filter(s => heightAt(s.x, s.y) > 0.3);
+}
+function placeShells() {
+  if (!living || !rewards) return;
+  const list = rewards.todaysShells(shellSpots()).map(sh => {
+    if (heightAt(sh.x, sh.y) > 0.3) return sh;
+    const spot = shellSpots().find(s => s.name === sh.where);
+    return spot ? { ...sh, x: spot.x, y: spot.y } : sh;
+  });
+  living.setShells(list);
+}
+
+// Apply the island state for the day being played. Shows what changed when the phase moves on.
+function syncIsland(extraGrant = null, eyebrow = null) {
+  if (!living) return;
+  const r = living.setDay(saveData.currentDayIndex || 0, saveData.completedDays);
+  const phaseGrant = r.changed ? rewards.seePhase(r.phase) : null;
+  if (r.changed && (phaseGrant || extraGrant)) {
+    const merged = mergeGrants(extraGrant, phaseGrant);
+    lifeHud.dispatch({
+      eyebrow: eyebrow || `Race week · ${currentDay.title}`,
+      title: r.info.name,
+      news: r.info.news,
+      grant: merged,
+      note: r.phase === 'quiet' ? 'The island changes with every race-week day you play. Come back tomorrow to open the next one.' : '',
+    });
+    return true;
+  }
+  return false;
+}
+function mergeGrants(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+  return { xp: a.xp + b.xp, credits: a.credits + b.credits, items: [...(a.items || []), ...(b.items || [])], levelUp: Math.max(a.levelUp || 0, b.levelUp || 0) };
+}
+function welcomeDispatch() {
+  const gift = rewards.checkIn();
+  resumePendingDay();
+  const shown = syncIsland(gift, gift?.first ? 'Welcome to Kona' : gift ? `Day ${gift.streak} in a row` : null);
+  if (!shown && gift) {
+    lifeHud.dispatch({
+      eyebrow: gift.streak > 1 ? `Day ${gift.streak} in a row · ×${rewards.multiplier.toFixed(1)} on everything you earn` : 'Welcome back',
+      title: `Today on the island: ${PHASES[living?.phase || 'quiet'].name}`,
+      news: ['Five new shells are hidden on beaches and in town.', ...PHASES[living?.phase || 'quiet'].news.slice(0, 2)],
+      grant: gift,
+    });
+  }
+  if (!gift) syncIsland();
+  if (saveData.pendingDay != null) enterFreeRoam();
+}
+// A day finished earlier opens once rewards.daysOpen allows it.
+function resumePendingDay() {
+  const next = saveData.pendingDay;
+  if (next == null || !rewards) return false;
+  if (next >= rewards.daysOpen(RACE_WEEK_QUESTS.length)) return false;
+  saveData.pendingDay = null;
+  roaming = false;
+  saveData.currentDayIndex = next;
+  saveData.currentStepIndex = 0;
+  currentDay = RACE_WEEK_QUESTS[next];
+  currentStep = currentDay.steps[0];
+  saveGameProgress(saveData);
+  setHour(currentDay.startHour || 7.25);
+  $('#hour').value = currentDay.startHour || 7.25;
+  setupActiveStep();
+  updateHUD();
+  return true;
+}
+// While the next day is closed: free roam, with the compass on the nearest shell of the day.
+function enterFreeRoam() {
+  roaming = true;
+  const next = RACE_WEEK_QUESTS[saveData.pendingDay];
+  $('#questDayNum').textContent = `DAY ${currentDay.dayNumber} · DONE`;
+  $('#questDayTitle').textContent = next ? `${next.title} opens tomorrow` : 'Race week complete';
+  $('#questDayDesc').textContent = 'Free roam: find today’s shells, spot honu from 3 m away, ride the Queen K. The island changes with the next day.';
+  $('#questStepCount').textContent = `SHELLS ${rewards.shellsFoundToday()} / 5`;
+  $('#questChecklist').innerHTML = '';
+  $('#questProgressFill').style.width = '100%';
+  aimAtShell();
+}
+function aimAtShell() {
+  if (!living || !echoMarkers) return;
+  const px = camera.position.x, py = -camera.position.z;
+  const left = living.shells.filter(s => s.g.visible);
+  if (!left.length) { $('#compassLabel').textContent = 'All of today’s shells found'; return; }
+  left.sort((a, b) => Math.hypot(a.x - px, a.y - py) - Math.hypot(b.x - px, b.y - py));
+  const s = left[0];
+  echoMarkers.setTarget([s.x, s.y], `🐚 Shell · ${s.where}`, 0, false, 0xffd166);
+  $('#compassLabel').textContent = `Shell near ${s.where}`;
+}
+
+let lifeT = 0, honuWarnT = 0;
+function lifeTick(dt) {
+  if (!living || !rewards) return;
+  lifeT += dt;
+  if (lifeT < 0.25) return;
+  lifeT = 0;
+  const px = camera.position.x, py = -camera.position.z;
+  const onFoot = locomotion?.getState().active;
+  for (const sh of living.shells) {
+    if (!sh.g.visible) continue;
+    const d = Math.hypot(sh.x - px, sh.y - py);
+    if (d < (onFoot ? 4 : 0)) {
+      living.hideShell(sh.id);
+      const g = rewards.pickShell(sh);
+      lifeHud.pop(g, sh.golden ? 'Golden cowrie!' : `Shell found · ${rewards.shellsFoundToday()}/5`);
+      if (roaming) { $('#questStepCount').textContent = `SHELLS ${rewards.shellsFoundToday()} / 5`; aimAtShell(); }
+    }
+  }
+  const h = onFoot ? living.nearestHonu(px, py) : null;
+  if (h && h.dist < 3 && performance.now() - honuWarnT > 15000) {
+    honuWarnT = performance.now();
+    toast('Too close. Give honu at least 3 m (10 ft) of space: it is the rule on Hawaiʻi beaches.');
+  } else if (h && h.dist < 15 && h.dist >= 3) {
+    const g = rewards.spotHonu(h.id);
+    if (g) lifeHud.pop(g, 'Honu spotted');
+  }
 }
 
 // ------------------------------------------------------------------ Quest & Progression Engine
 function initGameLoop() {
+  if ((saveData.completedDays || []).some(id => String(id).startsWith('day'))) {
+    saveData.completedDays = [];
+    saveData.currentDayIndex = 0;
+    saveData.currentStepIndex = 0;
+    saveGameProgress(saveData);
+  }
   const dayIdx = Math.min(saveData.currentDayIndex || 0, RACE_WEEK_QUESTS.length - 1);
   currentDay = RACE_WEEK_QUESTS[dayIdx];
   const stepIdx = Math.min(saveData.currentStepIndex || 0, currentDay.steps.length - 1);
@@ -318,6 +535,13 @@ function initGameLoop() {
 
   setupActiveStep();
   updateHUD();
+  if (coarse) {
+    const card = $('#questCard');
+    card?.addEventListener('click', ev => {
+      if (ev.target.closest('button')) return;
+      card.classList.toggle('open');
+    });
+  }
 
   // Mode Toggle Button (Cycles Walk -> Bike -> Drone Fly)
   const modeBtn = $('#btnModeToggle');
@@ -352,9 +576,12 @@ function initGameLoop() {
   const musBtn = $('#topMuseumBtn');
   if (musBtn) {
     musBtn.onclick = () => {
-      if (pierMuseumStudio) pierMuseumStudio.open(7); // Open with Frodeno 2019
+      if (pierMuseumStudio) pierMuseumStudio.open(); // opens on the latest bike you have unlocked
     };
   }
+
+  const myBtn = $('#topMyKonaBtn');
+  if (myBtn) myBtn.onclick = () => openMyKona();
 
   // Top Heritage Button -> Opens Hawaiian Scavenger Hunt Lore Codex
   const herBtn = $('#topHeritageBtn');
@@ -364,16 +591,14 @@ function initGameLoop() {
     };
   }
 
-  // Key E handler for opening museum when near a pedestal
+  // INTERACT: one semantic action for keyboard (E) and touch (the on-screen action button).
   window.addEventListener('keydown', e => {
-    if (e.code === 'KeyE') {
-      if (locomotion && pierMuseumStudio) {
-        pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
-          pierMuseumStudio.open(idx);
-        });
-      }
-    }
+    if (e.code !== 'KeyE' || e.repeat) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '')) return;
+    runInteraction();
   });
+  const actBtn = $('#actionPrompt');
+  if (actBtn) actBtn.onclick = () => runInteraction();
 
   // Jump Button (Mobile)
   const jumpBtn = $('#jumpBtn');
@@ -394,6 +619,7 @@ function setLocomotionMode(targetMode) {
     mode = targetMode ? 'walk' : 'fly';
   }
 
+  document.body.dataset.mode = mode;
   const modeIcon = $('#modeIcon');
   const modeLabel = $('#modeLabel');
   const hint = $('#walkHint');
@@ -420,10 +646,10 @@ function setLocomotionMode(targetMode) {
     if (modeIcon) modeIcon.textContent = '🚴';
     if (modeLabel) modeLabel.textContent = 'Bike';
     if (hint) {
-      hint.textContent = 'WASD Pedal & Steer · Shift Sprint (65 km/h) · [B] Dismount · [E] 3D Studio';
+      hint.textContent = 'WASD pedal and steer · Shift tuck · B dismount';
       hint.style.display = 'block';
     }
-    toast('🚴 Speedmax CFR Ride: 43–66 km/h Aero Cruise');
+    toast('On the bike. Pedal with W. Shift is the tuck.');
   } else {
     // fly
     if (locomotion) {
@@ -455,7 +681,9 @@ function setupActiveStep() {
   $('#questProgressFill').style.width = `${pct}%`;
   $('#compassLabel').textContent = currentStep.text;
 
+  progress?.beginDay(currentDay.id);
   renderChecklist();
+  renderChallenge();
 }
 
 function renderChecklist() {
@@ -488,6 +716,11 @@ function renderChecklist() {
 function teleportToActiveStep() {
   if (!currentStep || !currentStep.target) return;
   const [tx, ty] = currentStep.target;
+  const away = Math.hypot(camera.position.x - tx, -camera.position.z - ty);
+  if (away > 1600) {
+    toast(`Ride the highway. Still ${(away / 1000).toFixed(1)} km.`);
+    return;
+  }
 
   const spawnX = tx - 4;
   const spawnY = ty + 4;
@@ -505,7 +738,8 @@ function teleportToActiveStep() {
     camera.position.set(wPos.x - 12, wPos.y + 6, wPos.z + 12);
     controls.target.copy(wPos);
   }
-  toast(`Teleported to: ${currentStep.text}`);
+  explorer?.stamp(spawnX, spawnY, 700);
+  toast(`📍 ${currentStep.text}. Take it in, then press [E] when you're ready.`);
 }
 
 function completeCurrentStep() {
@@ -531,33 +765,89 @@ function completeCurrentStep() {
 
     if (pierMuseumStudio) {
       const yearIdx = pierMuseumStudio.getBikes().findIndex(b => b.year.includes(currentStep.echoYear));
-      pierMuseumStudio.open(yearIdx >= 0 ? yearIdx : 7);
+      // A memory reveals its exhibit if the museum has one; otherwise its artifact in the viewer.
+      if (yearIdx >= 0) pierMuseumStudio.open(yearIdx);
+      else if (artifactViewer) artifactViewer.show(currentStep.artifact, true);
     }
 
     saveGameProgress(saveData);
-    advanceToNextDayOrFinish();
+    advanceStep();
   } else {
     playUnlockFanfare();
-    toast(`✓ Objective Complete: ${currentStep.text}`);
+    const g = rewards?.grant({ xp: XP_FOR.step, credits: CREDITS_FOR.step, reason: currentStep.text });
+    toast(`✓ ${currentStep.text}${g ? ` · +${g.xp} XP · +${g.credits} Credits` : ''}`);
 
-    let nextStepIdx = (saveData.currentStepIndex || 0) + 1;
-    if (nextStepIdx < currentDay.steps.length) {
-      saveData.currentStepIndex = nextStepIdx;
-      currentStep = currentDay.steps[nextStepIdx];
-      saveGameProgress(saveData);
-      setupActiveStep();
-      updateHUD();
-    }
+    advanceStep();
   }
+}
+
+// Next step within the day, or the next day when this was the last step (echo or not).
+function advanceStep() {
+  const nextStepIdx = (saveData.currentStepIndex || 0) + 1;
+  if (nextStepIdx < currentDay.steps.length) {
+    saveData.currentStepIndex = nextStepIdx;
+    currentStep = currentDay.steps[nextStepIdx];
+    saveGameProgress(saveData);
+    setupActiveStep();
+    updateHUD();
+  } else {
+    advanceToNextDayOrFinish();
+  }
+}
+
+// ------------------------------------------------------------------ Interactions
+// Arriving means "you found something", never "done": the player chooses to act.
+let currentInteraction = null;
+function stepVerb(st) {
+  if (st.action) return st.action;
+  return st.isEcho ? 'Enter the memory' : 'Interact';
+}
+function refreshInteraction(questReached) {
+  let it = null;
+  if (questReached && currentStep) {
+    it = { key: 'quest:' + currentStep.id, label: stepVerb(currentStep), sub: currentStep.text, run: () => completeCurrentStep() };
+  } else if (locomotion?.getState().active && pierMuseumStudio) {
+    pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
+      it = { key: 'bike:' + idx, label: 'Inspect bike', sub: `${bike.year} · ${bike.name}`, run: () => pierMuseumStudio.open(idx) };
+    });
+  }
+  const el = $('#actionPrompt');
+  if ((it && it.key) !== (currentInteraction && currentInteraction.key) && el) {
+    if (it) {
+      el.innerHTML = `<kbd>E</kbd><b>${it.label}</b><small>${it.sub}</small>`;
+      el.classList.add('on');
+    } else el.classList.remove('on');
+  }
+  currentInteraction = it;
+}
+function runInteraction() {
+  if (!currentInteraction) return;
+  const it = currentInteraction;
+  currentInteraction = null;
+  $('#actionPrompt')?.classList.remove('on');
+  it.run();
 }
 
 function advanceToNextDayOrFinish() {
   if (!saveData.completedDays.includes(currentDay.id)) {
     saveData.completedDays.push(currentDay.id);
   }
-  toast(`🏆 Day ${currentDay.dayNumber} Completed! Chapter Unlocked.`);
+  toast(currentDay.lesson ? currentDay.lesson : `Day ${currentDay.dayNumber} complete.`);
 
   const nextDayIdx = saveData.currentDayIndex + 1;
+  const dayGrant = rewards?.grant({ xp: XP_FOR.day, credits: CREDITS_FOR.day, reason: `Finished ${currentDay.title}` });
+  if (rewards && nextDayIdx < RACE_WEEK_QUESTS.length && nextDayIdx >= rewards.daysOpen(RACE_WEEK_QUESTS.length)) {
+    saveData.pendingDay = nextDayIdx;
+    saveGameProgress(saveData);
+    lifeHud.pop(dayGrant, `${currentDay.title} complete`);
+    enterFreeRoam();
+    setTimeout(() => lifeHud.gate({
+      nextTitle: RACE_WEEK_QUESTS[nextDayIdx].title,
+      opensAt: rewards.nextOpening().getTime(),
+      onTicket: () => { if (resumePendingDay()) { syncIsland(null, 'Fast-forward'); toast(`${currentDay.title} is open.`); } },
+    }), 1400);
+    return;
+  }
   if (nextDayIdx < RACE_WEEK_QUESTS.length) {
     saveData.currentDayIndex = nextDayIdx;
     saveData.currentStepIndex = 0;
@@ -573,10 +863,15 @@ function advanceToNextDayOrFinish() {
   saveGameProgress(saveData);
   setupActiveStep();
   updateHUD();
+  if (!syncIsland(dayGrant)) lifeHud?.pop(dayGrant, 'Day complete');
 }
 
 function jumpToDay(dayIdx) {
   if (dayIdx < 0 || dayIdx >= RACE_WEEK_QUESTS.length) return;
+  if (dayIdx > (saveData.currentDayIndex || 0)) {
+    toast('Finish this day first. Later places stay closed.');
+    return;
+  }
   saveData.currentDayIndex = dayIdx;
   saveData.currentStepIndex = 0;
   currentDay = RACE_WEEK_QUESTS[dayIdx];
@@ -587,13 +882,48 @@ function jumpToDay(dayIdx) {
   $('#hour').value = currentDay.startHour || 7.25;
   if (currentDay.cameraStart) go(currentDay.cameraStart);
 
+  roaming = false;
   setupActiveStep();
   updateHUD();
+  living?.setDay(dayIdx, saveData.completedDays);
   toast(`Switched to Day ${currentDay.dayNumber}: ${currentDay.title}`);
 }
 
 function updateHUD() {
   renderChecklist();
+  renderChallenge();
+}
+
+function renderChallenge() {
+  const el = $('#questChallenge');
+  if (!el || !progress || !currentDay) return;
+  const c = progress.challengeFor(currentDay.id);
+  if (!c) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const km = c.metric !== 'heritage' && c.target >= 1000;
+  const unit = c.metric === 'heritage' ? '' : (km ? ' km' : ' m');
+  const shown = km ? (c.value / 1000).toFixed(1) : Math.round(c.value);
+  const goal = km ? (c.target / 1000).toFixed(0) : c.target;
+  const pct = Math.round(c.value / c.target * 100);
+  el.classList.toggle('done', c.done);
+  el.innerHTML = `<div class="qc-top"><span>${c.done ? 'Done' : 'Challenge'}</span><em>${shown}${unit} / ${goal}${unit}</em></div>
+    <div class="qc-text">${c.text}</div><div class="qc-bar"><i style="width:${pct}%"></i></div><div class="qc-reward">Unlocks ${c.reward}</div>`;
+  pierMuseumStudio?.refresh?.();
+  window.__winners?.refresh?.();
+}
+
+function openMyKona() {
+  if (!drawer) return;
+  drawer.open(saveData, RACE_WEEK_QUESTS);
+  const sm = progress.summary();
+  const bikes = pierMuseumStudio ? pierMuseumStudio.getBikes() : [];
+  const unlocked = bikes.filter(b => progress.isBikeUnlocked(b)).length;
+  $('#statMemories').textContent = `${sm.memories} / ${sm.totalMemories}`;
+  $('#statBikes').textContent = `${unlocked} / ${bikes.length}`;
+  const extra = $('#drawerExtraStats') || (() => { const d = document.createElement('div'); d.id = 'drawerExtraStats'; d.className = 'drawer-stats'; $('#museumDrawer .drawer-stats').after(d); return d; })();
+  extra.innerHTML = `<div class="stat-pill"><b>${sm.heritage} / ${sm.totalHeritage}</b><span>Heritage</span></div>
+    <div class="stat-pill"><b>${sm.challenges} / ${sm.totalChallenges}</b><span>Challenges</span></div>
+    <div class="stat-pill"><b>${((sm.stats.walk_m + sm.stats.ride_m + sm.stats.swim_m) / 1000).toFixed(1)} km</b><span>Explored</span></div>`;
 }
 
 // ------------------------------------------------------------------ Coffee Boat
@@ -667,20 +997,31 @@ async function island() {
   };
 
   const G = coarse ? 400 : 800, [tx0, ty0, tx1, ty1] = man.tile;
+  // The whole-island mesh is a ~200 m far-field backdrop. Near Kailua the detailed core tile and the 500 m
+  // streamed ring must always win, so sink the backdrop under that whole zone with a smooth ramp. A hard
+  // clamp at one edge left a vertical cliff (visible from Aliʻi Drive) that poked through the detail.
+  let rects = [[tx0, ty0, tx1, ty1]];
+  try {
+    const ti = await (await fetch(A + 'tiles/index.json')).json();
+    rects = rects.concat(ti.tiles.map(t => [t.x0, t.y0, t.x0 + ti.size, t.y0 + ti.size]));
+  } catch (_) { }
+  const distToDetail = (x, y) => {
+    let d = Infinity;
+    for (const [a, b, c, e] of rects) d = Math.min(d, Math.hypot(Math.max(a - x, 0, x - c), Math.max(b - y, 0, y - e)));
+    return d;
+  };
+  const SINK = 22, RAMP = 700;
   const g = new THREE.PlaneGeometry(1, 1, G, G), p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) {
     const u = uv.getX(i), v = uv.getY(i), x = isl.x0 + u * isl.size, y = isl.y0 + v * isl.size;
     let h = heightAt(x, y);
-    if (x > tx0 + 30 && x < tx1 - 30 && y > ty0 + 30 && y < ty1 - 30) h = Math.min(h, -80);
+    const d = distToDetail(x, y);
+    if (d < RAMP) { const k = Math.min(1, d / RAMP); h -= SINK * (1 - k * k * (3 - 2 * k)); }
     const w = W(x, y, h);
     p.setXYZ(i, w.x, w.y, w.z);
   }
-  const ix = g.index.array;
-  for (let i = 0; i < ix.length; i += 3) {
-    const a = ix[i + 1];
-    ix[i + 1] = ix[i + 2];
-    ix[i + 2] = a;
-  }
+  // PlaneGeometry winding is already correct after W() (x, y, z) -> (x, z, -y); the old index swap
+  // flipped every face so all normals pointed down (inverted lighting, invisible from above).
   g.computeVertexNormals();
 
   const t = tex.load(A + 'island_color.jpg');
@@ -689,6 +1030,9 @@ async function island() {
   const m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.9, metalness: 0.05 });
   const mesh = new THREE.Mesh(g, m);
   scene.add(mesh);
+  farIsland = mesh;
+  explorer = createExplorer(isl);
+  explorer.apply(m);
 }
 
 // ------------------------------------------------------------------ Race courses
@@ -749,13 +1093,225 @@ function routes() {
   fetch(A + 'routes.json').then(r => r.json()).then(data => {
     if (data.bike && data.bike.length) {
       const pts = data.bike.map(([lon, lat]) => [(lon - man.origin.lon) * kx, (lat - man.origin.lat) * ky]);
-      ribbon(pts, 3.2, 0x2a9d8f, 1.2);
+      ribbon(pts, 3.2, 0x2a9d8f, 0.2); // low, so riders on the course stay visible
     }
     if (data.run && data.run.length) {
       const pts = data.run.map(([lon, lat]) => [(lon - man.origin.lon) * kx, (lat - man.origin.lat) * ky]);
-      ribbon(pts, 2.4, 0xe76f51, 0.9);
+      ribbon(pts, 2.4, 0xe76f51, 0.15);
     }
   }).catch(e => console.warn('routes.json load err', e));
+  queenK();
+}
+
+function surfaceY(x, yNorth) {
+  let h = Math.max(0.4, heightAt(x, yNorth));
+  if (farIsland) {
+    const w = W(x, yNorth, 0);
+    const ray = new THREE.Raycaster(new THREE.Vector3(w.x, 900, w.z), new THREE.Vector3(0, -1, 0));
+    const hit = ray.intersectObject(farIsland, false)[0];
+    if (hit) h = Math.max(h, hit.point.y);
+  }
+  return h;
+}
+
+let roadMap = null;
+function roadTexture() {
+  if (roadMap) return roadMap;
+  const cv = document.createElement('canvas');
+  cv.width = 256;
+  cv.height = 256;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#6e767e';
+  c.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 1600; i++) {
+    c.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.12)';
+    c.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+  }
+  c.fillStyle = '#f4f7f8';
+  c.fillRect(0, 6, 256, 14);
+  c.fillRect(0, 236, 256, 14);
+  c.fillStyle = '#f0c14a';
+  for (let x = 10; x < 256; x += 52) c.fillRect(x, 116, 30, 22);
+  roadMap = new THREE.CanvasTexture(cv);
+  roadMap.wrapS = THREE.RepeatWrapping;
+  roadMap.wrapT = THREE.ClampToEdgeWrapping;
+  roadMap.colorSpace = THREE.SRGBColorSpace;
+  roadMap.anisotropy = 8;
+  return roadMap;
+}
+
+function densify(pts, step) {
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    const n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / step));
+    for (let k = 1; k <= n; k++) {
+      const t = k / n;
+      out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+    }
+  }
+  return out;
+}
+
+function solidRoad(pts, width, lift) {
+  const pos = [], uv = [], idx = [];
+  let dist = 0;
+  for (let i = 0; i < pts.length; i++) {
+    if (i) dist += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    const z = surfaceY(pts[i][0], pts[i][1]) + lift;
+    const w = W(pts[i][0], pts[i][1], z);
+    const ta = W(b[0] - a[0], b[1] - a[1], 0);
+    ta.y = 0;
+    if (ta.lengthSq() < 1e-6) ta.set(0, 0, 1);
+    ta.normalize();
+    const side = new THREE.Vector3(-ta.z, 0, ta.x);
+    for (const s of [-1, 1]) pos.push(w.x + side.x * s * width * 0.5, w.y, w.z + side.z * s * width * 0.5);
+    const u = dist / 18;
+    uv.push(u, 0, u, 1);
+    if (i) {
+      const k = i * 2;
+      idx.push(k - 2, k - 1, k + 1, k - 2, k + 1, k);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: roadTexture(), side: THREE.DoubleSide }));
+  mesh.userData.ground = true;
+  mesh.renderOrder = 2;
+  scene.add(mesh);
+  addGround(mesh);
+  return mesh;
+}
+
+function signBoard(title, body) {
+  const cv = document.createElement('canvas');
+  cv.width = 640;
+  cv.height = 360;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#101820';
+  c.fillRect(0, 0, 640, 360);
+  c.fillStyle = '#f9c74f';
+  c.fillRect(0, 0, 640, 12);
+  c.font = '700 42px sans-serif';
+  c.fillText(title, 28, 72);
+  c.fillStyle = '#f1f5f9';
+  c.font = '400 26px sans-serif';
+  const words = body.split(' ');
+  let line = '', y = 130;
+  for (const word of words) {
+    const next = line ? line + ' ' + word : word;
+    if (c.measureText(next).width > 580) { c.fillText(line, 28, y); y += 36; line = word; }
+    else line = next;
+  }
+  if (line) c.fillText(line, 28, y);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+function placeBoard(survey, aim, id, title, body) {
+  const z = surfaceY(survey[0], survey[1]) + 1.6;
+  const here = W(survey[0], survey[1], z);
+  const there = W(aim[0], aim[1], z);
+  const side = new THREE.Vector3().subVectors(there, here);
+  side.y = 0;
+  if (side.lengthSq() < 1e-4) side.set(1, 0, 0);
+  side.normalize();
+  const board = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 1.9), new THREE.MeshBasicMaterial({ map: signBoard(title, body), side: THREE.DoubleSide }));
+  board.position.copy(here).add(new THREE.Vector3(-side.z, 0, side.x).multiplyScalar(14));
+  board.lookAt(here.x, board.position.y, here.z);
+  scene.add(board);
+  briefings.push({ id, title, body, x: survey[0], y: survey[1] });
+}
+
+function queenK() {
+  if (farIsland && !farIsland.geometry.boundsTree) farIsland.geometry.computeBoundsTree();
+  // Terminal curb is east of runway 17/35. The line then runs south along the coast to the pier.
+  // These are a rideable corridor, not a surveyed centerline of Queen Kaʻahumanu Highway.
+  const wps = [
+    [19.73855, -156.04235],
+    [19.7310, -156.0412],
+    [19.722, -156.0435],
+    [19.700, -156.040],
+    [19.678, -156.028],
+    [19.662, -156.012],
+    [19.651, -156.001],
+    [19.643, -155.997],
+    [19.6392, -155.9968],
+  ];
+  const pts = densify(wps.map(([lat, lon]) => toLocal(lat, lon)), 80);
+  solidRoad(pts, 22, 0.45);
+  const along = 0.4;
+  highwayStart = [
+    pts[0][0] + (pts[1][0] - pts[0][0]) * along,
+    pts[0][1] + (pts[1][1] - pts[0][1]) * along,
+  ];
+  highwayAim = pts[Math.min(3, pts.length - 1)];
+  let dist = 0, nextPost = 1000;
+  const postMat = new THREE.MeshBasicMaterial({ color: 0xf9c74f });
+  for (let i = 1; i < pts.length; i++) {
+    dist += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    if (dist < nextPost) continue;
+    const z = surfaceY(pts[i][0], pts[i][1]);
+    const p = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.4, 0.12), postMat);
+    p.position.copy(W(pts[i][0], pts[i][1], z + 1.2));
+    scene.add(p);
+    nextPost += 1000;
+  }
+  const facts = [
+    ['b1978', '1978 · Oʻahu', 'The first Ironman was on Oʻahu on 18 February 1978: 15 starters, 12 finishers. This race has been in Kailua-Kona since 1981.'],
+    ['b1974', '1974 · San Diego', 'Triathlon began at Mission Bay, San Diego, on 25 September 1974. It was not born on this road.'],
+    ['b1982', '1982 · Aliʻi Drive', 'Julie Moss collapsed near the finish and crawled home 29 seconds behind Kathleen McCartney.'],
+    ['brecords', 'Course records', 'Women: Lucy Charles-Barclay, 8:24:31 in 2023. Men: Patrick Lange, 7:35:53 in 2024.'],
+  ];
+  facts.forEach((f, i) => {
+    const at = pointAlong(pts, 0.12 + i * 0.24);
+    placeBoard(at.pos, at.aim, f[0], f[1], f[2]);
+  });
+  for (let i = 0; i < pts.length; i += 4) explorer?.stamp(pts[i][0], pts[i][1], 700);
+}
+
+function pointAlong(pts, frac) {
+  const lens = [];
+  let total = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    lens.push(d);
+    total += d;
+  }
+  let want = Math.min(0.98, Math.max(0.02, frac)) * total;
+  for (let i = 1; i < pts.length; i++) {
+    if (want > lens[i - 1]) { want -= lens[i - 1]; continue; }
+    const t = lens[i - 1] ? want / lens[i - 1] : 0;
+    return {
+      pos: [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t],
+      aim: pts[Math.min(pts.length - 1, i + 1)],
+    };
+  }
+  return { pos: pts[pts.length - 1], aim: pts[pts.length - 1] };
+}
+
+function readNearbyBriefing() {
+  if (!saveData) return;
+  saveData.briefingsRead = saveData.briefingsRead || [];
+  const x = camera.position.x, y = -camera.position.z;
+  for (const b of briefings) {
+    if (saveData.briefingsRead.includes(b.id)) continue;
+    if (Math.hypot(x - b.x, y - b.y) > 28) continue;
+    saveData.briefingsRead.push(b.id);
+    saveGameProgress(saveData);
+    const el = $('#briefCard');
+    if (!el) return;
+    el.hidden = false;
+    el.innerHTML = `<b>${b.title}</b><p>${b.body}</p>`;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.hidden = true; }, 9000);
+    return;
+  }
 }
 
 function pois() {
@@ -798,31 +1354,49 @@ function pois() {
 // ------------------------------------------------------------------ Viewpoints
 const PLACES = {
   bay: () => ({ pos: W(40, -450, 220), look: W(30, 20, 0), ground: W(22, 10, 2.2), name: 'Kailua Bay', note: 'The swim course runs 1,840 m out along the Aliʻi Drive coast.' }),
-  pier: () => ({ pos: W(18, -45, 14), look: W(0, 10, 2.2), ground: W(4, 10, 2.2), name: 'Kailua Pier · Transition', note: 'The spiritual heart of Ironman. All 580 bikes racked here.' }),
+  pier: () => ({ pos: W(18, -45, 14), look: W(0, 10, 2.2), ground: W(4, 10, 2.2), name: 'Kailua Pier · Transition', note: 'The racks start empty. A bike appears only when that model is sourced and unlocked.' }),
+  winners: () => ({ pos: W(70, 6, 8), look: W(70, -12, 3), ground: W(70, -8, 2.4), name: 'Winners hall', note: 'Every year’s result. A bike or a statue appears only when that asset exists.' }),
   start: () => ({ pos: W(-45, -35, 4), look: W(50, -220, 1), ground: W(-45, -35, 1.2), name: 'Dig Me Beach · Swim Start', note: '6:25 AM cannon blast echoes across the volcanic amphitheater.' }),
-  finish: () => ({ pos: W(175, -55, 12), look: W(125, -20, 2), ground: W(175, -55, 3.5), name: 'Finish line · Aliʻi Drive', note: 'The most famous finish line in endurance sport.' }),
+  finish: () => ({ pos: W(40, -190, 70), look: W(125, -20, 4), ground: W(175, -55, 3.5), name: 'Finish line · Aliʻi Drive', note: 'The most famous finish line in endurance sport.' }),
   hawi: () => {
     const xy = toLocal(20.0545, -155.8306);
-    return { pos: W(xy[0] - 600, xy[1] - 800, 450), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), name: 'Hāwī Turnaround', note: 'Mile 56 turnaround in the Kohala mountain crosswinds.' };
+    return { aerial: true, pos: W(xy[0] - 600, xy[1] - 800, 450), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0] - 70, xy[1] - 90, 0), name: 'Hāwī Turnaround', note: 'Mile 56 turnaround in the Kohala mountain crosswinds.' };
   },
   energylab: () => {
     const xy = toLocal(19.7042, -156.0392);
-    return { pos: W(xy[0] - 350, xy[1] - 400, 180), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), name: 'Natural Energy Lab (NELHA)', note: 'Crushing heat and total isolation on the marathon.' };
+    return { aerial: true, pos: W(xy[0] - 350, xy[1] - 400, 180), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0] + 40, xy[1] - 120, 0), name: 'Natural Energy Lab (NELHA)', note: 'Crushing heat and total isolation on the marathon.' };
   },
-  island: () => ({ pos: W(24000, 18000, 24000), look: W(-2000, 4000, 1200), ground: W(4, 10, 2.2), name: 'Island of Hawaiʻi', note: '159 km from south to north, dominated by Mauna Kea and Mauna Loa.' }),
+  island: () => ({ aerial: true, pos: W(24000, 18000, 24000), look: W(-2000, 4000, 1200), ground: W(4, 10, 2.2), name: 'Island of Hawaiʻi', note: '159 km from south to north, dominated by Mauna Kea and Mauna Loa.' }),
 };
 
 let tween = null;
 function go(k, dur = 2.5) {
   const p = PLACES[k]();
   ride = null;
+  if ((k === 'hawi' || k === 'energylab') && !courseOpen(saveData.completedDays)) {
+    toast('Hāwī and the Energy Lab open after bike check-in on Friday 9 October.');
+    return;
+  }
+  if (explorer && k !== 'island') {
+    const g = p.ground || p.look;
+    if (!explorer.seen(g.x, -g.z)) {
+      toast('That part of the island is still closed. Ride there and the map opens.');
+      return;
+    }
+  }
 
-  if (locomotion && locomotion.getState().active) {
-    // Player is walking or riding a bike on the ground: teleport them to ground level at this landmark!
+  if (locomotion && locomotion.getState().active && p.aerial) {
+    // Aerial-only viewpoints (whole island) make no sense on foot: lift off into fly mode, then glide there.
+    setLocomotionMode('fly');
+  } else if (locomotion && locomotion.getState().active) {
+    // Player is walking or riding a bike on the ground: teleport them to ground level at this landmark,
+    // facing the thing the viewpoint is about (was always yaw 0, e.g. staring out to sea at Energy Lab).
     const target = p.ground || p.look;
     const targetGround = heightAt ? heightAt(target.x, -target.z) : 2.0;
     const groundY = Math.max(targetGround, 1.8);
-    locomotion.teleport(target.x, groundY, target.z, 0, 0);
+    const dx = p.look.x - target.x, dz = p.look.z - target.z;
+    const yaw = (Math.abs(dx) + Math.abs(dz) > 1) ? Math.atan2(-dx, -dz) : 0;
+    locomotion.teleport(target.x, groundY, target.z, yaw, 0);
     toast(`📍 Arrived at ${p.name}: ${p.note}`);
     $('#cap').innerHTML = `<b>${p.name}</b><span>${p.note}</span>`;
     $$('#nav button').forEach(b => b.classList.toggle('active', b.dataset.k === k));
@@ -866,7 +1440,8 @@ const navList = [
   ['finish', 'Finish line'],
   ['hawi', 'Hāwī'],
   ['energylab', 'Energy Lab'],
-  ['island', 'Island']
+  ['island', 'Island'],
+  ['winners', 'Winners']
 ];
 
 navList.forEach(([k, label]) => {
@@ -896,6 +1471,34 @@ function toast(t) {
 // ------------------------------------------------------------------ Main Animation Loop
 let fpsT = 0, frames = 0;
 let lastReachCheck = 0;
+const lastPos = new THREE.Vector3(); let hasLastPos = false, challengeUiT = 0;
+// Distance you actually travel (on foot, by bike, swimming) counts toward the day's challenge.
+function trackExploration(dt) {
+  if (!progress || !currentDay) return;
+  const st = locomotion.getState();
+  const p = camera.position;
+  if (st.active && hasLastPos) {
+    const d = Math.hypot(p.x - lastPos.x, p.z - lastPos.z);
+    if (d < 40 * Math.max(dt, 0.016)) {                   // ignore teleports / "Take me there"
+      progress.track(st.isSwimming ? 'swim_m' : (st.mode === 'bike' ? 'ride_m' : 'walk_m'), d, currentDay.id);
+    }
+  }
+  lastPos.copy(p); hasLastPos = st.active;
+  if (explorer && st.active) {
+    explorer.stamp(p.x, -p.z, st.mode === 'bike' ? 1600 : 900);
+    explorer.persist(loadPlayer() ? { last: { x: p.x, y: -p.z } } : null);
+  }
+  const speedEl = $('#rideSpeed'), distEl = $('#rideDist');
+  if (speedEl) speedEl.textContent = String(st.speedKmh || 0);
+  if (distEl && saveData?.stats) distEl.textContent = ((saveData.stats.ride_m || 0) / 1000).toFixed(1);
+  challengeUiT += dt;
+  if (challengeUiT > 0.5) {
+    challengeUiT = 0;
+    progress.checkHeritage(currentDay.id);
+    renderChallenge();
+    readNearbyBriefing();
+  }
+}
 let lastPedestalPrompt = 0;
 let lastFrameTime = performance.now();
 
@@ -930,6 +1533,7 @@ renderer.setAnimationLoop(() => {
   // Locomotion update
   if (locomotion) {
     locomotion.update(dt);
+    trackExploration(dt);
   }
 
   if (!locomotion?.getState().active && !tween && !ride) {
@@ -944,6 +1548,10 @@ renderer.setAnimationLoop(() => {
 
   // Pier Bike Museum update
   pierMuseumStudio?.update(dt, camera);
+
+  // Living island: crowds, athletes, canoes, flags, shells, honu
+  living?.update(dt, camera);
+  lifeTick(dt);
 
   // Fog & depth scaling
   scene.fog.density = 0.00011 / (1 + Math.max(0, camera.position.y) / 150);
@@ -971,18 +1579,10 @@ renderer.setAnimationLoop(() => {
       distEl.textContent = navState.distance < 9000 ? `${Math.round(navState.distance)} m` : '-- m';
     }
 
-    if (navState.reached && Date.now() - lastReachCheck > 3000) {
+    if (Date.now() - lastReachCheck > 150) {
       lastReachCheck = Date.now();
-      completeCurrentStep();
+      refreshInteraction(navState.reached);
     }
-  }
-
-  // Check proximity to Pier Heritage Pedestals while walking
-  if (locomotion?.getState().active && pierMuseumStudio && Date.now() - lastPedestalPrompt > 2500) {
-    pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
-      lastPedestalPrompt = Date.now();
-      toast(`🚲 ${bike.year} ${bike.name}: Press [E] or Click to Enter 3D Studio`);
-    });
   }
 
   renderer.render(scene, camera);
@@ -1009,11 +1609,13 @@ window.__kona = {
   scene,
   camera,
   THREE,
-  locomotion,
-  echoMarkers,
-  pierMuseumStudio,
-  hawaiianHunt,
+  get locomotion() { return locomotion; },
+  get echoMarkers() { return echoMarkers; },
+  get pierMuseumStudio() { return pierMuseumStudio; },
+  get hawaiianHunt() { return hawaiianHunt; },
   saveData,
+  get progress() { return progress; },
+  openMyKona: () => openMyKona(),
   get currentDay() { return currentDay; },
   get currentStep() { return currentStep; },
   get pierBikes() { return man?.bikes; },
@@ -1025,10 +1627,45 @@ window.__kona = {
   openHeritageHunt: (id = null) => hawaiianHunt?.open(id),
   go,
   setHour,
-  toast
+  toast,
+  get island() { return living; },
+  controls,
+  W,
+  heightAt: (x, y) => heightAt(x, y),
+  get explorer() { return explorer; },
+  get rewards() { return rewards; },
+  get lifeHud() { return lifeHud; },
+  syncIsland: () => syncIsland(),
 };
 
-load().catch(e => {
-  $('#loading p').textContent = 'Load failed: ' + e.message;
-  console.error(e);
-});
+function startWorld() {
+  $('#gate').hidden = true;
+  $('#loading').classList.remove('done');
+  load().catch(e => {
+    $('#loading p').textContent = 'Load failed: ' + e.message;
+    console.error(e);
+  });
+}
+
+const gate = $('#gate');
+const known = loadPlayer();
+if (known) {
+  startWorld();
+} else if (gate) {
+  $('#loading').classList.add('done');
+  gate.hidden = false;
+  $('#gateForm').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const name = ($('#gateName').value || '').trim();
+    if (name.length < 2) return;
+    const first = gate.querySelector('input[name=visit]:checked')?.value !== 'return';
+    const visits = first ? 1 : Math.max(2, Number($('#gateCount').value) || 2);
+    savePlayer({ name, visits, firstTime: first, created: Date.now() });
+    startWorld();
+  });
+  const syncCount = () => { $('#gateCount').hidden = gate.querySelector('input[value=return]')?.checked !== true; };
+  gate.querySelectorAll('input[name=visit]').forEach(r => r.addEventListener('change', syncCount));
+  syncCount();
+} else {
+  startWorld();
+}
