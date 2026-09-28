@@ -1,0 +1,577 @@
+{
+ "version": 1,
+ "units": "metres",
+ "items": [
+  {
+   "id": "helmet_longtail",
+   "name": "Long-tail aero helmet",
+   "cat": "helmet",
+   "slot": "head",
+   "pack": "bikebox",
+   "needed": true,
+   "note": "Rules require an approved, fastened helmet the whole bike leg.",
+   "faces": [
+    196,
+    126,
+    69
+   ],
+   "size_m": [
+    0.497,
+    0.22,
+    0.24
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "helmet_shorttail",
+   "name": "Short-tail aero helmet",
+   "cat": "helmet",
+   "slot": "head",
+   "pack": "bikebox",
+   "needed": true,
+   "faces": [
+    196,
+    132,
+    69
+   ],
+   "size_m": [
+    0.372,
+    0.22,
+    0.24
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "helmet_aeroroad",
+   "name": "Aero road helmet",
+   "cat": "helmet",
+   "slot": "head",
+   "pack": "bikebox",
+   "needed": true,
+   "faces": [
+    130,
+    79,
+    43
+   ],
+   "size_m": [
+    0.292,
+    0.22,
+    0.24
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "shoe_tri",
+   "name": "Tri cycling shoes",
+   "cat": "shoes",
+   "slot": "feet",
+   "pack": "bikebox",
+   "needed": true,
+   "note": "One strap and a heel loop for a fast transition.",
+   "faces": [
+    150,
+    92,
+    47
+   ],
+   "size_m": [
+    0.321,
+    0.11,
+    0.135
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "shoe_road",
+   "name": "Road cycling shoes",
+   "cat": "shoes",
+   "slot": "feet",
+   "pack": "bikebox",
+   "needed": false,
+   "faces": [
+    162,
+    105,
+    56
+   ],
+   "size_m": [
+    0.317,
+    0.104,
+    0.135
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "shoe_plated",
+   "name": "Plated racing run shoes",
+   "cat": "shoes",
+   "slot": "feet",
+   "pack": "suitcase",
+   "needed": true,
+   "note": "Race day on the Queen K.",
+   "faces": [
+    152,
+    97,
+    49
+   ],
+   "size_m": [
+    0.321,
+    0.104,
+    0.165
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "shoe_trainer",
+   "name": "Lightweight trainers",
+   "cat": "shoes",
+   "slot": "feet",
+   "pack": "suitcase",
+   "needed": false,
+   "faces": [
+    138,
+    82,
+    42
+   ],
+   "size_m": [
+    0.317,
+    0.104,
+    0.15
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "suit_sleeved",
+   "name": "Sleeved aero tri suit",
+   "cat": "apparel",
+   "slot": "body",
+   "pack": "suitcase",
+   "needed": true,
+   "note": "Sleeves are allowed and faster in the Kona sun.",
+   "faces": [
+    18,
+    18,
+    18
+   ],
+   "size_m": [
+    0.3,
+    0.24,
+    0.036
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "suit_sleeveless",
+   "name": "Sleeveless tri suit",
+   "cat": "apparel",
+   "slot": "body",
+   "pack": "suitcase",
+   "needed": false,
+   "faces": [
+    18,
+    18,
+    18
+   ],
+   "size_m": [
+    0.3,
+    0.24,
+    0.036
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "kit_training",
+   "name": "Two-piece training kit",
+   "cat": "apparel",
+   "slot": "body",
+   "pack": "suitcase",
+   "needed": false,
+   "faces": [
+    18,
+    18,
+    18
+   ],
+   "size_m": [
+    0.3,
+    0.24,
+    0.056
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "kit_casual",
+   "name": "Finisher shirt and shorts",
+   "cat": "apparel",
+   "slot": "body",
+   "pack": null,
+   "needed": false,
+   "faces": [
+    18,
+    18,
+    18
+   ],
+   "size_m": [
+    0.3,
+    0.24,
+    0.056
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "swimskin",
+   "name": "Swimskin",
+   "cat": "apparel",
+   "slot": "body",
+   "pack": "suitcase",
+   "needed": true,
+   "note": "Kailua Bay is usually about 26–27 °C in October: above the 24.5 °C age-group wetsuit cut-off.",
+   "faces": [
+    18,
+    18,
+    18
+   ],
+   "size_m": [
+    0.3,
+    0.22,
+    0.018
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "goggles",
+   "name": "Goggles (tinted)",
+   "cat": "kit",
+   "slot": "eyes",
+   "pack": "suitcase",
+   "needed": true,
+   "note": "Tinted for the morning sun on the way back to the pier.",
+   "faces": [
+    112,
+    112,
+    112
+   ],
+   "size_m": [
+    0.033,
+    0.123,
+    0.04
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "sunglasses",
+   "name": "Sunglasses",
+   "cat": "kit",
+   "slot": "eyes",
+   "pack": "bikebox",
+   "needed": false,
+   "faces": [
+    24,
+    24,
+    24
+   ],
+   "size_m": [
+    0.137,
+    0.15,
+    0.052
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "watch",
+   "name": "GPS watch",
+   "cat": "kit",
+   "slot": "wrist",
+   "pack": "suitcase",
+   "needed": false,
+   "faces": [
+    42,
+    42,
+    42
+   ],
+   "size_m": [
+    0.11,
+    0.048,
+    0.015
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "race_belt",
+   "name": "Race belt and number",
+   "cat": "kit",
+   "slot": "body",
+   "pack": "suitcase",
+   "needed": true,
+   "faces": [
+    18,
+    18,
+    18
+   ],
+   "size_m": [
+    0.34,
+    0.16,
+    0.016
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "bottle",
+   "name": "Bottles",
+   "cat": "kit",
+   "slot": null,
+   "pack": "bikebox",
+   "needed": true,
+   "faces": [
+    28,
+    28,
+    28
+   ],
+   "size_m": [
+    0.07,
+    0.072,
+    0.22
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "nutrition",
+   "name": "Gels and bars",
+   "cat": "kit",
+   "slot": null,
+   "pack": "suitcase",
+   "needed": true,
+   "note": "Practise race-day fuelling before you fly.",
+   "faces": [
+    24,
+    24,
+    24
+   ],
+   "size_m": [
+    0.145,
+    0.168,
+    0.02
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "pedals",
+   "name": "Pedals",
+   "cat": "kit",
+   "slot": null,
+   "pack": "bikebox",
+   "needed": true,
+   "note": "Taken off to fit the bike in the box. Easy to forget.",
+   "faces": [
+    28,
+    28,
+    28
+   ],
+   "size_m": [
+    0.09,
+    0.3,
+    0.022
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "pump",
+   "name": "Floor pump",
+   "cat": "kit",
+   "slot": null,
+   "pack": null,
+   "needed": false,
+   "faces": [
+    39,
+    39,
+    39
+   ],
+   "size_m": [
+    0.24,
+    0.26,
+    0.683
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "tools",
+   "name": "Tools, CO₂ and tube",
+   "cat": "kit",
+   "slot": null,
+   "pack": "bikebox",
+   "needed": true,
+   "faces": [
+    38,
+    38,
+    38
+   ],
+   "size_m": [
+    0.21,
+    0.119,
+    0.03
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "charger",
+   "name": "Chargers",
+   "cat": "kit",
+   "slot": null,
+   "pack": "suitcase",
+   "needed": false,
+   "faces": [
+    78,
+    78,
+    78
+   ],
+   "size_m": [
+    0.178,
+    0.106,
+    0.024
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "sunscreen",
+   "name": "Reef-safe sunscreen",
+   "cat": "kit",
+   "slot": null,
+   "pack": "suitcase",
+   "needed": true,
+   "note": "Hawaiʻi bans sunscreens with oxybenzone and octinoxate to protect the reefs.",
+   "faces": [
+    16,
+    16,
+    16
+   ],
+   "size_m": [
+    0.05,
+    0.03,
+    0.16
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "passport",
+   "name": "Passport and race licence",
+   "cat": "kit",
+   "slot": null,
+   "pack": "suitcase",
+   "needed": true,
+   "faces": [
+    12,
+    12,
+    12
+   ],
+   "size_m": [
+    0.125,
+    0.088,
+    0.009
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "wetsuit",
+   "name": "Wetsuit",
+   "cat": "trap",
+   "slot": null,
+   "pack": "trap",
+   "needed": false,
+   "note": "Leave it: Kona is almost always non-wetsuit for age-groupers. Pack a swimskin.",
+   "faces": [
+    12,
+    12,
+    12
+   ],
+   "size_m": [
+    0.36,
+    0.3,
+    0.076
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "glass_bottle",
+   "name": "Glass bottle",
+   "cat": "trap",
+   "slot": null,
+   "pack": "trap",
+   "needed": false,
+   "note": "Leave it: glass has no place on the course or on the beach.",
+   "faces": [
+    26,
+    26,
+    26
+   ],
+   "size_m": [
+    0.07,
+    0.07,
+    0.27
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "bike_box",
+   "name": "Bike box",
+   "cat": "luggage",
+   "slot": null,
+   "pack": null,
+   "needed": false,
+   "faces": [
+    54,
+    54,
+    54
+   ],
+   "size_m": [
+    1.2,
+    1.16,
+    0.85
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  },
+  {
+   "id": "suitcase",
+   "name": "Suitcase",
+   "cat": "luggage",
+   "slot": null,
+   "pack": null,
+   "needed": false,
+   "faces": [
+    30,
+    30,
+    30
+   ],
+   "size_m": [
+    0.7,
+    0.94,
+    0.135
+   ],
+   "tint": true,
+   "source": "original archetype (Caldas Studio), not a commercial product"
+  }
+ ]
+}

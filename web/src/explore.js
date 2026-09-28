@@ -93,10 +93,11 @@ export function createExplorer(isl) {
     stamp,
     seen,
     apply,
-    persist(extra) {
-      if (!dirty && !extra) return;
+    // Throttled: encoding the mask is expensive, so write at most every 4 s (or when forced, e.g. on pagehide).
+    persist(extra, force = false) {
       const now = performance.now();
-      if (now < saveAt && !extra) return;
+      if (!force && now < saveAt) return;
+      if (!dirty && !extra) return;
       saveAt = now + 4000;
       dirty = false;
       const prev = loadPlayer() || {};

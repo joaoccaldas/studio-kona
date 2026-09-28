@@ -22,6 +22,7 @@ import { createWinnersHall } from './winnersHall.js';
 import { createIslandLife, PHASES } from './islandLife.js';
 import { createRewards, XP_FOR, CREDITS_FOR } from './rewards.js';
 import { createLifeHud } from './lifeHud.js';
+import { runApartment } from './apartment.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -334,8 +335,9 @@ async function load() {
   await initIslandLife().catch(e => console.warn('Island life failed', e));
 
   console.log('[Kona] Load completed successfully!');
-  $('#loading').classList.add('done');
-  arrive();
+  const reveal = () => { $('#loading').classList.add('done'); document.body.classList.remove('flying'); arrive(); };
+  const wait = flightUntil ? Math.max(0, flightUntil - performance.now()) : 0;
+  if (wait) setTimeout(reveal, wait); else reveal();
 }
 
 function arrive() {
@@ -360,13 +362,14 @@ function arrive() {
   $('#cap').innerHTML = `<b>${KOA.short}</b><span>${KOA.name}. Ride toward Kailua-Kona.</span>`;
   const sub = document.querySelector('.top-sub');
   if (sub && player?.name) sub.textContent = `${player.name} · ${times}`;
+  arrived = true;
   mountFlights({ open: false });
   if (rewards) setTimeout(() => welcomeDispatch(), player?.last ? 600 : 2400);
 }
 
 // ------------------------------------------------------------------ Living island + rewards
 async function initIslandLife() {
-  rewards = createRewards({ onChange: () => lifeHud?.wallet() });
+  rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
   lifeHud = createLifeHud({ rewards });
   geocodes = await (await fetch(A + 'geocodes.json')).json().catch(() => ({}));
   const player = loadPlayer();
@@ -774,7 +777,7 @@ function completeCurrentStep() {
     advanceStep();
   } else {
     playUnlockFanfare();
-    const g = rewards?.grant({ xp: XP_FOR.step, credits: CREDITS_FOR.step, reason: currentStep.text });
+    const g = rewards?.grantOnce(`step:${currentDay.id}:${currentStep.id}`, { xp: XP_FOR.step, credits: CREDITS_FOR.step, reason: currentStep.text });
     toast(`✓ ${currentStep.text}${g ? ` · +${g.xp} XP · +${g.credits} Credits` : ''}`);
 
     advanceStep();
@@ -835,7 +838,7 @@ function advanceToNextDayOrFinish() {
   toast(currentDay.lesson ? currentDay.lesson : `Day ${currentDay.dayNumber} complete.`);
 
   const nextDayIdx = saveData.currentDayIndex + 1;
-  const dayGrant = rewards?.grant({ xp: XP_FOR.day, credits: CREDITS_FOR.day, reason: `Finished ${currentDay.title}` });
+  const dayGrant = rewards?.grantOnce(`day:${currentDay.id}`, { xp: XP_FOR.day, credits: CREDITS_FOR.day, reason: `Finished ${currentDay.title}` });
   if (rewards && nextDayIdx < RACE_WEEK_QUESTS.length && nextDayIdx >= rewards.daysOpen(RACE_WEEK_QUESTS.length)) {
     saveData.pendingDay = nextDayIdx;
     saveGameProgress(saveData);
@@ -1473,8 +1476,10 @@ let fpsT = 0, frames = 0;
 let lastReachCheck = 0;
 const lastPos = new THREE.Vector3(); let hasLastPos = false, challengeUiT = 0;
 // Distance you actually travel (on foot, by bike, swimming) counts toward the day's challenge.
+let lastSeen = null, arrived = false;
+addEventListener('pagehide', () => { if (explorer && lastSeen && loadPlayer()) explorer.persist({ last: lastSeen }, true); });
 function trackExploration(dt) {
-  if (!progress || !currentDay) return;
+  if (!progress || !currentDay || !arrived) return;
   const st = locomotion.getState();
   const p = camera.position;
   if (st.active && hasLastPos) {
@@ -1486,7 +1491,8 @@ function trackExploration(dt) {
   lastPos.copy(p); hasLastPos = st.active;
   if (explorer && st.active) {
     explorer.stamp(p.x, -p.z, st.mode === 'bike' ? 1600 : 900);
-    explorer.persist(loadPlayer() ? { last: { x: p.x, y: -p.z } } : null);
+    lastSeen = { x: p.x, y: -p.z };
+    explorer.persist(loadPlayer() ? { last: lastSeen } : null);
   }
   const speedEl = $('#rideSpeed'), distEl = $('#rideDist');
   if (speedEl) speedEl.textContent = String(st.speedKmh || 0);
@@ -1642,26 +1648,64 @@ function startWorld() {
   $('#gate').hidden = true;
   $('#loading').classList.remove('done');
   load().catch(e => {
-    $('#loading p').textContent = 'Load failed: ' + e.message;
     console.error(e);
+    const p = $('#loading p');
+    if (p) {
+      p.innerHTML = 'Kona did not load. Check your connection and try again.';
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = 'Try again';
+      b.className = 'load-retry';
+      b.onclick = () => location.reload();
+      p.after(b);
+    }
   });
+}
+
+// ------------------------------------------------------------------ First session: athlete → apartment → flight → KOA
+// New athletes create themselves, pack in their apartment, then fly. Anyone who has been on the island goes straight there.
+let flightUntil = 0;
+function beginJourney() {
+  const p = loadPlayer();
+  if (!p || p.last || p.packing) { startWorld(); return; }
+  $('#gate').hidden = true;
+  $('#loading').classList.add('done');
+  rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
+  runApartment({
+    player: p, rewards, base: A,
+    onDone: (what, pl) => {
+      savePlayer(pl);
+      if (what === 'depart') { document.body.classList.add('flying'); flightUntil = performance.now() + 4500; startWorld(); }
+    },
+  }).then(api => { window.__apt = api; }).catch(e => { console.error('Apartment failed', e); startWorld(); });
 }
 
 const gate = $('#gate');
 const known = loadPlayer();
 if (known) {
-  startWorld();
+  beginJourney();
 } else if (gate) {
   $('#loading').classList.add('done');
   gate.hidden = false;
+  const step = n => gate.querySelectorAll('.gstep').forEach(el => { el.hidden = el.dataset.step !== String(n); });
+  const nameOk = () => ($('#gateName').value || '').trim().length >= 2;
+  $('#gateNext').onclick = () => {
+    $('#gateErr').hidden = nameOk();
+    if (nameOk()) { step(2); gate.scrollTop = 0; }
+    else $('#gateName').focus();
+  };
+  $('#gateBack').onclick = () => step(1);
   $('#gateForm').addEventListener('submit', ev => {
     ev.preventDefault();
-    const name = ($('#gateName').value || '').trim();
-    if (name.length < 2) return;
-    const first = gate.querySelector('input[name=visit]:checked')?.value !== 'return';
-    const visits = first ? 1 : Math.max(2, Number($('#gateCount').value) || 2);
-    savePlayer({ name, visits, firstTime: first, created: Date.now() });
-    startWorld();
+    if (!nameOk()) { step(1); $('#gateErr').hidden = false; return; }
+    const f = new FormData($('#gateForm'));
+    const first = f.get('visit') !== 'return';
+    const visits = first ? 1 : Math.max(2, Number(f.get('count')) || 2);
+    savePlayer({
+      name: String(f.get('name')).trim().slice(0, 24), country: f.get('country'), visits, firstTime: first, created: Date.now(),
+      look: { skin: f.get('skin'), suit: f.get('suit'), helmet: f.get('helmet'), bike: f.get('bike') },
+    });
+    beginJourney();
   });
   const syncCount = () => { $('#gateCount').hidden = gate.querySelector('input[value=return]')?.checked !== true; };
   gate.querySelectorAll('input[name=visit]').forEach(r => r.addEventListener('change', syncCount));
