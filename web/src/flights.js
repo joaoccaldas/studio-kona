@@ -7,8 +7,11 @@ export function mountFlights(opts = {}) {
   const meta = document.querySelector('#flightMeta');
   if (!sheet || !body) return;
 
-  const open = () => { sheet.hidden = false; load(); };
-  const close = () => { sheet.hidden = true; };
+  // The live board needs the proxy in web/serve.py. It is only asked while the sheet is open, so static hosting
+  // (GitHub Pages, Vercel) never requests it on load.
+  let timer = 0;
+  const open = () => { sheet.hidden = false; load(); clearInterval(timer); timer = setInterval(load, 120000); };
+  const close = () => { sheet.hidden = true; clearInterval(timer); };
   btn?.addEventListener('click', open);
   sheet.querySelector('[data-close]')?.addEventListener('click', close);
 
@@ -16,11 +19,12 @@ export function mountFlights(opts = {}) {
     body.textContent = 'Asking the live feed…';
     try {
       const res = await fetch('/api/koa-flights');
+      if (!res.ok) throw new Error('offline');
       const data = await res.json();
       paintWorld(data);
       paintSheet(data);
     } catch (e) {
-      body.textContent = 'Live feed did not answer. No flights are invented.';
+      body.textContent = 'The live KOA board is offline on this server. No flights are invented.';
       if (meta) meta.textContent = '';
     }
   }
@@ -55,12 +59,7 @@ export function mountFlights(opts = {}) {
     }
   }
 
-  if (opts.open) {
-    sheet.hidden = false;
-    document.querySelector('#toast')?.classList.remove('on');
-  }
-  load();
-  setInterval(load, 120000);
+  if (opts.open) open();
 }
 
 function esc(s) {

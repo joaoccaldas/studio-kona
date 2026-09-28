@@ -3,7 +3,7 @@
 // Race-week days open one per day you play (or on their real Hawaiʻi date); a Fast-forward ticket opens one early.
 // Saved on this device under one versioned key, shaped so it can sync to an account later.
 
-const KEY = 'kona-rewards-v1';
+import { readSection, writeSection } from './save.js';
 const WEEK_START = '2026-10-02'; // Hawaiʻi dates of the playable week: 2–12 October 2026
 
 export const RARITY = {
@@ -54,7 +54,7 @@ function blank() {
 }
 
 // A save from an older build, another tab or a hand-edited store must never break play or mint Credits.
-function sanitize(raw) {
+export function sanitize(raw) {
   const b = blank();
   if (!raw || typeof raw !== 'object') return b;
   const num = (v, d = 0) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : d);
@@ -76,8 +76,8 @@ function sanitize(raw) {
 
 export function createRewards({ onChange } = {}) {
   let st;
-  try { st = sanitize(JSON.parse(localStorage.getItem(KEY))); } catch { st = blank(); }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch { /* private mode: play on */ } onChange?.(api); };
+  st = sanitize(readSection('rewards'));
+  const save = () => { writeSection('rewards', st); onChange?.(api); };
 
   const multiplier = () => 1 + 0.1 * Math.min(Math.max(st.streak - 1, 0), 5);  // up to ×1.5 on a 6-day streak
 

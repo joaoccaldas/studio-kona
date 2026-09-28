@@ -2,7 +2,7 @@
 // Geography is the real island. The fog mask is the only generated layer.
 import * as THREE from 'three';
 
-const KEY = 'kona-player-v1';
+import { readSection, writeSection, readFog, writeFog } from './save.js';
 export const KOA = {
   lat: 19.7388,
   lon: -156.0456,
@@ -10,17 +10,16 @@ export const KOA = {
   short: 'KOA',
 };
 
+// The player lives in the versioned save (save.js); the fog mask is stored apart because it is large.
 export function loadPlayer() {
-  try {
-    const p = JSON.parse(localStorage.getItem(KEY) || 'null');
-    return p && p.name ? p : null;
-  } catch (e) {
-    return null;
-  }
+  return readSection('player');
 }
 
 export function savePlayer(p) {
-  localStorage.setItem(KEY, JSON.stringify(p));
+  if (!p) return;
+  const { mask, ...rest } = p;
+  if (mask) writeFog(mask);
+  writeSection('player', rest);
 }
 
 export function createExplorer(isl) {
@@ -35,11 +34,11 @@ export function createExplorer(isl) {
   let dirty = false;
   let saveAt = 0;
 
-  const saved = loadPlayer();
-  if (saved && saved.mask) {
+  const savedMask = readFog();
+  if (savedMask) {
     const img = new Image();
     img.onload = () => { ctx.drawImage(img, 0, 0, N, N); tex.needsUpdate = true; };
-    img.src = saved.mask;
+    img.src = savedMask;
   } else {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, N, N);
@@ -100,8 +99,9 @@ export function createExplorer(isl) {
       if (!dirty && !extra) return;
       saveAt = now + 4000;
       dirty = false;
-      const prev = loadPlayer() || {};
-      savePlayer({ ...prev, ...extra, mask: cv.toDataURL('image/png') });
+      writeFog(cv.toDataURL('image/png'));
+      const prev = loadPlayer();
+      if (prev && extra) savePlayer({ ...prev, ...extra });
     },
   };
 }

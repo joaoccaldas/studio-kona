@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { playConchChime, playMemoryChime } from './audio.js';
+import { readSection, writeSection } from './save.js';
 
 export const HAWAIIAN_HERITAGE_DISCOVERIES = [
   {
@@ -252,12 +253,7 @@ export const HAWAIIAN_HERITAGE_DISCOVERIES = [
 export function createHawaiianScavengerHunt(ctx) {
   const { scene, camera, W, heightAt, toast } = ctx;
 
-  const storageKey = 'kona_hawaiian_scavenger_hunt_v1';
-  let discoveredIds = new Set();
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (raw) discoveredIds = new Set(JSON.parse(raw));
-  } catch (e) {}
+  let discoveredIds = new Set(readSection('heritage'));
 
   let activeIndex = 0;
   let studioScene, studioCamera, studioRenderer, studioControls;
@@ -366,9 +362,7 @@ export function createHawaiianScavengerHunt(ctx) {
   setupHeritageStudioDOM();
 
   function saveProgress() {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify([...discoveredIds]));
-    } catch (e) {}
+    writeSection('heritage', [...discoveredIds]);
     updateProgressHUD();
   }
 
