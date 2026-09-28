@@ -26,6 +26,7 @@ import { runApartment } from './apartment.js';
 import { mountTouchControls } from './touchControls.js';
 import { createRideRings } from './rideRings.js';
 import { createSfx } from './aptFx.js';
+import { initAppShell, haptic } from './appShell.js';
 import { runTransitionTangle, TRANSITION } from './transitionTangle.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -399,7 +400,7 @@ async function initIslandLife() {
   if (highwayPts) {
     rideRings = createRideRings({
       scene, W, pts: highwayPts, surfaceY, rewards, locomotion, sfx: createSfx(),
-      pop: (g, label) => lifeHud.pop(g, label),
+      pop: (g, label) => { haptic(18); lifeHud.pop(g, label); },
       onCount: (n, total) => { const el = $('#ringHud'); if (el) el.textContent = `Aloha rings ${n} / ${total}`; },
     });
   }
@@ -1778,6 +1779,7 @@ function beginJourney() {
 
 // ?c=<challenge> opens that challenge straight away, no account and no setup: the link a result card shares.
 // Also as a bare #anchor (#transition_tangle): some hosts pass the hash but not the query string.
+initAppShell();
 const deepChallenge = new URLSearchParams(location.search).get('c') || (/^#[a-z0-9_]{2,40}$/.test(location.hash) ? location.hash.slice(1) : null);
 function boot() {
 const gate = $('#gate');

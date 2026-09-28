@@ -7,6 +7,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { addRoomLight, createBursts, createSfx, confetti } from './aptFx.js';
 import { gearModel, setGlow } from './gearModels.js';
+import { haptic } from './appShell.js';
 
 const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y); // Blender (x, y, z-up) -> Three.js
 const MEDALS = [{ id: 'gold', label: 'Gold', t: 45 }, { id: 'silver', label: 'Silver', t: 75 }, { id: 'bronze', label: 'Bronze', t: Infinity }];
@@ -243,6 +244,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
       it.state = 'left';
       shake(it.mesh);
       sfx.trap();
+      haptic([30, 40, 30]);
       tip(`+5 s · ${it.def.note || 'Leave it at home.'}`, 4200);
       return;
     }
@@ -251,6 +253,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     combo = now - lastPack < 2600 ? combo + 1 : 1;
     lastPack = now;
     sfx.pack(combo);
+    haptic(10);
     if (combo >= 2) showCombo(combo);
     const dest = bags[it.def.pack] || suitcase;
     const into = dest.position.clone().add(new THREE.Vector3((Math.random() - 0.5) * 0.35, dest === bikeBox ? 0.55 : 0.12, (Math.random() - 0.5) * 0.25));

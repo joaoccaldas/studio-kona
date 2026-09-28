@@ -8,6 +8,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { gearModel, setGlow } from './gearModels.js';
+import { haptic } from './appShell.js';
 import { defineChallenge, submitRun, recordFor, dailySeed, rng, fmt, MEDAL_LABEL, shareText, deepLink } from './challenge.js';
 
 export const TRANSITION = defineChallenge({
@@ -324,6 +325,7 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
   }
   function penalty(s, why) {
     penalties.push({ s, why });
+    haptic([25, 35, 25]);
     $('#ttPen').textContent = ` +${penalties.reduce((a, p) => a + p.s, 0)} s`;
     tip(`+${s} s · ${why}`, 3000, true);
     root.classList.remove('hurt'); void root.offsetWidth; root.classList.add('hurt');
