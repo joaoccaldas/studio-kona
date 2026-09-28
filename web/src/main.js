@@ -299,7 +299,7 @@ async function load() {
   setHour(hour);
 
   // Initialize Locomotion, Echo Markers, Canyon Studio Pier Museum & Hawaiian Heritage Hunt
-  locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast });
+  locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast, onModeRequest: m => setLocomotionMode(m) });
   echoMarkers = createEchoMarkers({ scene, W, heightAt });
   pierMuseumStudio = createPierMuseumStudio({ scene, camera, W, heightAt });
   hawaiianHunt = createHawaiianScavengerHunt({ scene, camera, W, heightAt, toast });
@@ -367,16 +367,14 @@ function initGameLoop() {
     };
   }
 
-  // Key E handler for opening museum when near a pedestal
+  // INTERACT: one semantic action for keyboard (E) and touch (the on-screen action button).
   window.addEventListener('keydown', e => {
-    if (e.code === 'KeyE') {
-      if (locomotion && pierMuseumStudio) {
-        pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
-          pierMuseumStudio.open(idx);
-        });
-      }
-    }
+    if (e.code !== 'KeyE' || e.repeat) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '')) return;
+    runInteraction();
   });
+  const actBtn = $('#actionPrompt');
+  if (actBtn) actBtn.onclick = () => runInteraction();
 
   // Jump Button (Mobile)
   const jumpBtn = $('#jumpBtn');
@@ -508,7 +506,7 @@ function teleportToActiveStep() {
     camera.position.set(wPos.x - 12, wPos.y + 6, wPos.z + 12);
     controls.target.copy(wPos);
   }
-  toast(`Teleported to: ${currentStep.text}`);
+  toast(`📍 ${currentStep.text}. Take it in, then press [E] when you're ready.`);
 }
 
 function completeCurrentStep() {
@@ -538,20 +536,60 @@ function completeCurrentStep() {
     }
 
     saveGameProgress(saveData);
-    advanceToNextDayOrFinish();
+    advanceStep();
   } else {
     playUnlockFanfare();
     toast(`✓ Objective Complete: ${currentStep.text}`);
 
-    let nextStepIdx = (saveData.currentStepIndex || 0) + 1;
-    if (nextStepIdx < currentDay.steps.length) {
-      saveData.currentStepIndex = nextStepIdx;
-      currentStep = currentDay.steps[nextStepIdx];
-      saveGameProgress(saveData);
-      setupActiveStep();
-      updateHUD();
-    }
+    advanceStep();
   }
+}
+
+// Next step within the day, or the next day when this was the last step (echo or not).
+function advanceStep() {
+  const nextStepIdx = (saveData.currentStepIndex || 0) + 1;
+  if (nextStepIdx < currentDay.steps.length) {
+    saveData.currentStepIndex = nextStepIdx;
+    currentStep = currentDay.steps[nextStepIdx];
+    saveGameProgress(saveData);
+    setupActiveStep();
+    updateHUD();
+  } else {
+    advanceToNextDayOrFinish();
+  }
+}
+
+// ------------------------------------------------------------------ Interactions
+// Arriving means "you found something", never "done": the player chooses to act.
+let currentInteraction = null;
+function stepVerb(st) {
+  if (st.action) return st.action;
+  return st.isEcho ? 'Enter the memory' : 'Interact';
+}
+function refreshInteraction(questReached) {
+  let it = null;
+  if (questReached && currentStep) {
+    it = { key: 'quest:' + currentStep.id, label: stepVerb(currentStep), sub: currentStep.text, run: () => completeCurrentStep() };
+  } else if (locomotion?.getState().active && pierMuseumStudio) {
+    pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
+      it = { key: 'bike:' + idx, label: 'Inspect bike', sub: `${bike.year} · ${bike.name}`, run: () => pierMuseumStudio.open(idx) };
+    });
+  }
+  const el = $('#actionPrompt');
+  if ((it && it.key) !== (currentInteraction && currentInteraction.key) && el) {
+    if (it) {
+      el.innerHTML = `<kbd>E</kbd><b>${it.label}</b><small>${it.sub}</small>`;
+      el.classList.add('on');
+    } else el.classList.remove('on');
+  }
+  currentInteraction = it;
+}
+function runInteraction() {
+  if (!currentInteraction) return;
+  const it = currentInteraction;
+  currentInteraction = null;
+  $('#actionPrompt')?.classList.remove('on');
+  it.run();
 }
 
 function advanceToNextDayOrFinish() {
@@ -991,18 +1029,10 @@ renderer.setAnimationLoop(() => {
       distEl.textContent = navState.distance < 9000 ? `${Math.round(navState.distance)} m` : '-- m';
     }
 
-    if (navState.reached && Date.now() - lastReachCheck > 3000) {
+    if (Date.now() - lastReachCheck > 150) {
       lastReachCheck = Date.now();
-      completeCurrentStep();
+      refreshInteraction(navState.reached);
     }
-  }
-
-  // Check proximity to Pier Heritage Pedestals while walking
-  if (locomotion?.getState().active && pierMuseumStudio && Date.now() - lastPedestalPrompt > 2500) {
-    pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
-      lastPedestalPrompt = Date.now();
-      toast(`🚲 ${bike.year} ${bike.name}: Press [E] or Click to Enter 3D Studio`);
-    });
   }
 
   renderer.render(scene, camera);
@@ -1029,10 +1059,10 @@ window.__kona = {
   scene,
   camera,
   THREE,
-  locomotion,
-  echoMarkers,
-  pierMuseumStudio,
-  hawaiianHunt,
+  get locomotion() { return locomotion; },
+  get echoMarkers() { return echoMarkers; },
+  get pierMuseumStudio() { return pierMuseumStudio; },
+  get hawaiianHunt() { return hawaiianHunt; },
   saveData,
   get currentDay() { return currentDay; },
   get currentStep() { return currentStep; },

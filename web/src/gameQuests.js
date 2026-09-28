@@ -11,6 +11,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day1_pier',
+        action: 'Check in at the pier',
         text: 'Walk to Kailua Pier entrance',
         target: [2, 8],
         radius: 14,
@@ -19,6 +20,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day1_swim',
+        action: 'Start the shakeout swim',
         text: 'Shakeout swim in Kamakahonu Bay',
         target: [-30, -22],
         radius: 16,
@@ -27,6 +29,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day1_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 1982: The Crawl',
         target: [48, -55],
         radius: 12,
@@ -67,6 +70,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day2_palani',
+        action: 'Take on Palani climb',
         text: 'Climb Palani Road towards the Queen K',
         target: [120, 25],
         radius: 20,
@@ -75,6 +79,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day2_crosswinds',
+        action: 'Face the crosswind',
         text: 'Reach Queen K Highway crosswind sector',
         target: [280, 50],
         radius: 28,
@@ -83,6 +88,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day2_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 1989: The Iron War',
         target: [219, 8],
         radius: 16,
@@ -123,6 +129,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day3_bay',
+        action: 'Swim the reef line',
         text: 'Swim past the Dig Me Beach reef',
         target: [60, -90],
         radius: 22,
@@ -131,6 +138,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day3_coffee',
+        action: 'Grab a coffee',
         text: 'Reach the floating Coffee Boat',
         target: [120, -180],
         radius: 18,
@@ -139,6 +147,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day3_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 2023: Wire-to-Wire Record',
         target: [160, -220],
         radius: 16,
@@ -179,6 +188,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day4_underpants',
+        action: 'Join the Underpants Run',
         text: 'Run the festive Underpants Run on Aliʻi Drive',
         target: [320, -90],
         radius: 35,
@@ -187,6 +197,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day4_village',
+        action: 'Enter IRONMAN Village',
         text: 'Visit IRONMAN Village at Hale Hālāwai',
         target: [219, 8],
         radius: 20,
@@ -195,6 +206,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day4_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 2018: Sub-8 Barrier Broken',
         target: [160, -40],
         radius: 16,
@@ -234,6 +246,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day5_pier_gate',
+        action: 'Scan your wristband',
         text: 'Enter the transition gate on Kailua Pier',
         target: [-18, 30],
         radius: 14,
@@ -242,6 +255,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day5_rack',
+        action: 'Rack your bike',
         text: 'Rack your machine in Row 1',
         target: [0, 10],
         radius: 12,
@@ -250,6 +264,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day5_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 2019: Frodeno’s Canyon Speedmax',
         target: [12, 6],
         radius: 10,
@@ -291,6 +306,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day6_cannon',
+        action: 'Line up for the cannon',
         text: 'Stand at Dig Me Beach for the 06:25 cannon blast',
         target: [48, -55],
         radius: 18,
@@ -299,6 +315,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day6_turn',
+        action: 'Round the turn boats',
         text: 'Reach the Turn Boats at 1,840m',
         target: [631, -1778],
         radius: 45,
@@ -307,6 +324,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day6_finish',
+        action: 'Cross the finish line',
         text: 'Cross the finish line on Aliʻi Drive: YOU ARE AN IRONMAN!',
         target: [160, -40],
         radius: 16,

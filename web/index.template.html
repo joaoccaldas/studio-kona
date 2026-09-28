@@ -85,6 +85,12 @@ body.walking #crosshair{display:block}
 /* Touch controls for Mobile */
 #touchJoyBase{position:fixed;width:80px;height:80px;border-radius:50%;border:2px solid rgba(249,199,79,0.4);background:rgba(0,0,0,0.3);backdrop-filter:blur(6px);pointer-events:none;display:none;z-index:30}
 #touchJoyKnob{position:absolute;top:20px;left:20px;width:40px;height:40px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+#actionPrompt{position:fixed;left:50%;bottom:132px;transform:translate(-50%,12px);opacity:0;pointer-events:none;display:flex;align-items:center;gap:10px;padding:10px 16px 10px 10px;border-radius:14px;background:rgba(5,13,22,.82);border:1px solid rgba(249,199,79,.45);color:#fff;font:inherit;backdrop-filter:blur(14px);z-index:40;transition:opacity .2s,transform .2s;cursor:pointer;max-width:min(520px,calc(100vw - 32px))}
+#actionPrompt.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#actionPrompt kbd{display:grid;place-items:center;min-width:30px;height:30px;border-radius:8px;background:var(--gold);color:#111;font:800 13px/1 system-ui}
+#actionPrompt b{font-size:13px;white-space:nowrap}
+#actionPrompt small{font-size:11px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (pointer:coarse){#actionPrompt kbd{display:none}#actionPrompt{padding:14px 20px;bottom:150px}}
 #jumpBtn{position:fixed;bottom:85px;right:20px;width:58px;height:58px;border-radius:50%;background:rgba(249,199,79,0.18);border:2px solid var(--gold);color:#fff;font-size:11px;font-weight:800;backdrop-filter:blur(10px);cursor:pointer;display:none;z-index:30}
 body.walking #jumpBtn{display:block}
 
@@ -226,8 +232,8 @@ body.walking #mode{display:block}
 
   <div class="quest-card-actions">
     <button type="button" class="btn-teleport-step" id="btnTeleportStep">
-      <span>⚡</span>
-      <span>Go to Active Action</span>
+      <span>📍</span>
+      <span>Take me there</span>
     </button>
   </div>
 
@@ -238,6 +244,7 @@ body.walking #mode{display:block}
 <div id="crosshair"></div>
 <div id="touchJoyBase"><div id="touchJoyKnob"></div></div>
 <button type="button" id="jumpBtn">▲ JUMP</button>
+<button type="button" id="actionPrompt" aria-live="polite"></button>
 <div id="mode"></div>
 <div id="toast"></div>
 <div id="cap"></div>
