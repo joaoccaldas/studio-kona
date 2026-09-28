@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { addRoomLight, createBursts, createSfx, confetti } from './aptFx.js';
 
 const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y); // Blender (x, y, z-up) -> Three.js
 const MEDALS = [{ id: 'gold', label: 'Gold', t: 45 }, { id: 'silver', label: 'Silver', t: 75 }, { id: 'bronze', label: 'Bronze', t: Infinity }];
@@ -34,6 +35,9 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
       <div class="apt-chip"><b>Pack for Kona</b><span id="aptCount">0 / 0</span></div>
       <div class="apt-chip apt-time"><span id="aptTime">0:00</span></div>
     </div>
+    <div class="apt-bags" aria-live="polite"><span id="aptBox">Bike box</span><span id="aptCase">Suitcase</span></div>
+    <div class="apt-combo" id="aptCombo" aria-hidden="true"></div>
+    <section id="aptCoach" hidden aria-live="polite"></section>
     <div class="apt-tip" id="aptTip">Tap what you need for race week. It goes into the bike box or the suitcase.</div>
     <div class="apt-bottom">
       <button type="button" id="aptHint" class="apt-ghost">Hint</button>
@@ -49,7 +53,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.AgXToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.22;
   renderer.setPixelRatio(Math.min(devicePixelRatio, coarse ? 1.75 : 2));
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x9fc4e6);
@@ -57,7 +61,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 60);
   const hemi = new THREE.HemisphereLight(0xdfeaff, 0x8a6a4a, 1.1);
-  const sun = new THREE.DirectionalLight(0xfff0d8, 2.4);
+  const sun = new THREE.DirectionalLight(0xfff0d8, 1.1);   // fill; the shadow-casting sun lives in aptFx
   sun.position.copy(W(-2.9, 8, 5.3));
   scene.add(hemi, sun);
 
@@ -110,6 +114,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     bike.position.copy(wpos(spots.SPOT_bike));
     bike.position.y -= box.min.y;
     bike.position.x -= (box.min.x + box.max.x) / 2;
+    bike.traverse(m => { if (m.isMesh) m.castShadow = true; });
     scene.add(bike);
   }).catch(e => console.warn('bike model', e));
 
@@ -136,6 +141,26 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     return it;
   });
   const needed = items.filter(i => i.needed);
+  // The helmet is the hero item: it rests at the spot nearest the camera, so a first-timer finds it at once.
+  {
+    const cam0 = wpos(spots.CAM_start), fwd = wpos(spots.CAM_look).sub(cam0).normalize();
+    const hero = items.find(i => i.def.cat === 'helmet');
+    // Best spot: 1.6–3.2 m away and closest to the middle of the opening view.
+    const score = i => { const d = i.mesh.position.clone().sub(cam0), L = d.length(); return L < 1.6 || L > 3.2 ? -2 : d.normalize().dot(fwd); };
+    const nearest = items.reduce((a, i) => (score(i) > score(a) ? i : a), items[0]);
+    if (hero && nearest && hero !== nearest) {
+      const p = hero.mesh.position.clone();
+      hero.mesh.position.copy(nearest.mesh.position);
+      nearest.mesh.position.copy(p);
+      [hero.home, nearest.home] = [hero.mesh.position.clone(), nearest.mesh.position.clone()];
+    }
+  }
+  const fxLight = addRoomLight({ renderer, scene, W, coarse, casters: [bikeBox, suitcase, ...items.map(i => i.mesh)] });
+  const bursts = createBursts(scene);
+  const sfx = createSfx();
+  const bags = { bikebox: bikeBox, suitcase };
+  const bounce = new Map();                                    // bag -> time left on its landing bounce
+  let combo = 0, lastPack = 0;
 
   // ---------------------------------------------------------------- camera: look around by dragging, tap to pack
   const camPos = wpos(spots.CAM_start), look0 = wpos(spots.CAM_look);
@@ -153,6 +178,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     if (drag) {
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       moved += Math.abs(dx) + Math.abs(dy);
+      coach?.dragged(Math.abs(dx) + Math.abs(dy));
       yaw = THREE.MathUtils.clamp(yaw + dx * 0.004, -0.75, 0.75);
       pitch = THREE.MathUtils.clamp(pitch - dy * 0.003, -0.35, 0.25);
       drag = { x: e.clientX, y: e.clientY };
@@ -165,7 +191,8 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
   function pick(e) {
     ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    const hits = ray.intersectObjects(items.filter(i => i.state === 'loose').map(i => i.hit), false);
+    const pool = items.filter(i => i.state === 'loose' && (!coach?.active || coach.allows(i)));   // walkthrough: only the highlighted item
+    const hits = ray.intersectObjects(pool.map(i => i.hit), false);
     return hits[0]?.object.userData.item || null;
   }
   let hovered = null;
@@ -189,29 +216,112 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     clearTimeout(tipT);
     tipT = setTimeout(() => tipEl.classList.remove('on'), ms);
   }
-  function count() { $('#aptCount').textContent = `${needed.filter(i => i.state === 'packed').length} / ${needed.length}`; }
+  function count() {
+    $('#aptCount').textContent = `${needed.filter(i => i.state === 'packed').length} / ${needed.length}`;
+    const inBag = k => needed.filter(i => i.def.pack === k);
+    const b = inBag('bikebox'), c = inBag('suitcase');
+    $('#aptBox').textContent = `Bike box ${b.filter(i => i.state === 'packed').length}/${b.length}`;
+    $('#aptCase').textContent = `Suitcase ${c.filter(i => i.state === 'packed').length}/${c.length}`;
+  }
   count();
 
   function tap(e) {
     if (finished) return;
+    sfx.unlock();
     const it = pick(e);
     if (!it) return;
-    if (t0 === null) t0 = performance.now();
+    if (coach.active && !coach.allows(it)) return;              // during the walkthrough only the highlighted item
+    if (t0 === null && !coach.active) t0 = performance.now();
     lastAct = performance.now();
     if (it.trap) {
       traps++;
+      combo = 0;
       it.state = 'left';
       shake(it.mesh);
-      tip(it.def.note || 'Leave it at home.', 4200);
+      sfx.trap();
+      tip(`+5 s · ${it.def.note || 'Leave it at home.'}`, 4200);
       return;
     }
     it.state = 'packed';
-    const dest = it.def.pack === 'bikebox' ? bikeBox : suitcase;
+    const now = performance.now();
+    combo = now - lastPack < 2600 ? combo + 1 : 1;
+    lastPack = now;
+    sfx.pack(combo);
+    if (combo >= 2) showCombo(combo);
+    const dest = bags[it.def.pack] || suitcase;
     const into = dest.position.clone().add(new THREE.Vector3((Math.random() - 0.5) * 0.35, dest === bikeBox ? 0.55 : 0.12, (Math.random() - 0.5) * 0.25));
-    flights.push({ it, from: it.mesh.position.clone(), to: into, t: 0 });
+    flights.push({ it, from: it.mesh.position.clone(), to: into, t: 0, dest });
     tip(`${it.def.name} → ${dest === bikeBox ? 'bike box' : 'suitcase'}${it.def.note ? '. ' + it.def.note : ''}`, it.def.note ? 3800 : 1800);
     count();
+    coach.packed(it);
   }
+  let comboT = 0;
+  function showCombo(n) {
+    const el = $('#aptCombo');
+    el.textContent = `Combo ×${n}`;
+    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    clearTimeout(comboT);
+    comboT = setTimeout(() => el.classList.remove('on'), 1100);
+  }
+  function faceTo(at) {                                        // turn the camera toward a point in the room
+    const dir = at.clone().sub(camPos).normalize();
+    yaw = THREE.MathUtils.clamp(Math.atan2(dir.x, dir.z) - baseYaw, -0.75, 0.75);
+    pitch = THREE.MathUtils.clamp(Math.asin(dir.y) - basePitch, -0.35, 0.25);
+    aim();
+  }
+
+  // ---------------------------------------------------------------- guided onboarding (first visit only, skippable)
+  // Welcome → drag to look → tap your glowing helmet → how packing works → traps → start the clock.
+  const coach = (() => {
+    const el = $('#aptCoach');
+    const seen = (player.tutorials || []).includes('apartment');
+    const helmetItem = items.find(i => i.def.cat === 'helmet');
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.012, 8, 40), new THREE.MeshBasicMaterial({ color: 0xd9785b, transparent: true, depthTest: false }));
+    ring.rotation.x = -Math.PI / 2;
+    ring.renderOrder = 10;
+    ring.visible = false;
+    scene.add(ring);
+    let step = seen || !helmetItem ? -1 : 0, dragged = 0;
+    const who = (player.name || 'Athlete').split(' ')[0];
+    const STEPS = [
+      { title: `Aloha, ${who}`, text: 'Race week in Kona starts in five days. Your bike is ready. Pack everything you need before the flight.', next: 'Show me how' },
+      { title: 'Look around', text: 'Drag anywhere on the screen to look around the room.', hand: true, next: 'Next' },
+      { title: 'Tap your helmet', text: 'Glowing things are yours to pack. Tap the helmet with the orange ring.' },
+      { title: 'Into the bags', text: 'Bike kit flies into the bike box, clothes and race kit into the suitcase. The counters at the top show what is left.', next: 'Got it' },
+      { title: 'Watch for traps', text: 'Some things belong at home. Each one you pack adds 5 seconds. Stuck? Tap Hint.', next: 'Start the clock' },
+    ];
+    function render() {
+      if (step < 0 || step >= STEPS.length) { el.hidden = true; ring.visible = false; root.classList.remove('coaching'); return; }
+      const st = STEPS[step];
+      root.classList.add('coaching');
+      el.hidden = false;
+      el.innerHTML = `<div class="coach-top"><span class="coach-step">${step + 1} of ${STEPS.length}</span><button type="button" class="coach-skip">Skip</button></div>
+        <h3>${st.title}</h3><p>${st.text}</p>${st.hand ? '<div class="coach-hand" aria-hidden="true"></div>' : ''}
+        ${st.next ? `<button type="button" class="coach-next">${st.next}</button>` : ''}`;
+      el.querySelector('.coach-skip').onclick = end;
+      const nx = el.querySelector('.coach-next');
+      if (nx) nx.onclick = () => go(step + 1);
+      ring.visible = step === 2;
+      if (step === 2) { faceTo(helmetItem.mesh.position); helmetItem.pulse = 3; hintAt = performance.now() + 60000; }
+      sfx.step();
+    }
+    function go(n) { step = n; if (step >= STEPS.length) end(); else render(); }
+    function end() {
+      step = -1;
+      render();
+      if (!(player.tutorials || []).includes('apartment')) { player.tutorials = [...(player.tutorials || []), 'apartment']; onDone?.('save', player); }
+      if (t0 === null) t0 = performance.now();
+      tip('Clock is running. Pack everything you need.', 2200);
+    }
+    render();
+    return {
+      get active() { return step >= 0; },
+      allows: it => step === 2 && it === helmetItem,
+      packed: it => { if (step === 2 && it === helmetItem) setTimeout(() => go(3), 900); },
+      dragged: d => { if (step !== 1) return; dragged += d; if (dragged > 140) go(2); },
+      update: t => { if (ring.visible) { ring.position.copy(helmetItem.mesh.position).add(new THREE.Vector3(0, 0.03, 0)); ring.scale.setScalar(1 + 0.15 * Math.sin(t * 5)); } },
+    };
+  })();
   function shake(mesh) {
     const x = mesh.position.x;
     let k = 0;
@@ -223,10 +333,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     hintAt = performance.now();
     const it = left[0];
     tip(`Look for: ${it.def.name}`);
-    const dir = it.mesh.position.clone().sub(camPos).normalize();
-    yaw = THREE.MathUtils.clamp(Math.atan2(dir.x, dir.z) - baseYaw, -0.75, 0.75);
-    pitch = THREE.MathUtils.clamp(Math.asin(dir.y) - basePitch, -0.35, 0.25);
-    aim();
+    faceTo(it.mesh.position);
     it.pulse = 3;
   };
   $('#aptClose').onclick = () => {
@@ -245,7 +352,8 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     const el = $('#aptSheet');
     el.innerHTML = html + `<div class="d-actions">${actions.map((a, i) => `<button type="button" data-a="${i}" class="${a.primary ? 'primary' : ''}">${a.label}</button>`).join('')}</div>`;
     el.hidden = false;
-    el.querySelectorAll('[data-a]').forEach(b => { b.onclick = () => { el.hidden = true; actions[+b.dataset.a].run?.(); }; });
+    root.classList.add('sheet-open');
+    el.querySelectorAll('[data-a]').forEach(b => { b.onclick = () => { el.hidden = true; root.classList.remove('sheet-open'); actions[+b.dataset.a].run?.(); }; });
   }
 
   function finish() {
@@ -264,6 +372,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     player.packing = { packed: packed.map(i => i.id), missing, extras, traps, secs: Math.round(secs * 10) / 10, medal: medal?.id || null, bestSecs: best, at: Date.now() };
     onDone?.('save', player);
     const delta = prev?.bestSecs && complete ? secs - prev.bestSecs : null;
+    if (complete) { sfx.done(); confetti(root); }
     const chips = [];
     for (const g of [reward, medalReward]) if (g) { chips.push(`<span class="chip">+${g.xp} XP</span>`, `<span class="chip">+${g.credits} Credits</span>`); }
     sheet(`<div class="d-eyebrow">${medal ? medal.label + ' medal' : complete ? 'Packed' : 'Packed, with gaps'}</div>
@@ -274,13 +383,12 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     [{ label: 'Fly to Kona', primary: true, run: () => depart() }, { label: 'Pack again', run: () => restart() }]);
   }
   function restart() {
-    finished = false; t0 = null; traps = 0;
+    finished = false; t0 = null; traps = 0; combo = 0;
     items.forEach((it, i) => {
       it.state = 'loose';
       it.mesh.visible = true;
       it.mesh.scale.setScalar(1);
-      const spot = free[i % free.length];
-      it.mesh.position.copy(wpos(spot));
+      it.mesh.position.copy(it.home || wpos(free[i % free.length]));
     });
     count();
     tip('Again: everything you need, as fast as you can.');
@@ -313,18 +421,30 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
       f.it.mesh.position.y += Math.sin(e * Math.PI) * 0.6;
       f.it.mesh.rotation.y += dt * 6;
       f.it.mesh.scale.setScalar(1 - e * 0.35);
-      if (f.t >= 1) flights.splice(i, 1);
+      if (f.t >= 1) {
+        flights.splice(i, 1);
+        f.it.mesh.visible = false;
+        if (f.dest) { bursts.burst(f.to); bounce.set(f.dest, 0.35); }
+      }
+    }
+    fxLight(now / 1000);
+    bursts.update(dt);
+    coach.update(now / 1000);
+    for (const [bag, left] of bounce) {
+      const k = Math.max(0, left - dt);
+      bag.scale.set(1 + Math.sin((0.35 - k) / 0.35 * Math.PI) * 0.06, 1 - Math.sin((0.35 - k) / 0.35 * Math.PI) * 0.05, 1 + Math.sin((0.35 - k) / 0.35 * Math.PI) * 0.06);
+      if (k <= 0) { bounce.delete(bag); bag.scale.set(1, 1, 1); } else bounce.set(bag, k);
     }
     const glow = 0.18 + 0.12 * Math.sin(now * 0.004);
     for (const it of items) {
       if (it.state !== 'loose') { it.mesh.material.emissiveIntensity = 0; continue; }
       it.mesh.material.emissiveIntensity = it.pulse && now - hintAt < 3000 ? 0.9 * (0.5 + 0.5 * Math.sin(now * 0.012)) : glow * 0.35;
     }
-    if (!finished && now - lastAct > 15000 && needed.some(i => i.state === 'loose')) { lastAct = now; tip('Stuck? Tap Hint.'); }
+    if (!finished && !coach.active && now - lastAct > 15000 && needed.some(i => i.state === 'loose')) { lastAct = now; tip('Stuck? Tap Hint.'); }
     renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);
   }
   $('#aptLoad').remove();
   raf = requestAnimationFrame(frame);
-  return { finish, restart, items, get state() { return { elapsed, traps, packed: needed.filter(i => i.state === 'packed').length, needed: needed.length }; }, camera, scene };
+  return { finish, restart, items, get coaching() { return coach.active; }, get state() { return { elapsed, traps, packed: needed.filter(i => i.state === 'packed').length, needed: needed.length }; }, camera, scene };
 }

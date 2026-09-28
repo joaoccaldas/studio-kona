@@ -41,6 +41,7 @@ export function validPlayer(p) {
     },
   };
   if (p.last && Number.isFinite(p.last.x) && Number.isFinite(p.last.y)) out.last = { x: p.last.x, y: p.last.y };
+  out.tutorials = [...new Set(strList(p.tutorials))].slice(0, 20);            // guided onboarding already seen
   // The bike travels in its box and is built at KOA. New athletes carry bikeBuilt: false from creation;
   // saves from before this flag existed that already have a position on the island rode there, so their bike is built.
   if (p.bikeBuilt === true || (p.bikeBuilt === undefined && out.last)) out.bikeBuilt = true;

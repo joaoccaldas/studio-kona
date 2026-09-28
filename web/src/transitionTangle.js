@@ -39,7 +39,7 @@ function tintMaterial(tint = 0xffffff) {
   return m;
 }
 
-function labelTexture(lines, { w = 512, h = 256, bg = '#0b2233', fg = '#f9c74f', sub = '#f1f5f9' } = {}) {
+function labelTexture(lines, { w = 512, h = 256, bg = '#FBF8F2', fg = '#2E6F73', sub = '#13293D' } = {}) {   // Kona palette
   const cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
   const c = cv.getContext('2d');
