@@ -1,3 +1,4 @@
+import { readSection, writeSection } from './save.js';
 // Kona Race-Week Campaign & Memory Quest Engine
 export const RACE_WEEK_QUESTS = [
   {
@@ -356,25 +357,12 @@ export const RACE_WEEK_QUESTS = [
   }
 ];
 
-const STORAGE_KEY = 'kona.game.save.v1';
-
+// Campaign progress lives in the versioned save (save.js), validated on every read.
 export function loadGameSave() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
-
-  return {
-    currentDayIndex: 0,
-    currentStepIndex: 0,
-    completedDays: [],
-    unlockedArtifacts: [],
-    discoveredMemories: []
-  };
+  return readSection('campaign');
 }
 
 export function saveGameProgress(saveData) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
-  } catch (e) {}
+  const clean = writeSection('campaign', saveData);
+  Object.assign(saveData, clean);             // callers keep their object; invalid values are corrected in place
 }

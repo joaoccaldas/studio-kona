@@ -303,6 +303,76 @@ body.walking #mode{display:block}
   #jumpBtn{bottom:auto;top:46%;right:10px}
   #actionPrompt{bottom:auto;top:96px}
 }
+
+/* Athlete creation */
+#gate{overflow:auto;align-items:start;padding:max(24px,env(safe-area-inset-top)) 16px 24px}
+#gate form{margin:auto}
+#gate .gstep{display:grid;gap:14px}
+#gate .gstep[hidden]{display:none}
+#gate .g-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+#gate select{font:inherit;font-weight:500;background:#0b1824;color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 14px;min-height:46px}
+#gate fieldset{border:0;display:grid;gap:8px}
+#gate legend{font-size:13px;font-weight:700;margin-bottom:8px}
+#gate .sws{display:flex;gap:10px;flex-wrap:wrap}
+#gate .sw{position:relative;cursor:pointer}
+#gate .sw input{position:absolute;opacity:0}
+#gate .sw i{display:block;width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.2)}
+#gate .sw input:checked+i{border-color:var(--gold);box-shadow:0 0 0 3px rgba(249,199,79,.35)}
+#gate .sw input:focus-visible+i{outline:2px solid #fff;outline-offset:2px}
+#gate .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+#gate .cards{display:grid;gap:8px}
+#gate .card{display:grid;gap:2px;padding:10px 12px 10px 40px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#0b1824;cursor:pointer;position:relative;font-weight:500}
+#gate .card input{position:absolute;left:14px;top:14px;accent-color:var(--gold)}
+#gate .card b{font-size:14px}
+#gate .card span{font-size:12px;color:var(--mute)}
+#gate .card:has(input:checked){border-color:var(--gold)}
+#gate .card.off{opacity:.5;cursor:default}
+#gate .g-nav{display:flex;gap:8px}
+#gate .g-nav button{flex:1}
+#gate .g-back{background:transparent!important;color:var(--ink)!important;border:1px solid rgba(255,255,255,.2)!important;flex:0 0 96px!important}
+#gate .g-err{color:#ff8a70;font-size:13px}
+
+/* Apartment: Pack for Kona */
+#apt{position:fixed;inset:0;z-index:900;background:#0b1520;color:var(--ink)}
+#aptCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#apt .apt-top{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+#apt .apt-chip{display:flex;gap:10px;align-items:baseline;background:rgba(8,20,32,.78);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:9px 14px;backdrop-filter:blur(12px);font-size:13px}
+#apt .apt-chip b{color:var(--gold);letter-spacing:.06em}
+#apt .apt-chip span{font-variant-numeric:tabular-nums;font-weight:700}
+#apt .apt-tip{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(520px,calc(100vw - 24px));text-align:center;background:rgba(8,20,32,.86);border:1px solid rgba(249,199,79,.4);border-radius:14px;padding:10px 14px;font-size:14px;font-weight:600;line-height:1.4;opacity:0;transition:opacity .25s;pointer-events:none}
+#apt .apt-tip.on{opacity:1}
+#apt .apt-bottom{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:center}
+#apt .apt-bottom button{font:inherit;font-weight:800;min-height:50px;padding:0 22px;border-radius:999px;cursor:pointer}
+#apt .apt-primary{background:var(--gold);color:#081420;border:0;flex:0 1 320px}
+#apt .apt-ghost{background:rgba(8,20,32,.8);color:var(--ink);border:1px solid rgba(255,255,255,.2)}
+#aptSheet{position:absolute;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(440px,calc(100vw - 24px));max-height:74vh;overflow:auto;background:rgba(8,20,32,.97);border:1px solid rgba(249,199,79,.45);border-radius:18px;padding:18px;display:grid;gap:12px;z-index:5}
+#aptSheet[hidden]{display:none}
+#aptSheet h2{font-family:'Space Grotesk',sans-serif;font-size:22px}
+#aptSheet .d-eyebrow{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+#aptSheet ul{list-style:none;display:grid;gap:6px;font-size:13.5px;color:var(--mute)}
+#aptSheet ul li::before{content:'· ';color:var(--coral)}
+#aptSheet .d-note{font-size:13px;color:var(--mute);line-height:1.45}
+#aptSheet .d-rewards{display:flex;flex-wrap:wrap;gap:6px}
+#aptSheet .chip{font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+#aptSheet .d-actions{display:flex;gap:8px;flex-wrap:wrap}
+#aptSheet .d-actions button{font:inherit;font-weight:800;min-height:46px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer}
+#aptSheet .d-actions button.primary{background:var(--gold);color:#081420;border-color:transparent}
+#aptLoad{position:absolute;inset:0;display:grid;place-items:center;background:#0b1520}
+#aptLoad div{display:grid;gap:6px;text-align:center}
+#aptLoad b{font-family:'Space Grotesk',sans-serif;font-size:22px;color:var(--gold)}
+#aptLoad span{color:var(--mute);font-size:13px}
+
+/* The flight to Kona (the loading screen after the apartment) */
+.flight{display:none}
+body.flying .flight{display:grid;gap:10px;justify-items:center;margin-bottom:18px}
+body.flying #loading h1{display:none}
+.flight svg{width:min(320px,80vw);height:auto;overflow:visible}
+.flight .route{stroke:rgba(249,199,79,.5);stroke-width:2;stroke-dasharray:4 6;fill:none}
+.flight .plane{fill:var(--gold);offset-path:path('M10,70 Q160,-20 310,70');animation:fly 6s ease-in-out infinite;font-size:22px}
+@keyframes fly{from{offset-distance:0%}to{offset-distance:100%}}
+.flight b{font-family:'Space Grotesk',sans-serif;font-size:20px;letter-spacing:.12em;color:var(--gold)}
+.load-retry{margin-top:14px;font:inherit;font-weight:800;min-height:46px;padding:0 20px;border-radius:999px;border:0;background:var(--gold);color:#081420;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.flight .plane{animation:none;offset-distance:50%}}
 /* Wallet + island dispatch (rewards.js, islandLife.js) */
 #wallet{gap:8px}
 #wallet b{color:var(--gold);font-variant-numeric:tabular-nums}
@@ -429,23 +499,47 @@ body.walking #mode{display:block}
 </div>
 
 <div id="gate" hidden>
-  <form id="gateForm">
-    <h1>K O N A</h1>
-    <p>You are landing at Ellison Onizuka Kona International Airport for race week. The island stays blurred until you ride it open.</p>
-    <label>Your name<input id="gateName" name="name" type="text" autocomplete="nickname" maxlength="40" required placeholder="How should the island greet you?"></label>
-    <div class="visits">
-      <label><input type="radio" name="visit" value="first" checked> First time in Kona</label>
-      <label><input type="radio" name="visit" value="return"> I have been before</label>
+  <form id="gateForm" novalidate>
+    <div class="gstep" data-step="1">
+      <p class="g-eyebrow">Race week · Kailua-Kona · 2–10 October 2026</p>
+      <h1>K O N A</h1>
+      <p>You fly to Hawaiʻi for the biggest race week of your life. First, who is racing?</p>
+      <label>Your name<input id="gateName" name="name" type="text" autocomplete="nickname" maxlength="24" required placeholder="How should the island greet you?"></label>
+      <label>Country<select id="gateCountry" name="country"><option value="US">United States</option><option value="BR">Brazil</option><option value="PT">Portugal</option><option value="DE">Germany</option><option value="GB">United Kingdom</option><option value="AU">Australia</option><option value="CA">Canada</option><option value="FR">France</option><option value="ES">Spain</option><option value="IT">Italy</option><option value="CH">Switzerland</option><option value="NL">Netherlands</option><option value="BE">Belgium</option><option value="DK">Denmark</option><option value="NO">Norway</option><option value="SE">Sweden</option><option value="AT">Austria</option><option value="IE">Ireland</option><option value="NZ">New Zealand</option><option value="JP">Japan</option><option value="MX">Mexico</option><option value="AR">Argentina</option><option value="CL">Chile</option><option value="ZA">South Africa</option><option value="XX">Somewhere else</option></select></label>
+      <div class="visits">
+        <label><input type="radio" name="visit" value="first" checked> First time in Kona</label>
+        <label><input type="radio" name="visit" value="return"> I have been before</label>
+      </div>
+      <label id="gateCount" hidden>How many times, including this one?<input name="count" type="number" min="2" max="40" value="2"></label>
+      <p class="g-err" id="gateErr" hidden>Add a name of at least 2 letters.</p>
+      <button type="button" id="gateNext">Next: your race kit</button>
     </div>
-    <label id="gateCount" hidden>How many times, including this one?<input name="count" type="number" min="2" max="40" value="2"></label>
-    <button type="submit">Land at KOA</button>
-    <p class="fine">Saved on this device for now. A cloud login is not wired yet.</p>
+    <div class="gstep" data-step="2" hidden>
+      <p class="g-eyebrow">Your race kit</p>
+      <fieldset><legend>Skin tone</legend><div class="sws"><label class="sw"><input type="radio" name="skin" value="#f1d3bf"><i style="background:#f1d3bf"></i><span class="sr">#f1d3bf</span></label><label class="sw"><input type="radio" name="skin" value="#d9a882"><i style="background:#d9a882"></i><span class="sr">#d9a882</span></label><label class="sw"><input type="radio" name="skin" value="#b07a52" checked><i style="background:#b07a52"></i><span class="sr">#b07a52</span></label><label class="sw"><input type="radio" name="skin" value="#7a4a2c"><i style="background:#7a4a2c"></i><span class="sr">#7a4a2c</span></label><label class="sw"><input type="radio" name="skin" value="#4a2a17"><i style="background:#4a2a17"></i><span class="sr">#4a2a17</span></label></div></fieldset>
+      <fieldset><legend>Suit colour</legend><div class="sws"><label class="sw"><input type="radio" name="suit" value="#1d3557" checked><i style="background:#1d3557"></i><span class="sr">#1d3557</span></label><label class="sw"><input type="radio" name="suit" value="#e63946"><i style="background:#e63946"></i><span class="sr">#e63946</span></label><label class="sw"><input type="radio" name="suit" value="#2a9d8f"><i style="background:#2a9d8f"></i><span class="sr">#2a9d8f</span></label><label class="sw"><input type="radio" name="suit" value="#f4a261"><i style="background:#f4a261"></i><span class="sr">#f4a261</span></label><label class="sw"><input type="radio" name="suit" value="#111418"><i style="background:#111418"></i><span class="sr">#111418</span></label><label class="sw"><input type="radio" name="suit" value="#f1faee"><i style="background:#f1faee"></i><span class="sr">#f1faee</span></label></div></fieldset>
+      <fieldset><legend>Helmet</legend><div class="cards">
+        <label class="card"><input type="radio" name="helmet" value="helmet_longtail" checked><b>Long-tail aero</b><span>Fastest when you hold your head still</span></label>
+        <label class="card"><input type="radio" name="helmet" value="helmet_shorttail"><b>Short-tail aero</b><span>Forgiving when you look around</span></label>
+        <label class="card"><input type="radio" name="helmet" value="helmet_aeroroad"><b>Aero road</b><span>Cooler in the Kona heat</span></label>
+      </div></fieldset>
+      <fieldset><legend>Bike</legend><div class="cards">
+        <label class="card"><input type="radio" name="bike" value="speedmax_cfr" checked><b>Canyon Speedmax CFR</b><span>MY2027 · reconstructed from Canyon studio photos</span></label>
+        <label class="card off"><input type="radio" name="bike" value="trek_sc_slr" disabled><b>Trek Speed Concept SLR</b><span>In the workshop · coming soon</span></label>
+      </div></fieldset>
+      <div class="g-nav"><button type="button" class="g-back" id="gateBack">Back</button><button type="submit">Enter your apartment</button></div>
+      <p class="fine">Saved on this device. Accounts come later; nothing leaves your phone.</p>
+    </div>
   </form>
 </div>
 
 <!-- Loading overlay -->
 <div id="loading">
   <div>
+    <div class="flight" aria-hidden="true">
+      <svg viewBox="0 0 320 80"><path class="route" d="M10,70 Q160,-20 310,70"/><text x="0" y="0" class="plane" style="position:absolute">✈</text></svg>
+      <b>FLYING TO KONA · KOA</b>
+    </div>
     <h1>K O N A</h1>
     <div class="trk"><div id="bar"></div></div>
     <p>Awakening the Living Island...</p>

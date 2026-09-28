@@ -3,7 +3,7 @@
 // Race-week days open one per day you play (or on their real Hawaiʻi date); a Fast-forward ticket opens one early.
 // Saved on this device under one versioned key, shaped so it can sync to an account later.
 
-const KEY = 'kona-rewards-v1';
+import { readSection, writeSection } from './save.js';
 const WEEK_START = '2026-10-02'; // Hawaiʻi dates of the playable week: 2–12 October 2026
 
 export const RARITY = {
@@ -50,13 +50,34 @@ export function levelFor(xp) {
 }
 
 function blank() {
-  return { v: 1, xp: 0, credits: 0, items: {}, streak: 0, lastDay: null, days: [], ticketsUsed: 0, shells: {}, honu: {}, seenPhases: [], log: [] };
+  return { v: 1, xp: 0, credits: 0, items: {}, streak: 0, lastDay: null, days: [], ticketsUsed: 0, shells: {}, honu: {}, seenPhases: [], claimed: {}, log: [] };
+}
+
+// A save from an older build, another tab or a hand-edited store must never break play or mint Credits.
+export function sanitize(raw) {
+  const b = blank();
+  if (!raw || typeof raw !== 'object') return b;
+  const num = (v, d = 0) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : d);
+  const dateList = v => (Array.isArray(v) ? v.filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)) : []);
+  const items = {};
+  if (raw.items && typeof raw.items === 'object') for (const [k, v] of Object.entries(raw.items)) if (ITEMS[k]) items[k] = num(v);
+  return {
+    ...b,
+    xp: num(raw.xp), credits: num(raw.credits), items,
+    streak: num(raw.streak), lastDay: /^\d{4}-\d{2}-\d{2}$/.test(raw.lastDay) ? raw.lastDay : null,
+    days: [...new Set(dateList(raw.days))], ticketsUsed: num(raw.ticketsUsed),
+    shells: raw.shells && typeof raw.shells === 'object' ? raw.shells : {},
+    honu: raw.honu && typeof raw.honu === 'object' ? raw.honu : {},
+    seenPhases: Array.isArray(raw.seenPhases) ? raw.seenPhases.filter(x => typeof x === 'string') : [],
+    claimed: raw.claimed && typeof raw.claimed === 'object' ? raw.claimed : {},
+    log: Array.isArray(raw.log) ? raw.log.slice(0, 40) : [],
+  };
 }
 
 export function createRewards({ onChange } = {}) {
   let st;
-  try { st = { ...blank(), ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch { st = blank(); }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch { /* private mode: play on */ } onChange?.(api); };
+  st = sanitize(readSection('rewards'));
+  const save = () => { writeSection('rewards', st); onChange?.(api); };
 
   const multiplier = () => 1 + 0.1 * Math.min(Math.max(st.streak - 1, 0), 5);  // up to ×1.5 on a 6-day streak
 
@@ -85,6 +106,14 @@ export function createRewards({ onChange } = {}) {
     const after = levelFor(st.xp).level;
     return { xp: gx, credits: gc, items, levelUp: after > before ? after : 0, multiplier: k };
   }
+
+  // First completion pays; replays (going back to an earlier day, a second tap) do not.
+  function grantOnce(key, reward) {
+    if (st.claimed[key]) return null;
+    st.claimed[key] = Date.now();
+    return grant({ ...reward, reason: reward.reason || key });
+  }
+  const claimed = key => !!st.claimed[key];
 
   // Once per calendar day: streak, a daily gift and today's shells.
   function checkIn() {
@@ -159,7 +188,7 @@ export function createRewards({ onChange } = {}) {
     get state() { return st; },
     get level() { return levelFor(st.xp); },
     get multiplier() { return multiplier(); },
-    grant, checkIn, daysOpen, useTicket, nextOpening, todaysShells, pickShell, spotHonu, seePhase, roll,
+    grant, grantOnce, claimed, checkIn, daysOpen, useTicket, nextOpening, todaysShells, pickShell, spotHonu, seePhase, roll,
     shellsFoundToday: () => (st.shells[localDate()] || []).length,
   };
   return api;
