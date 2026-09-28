@@ -293,6 +293,47 @@ body.walking #mode{display:block}
   #mode{display:none !important}
   #walkHint{display:none !important}
 }
+
+
+@media (min-width:761px){#compassHud{top:62px}}
+@media (max-width:760px){
+  body:not([data-mode="bike"]) #rideHud{display:none!important}
+  #toast{top:150px;transform:translate(-50%,0);font-size:13px;padding:10px 14px;border-radius:12px;max-width:calc(100vw - 32px)}
+  #toast.on{transform:translate(-50%,0)}
+  #jumpBtn{bottom:auto;top:46%;right:10px}
+  #actionPrompt{bottom:auto;top:96px}
+}
+/* Wallet + island dispatch (rewards.js, islandLife.js) */
+#wallet{gap:8px}
+#wallet b{color:var(--gold);font-variant-numeric:tabular-nums}
+#wallet .w-cr{font-variant-numeric:tabular-nums}
+#wallet .w-streak{color:var(--coral);font-weight:800}
+#dispatch{position:fixed;z-index:60;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100vw - 24px));max-height:min(78vh,640px);overflow:auto;background:rgba(8,20,32,.96);border:1px solid rgba(249,199,79,.45);border-radius:18px;padding:18px 18px 16px;box-shadow:0 24px 64px rgba(0,0,0,.6);color:var(--ink);display:grid;gap:12px}
+#dispatch[hidden]{display:none}
+#dispatch .d-eyebrow{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+#dispatch h2{font-family:'Space Grotesk',sans-serif;font-size:22px;line-height:1.15}
+#dispatch ul{list-style:none;display:grid;gap:6px;font-size:13.5px;color:var(--mute)}
+#dispatch ul li{padding-left:16px;position:relative}
+#dispatch ul li::before{content:'';position:absolute;left:2px;top:.55em;width:6px;height:6px;border-radius:50%;background:var(--teal)}
+#dispatch .d-rewards{display:flex;flex-wrap:wrap;gap:6px}
+#dispatch .chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+#dispatch .chip i{font-style:normal;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800}
+#dispatch .d-level{display:grid;gap:4px;font-size:12px;color:var(--mute)}
+#dispatch .d-level .bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+#dispatch .d-level .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--coral))}
+#dispatch .d-bag{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+#dispatch .bag-item{display:grid;gap:2px;padding:8px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-size:12px}
+#dispatch .bag-item b{font-size:12.5px}
+#dispatch .bag-item small{color:var(--mute);line-height:1.35}
+#dispatch .d-actions{display:flex;gap:8px;flex-wrap:wrap}
+#dispatch .d-actions button{font:inherit;font-weight:800;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer}
+#dispatch .d-actions button.primary{background:var(--gold);color:#081420;border-color:transparent}
+#dispatch .d-actions button:disabled{opacity:.45;cursor:default}
+#dispatch .d-note{font-size:12px;color:var(--mute);line-height:1.45}
+@media (max-width:760px){
+  #dispatch{top:auto;bottom:8px;transform:translateX(-50%);max-height:72vh;border-radius:18px}
+  #wallet .w-label{display:none}
+}
 </style>
 </head>
 <body>
@@ -306,6 +347,7 @@ body.walking #mode{display:block}
 
 <!-- Top Right Controls -->
 <div class="tr-bar">
+  <button type="button" class="btn-top" id="wallet" aria-label="Your level, Credits and streak"><b id="wLevel">Lv 1</b><span class="w-cr" id="wCredits">0</span><span class="w-label">Credits</span><span class="w-streak" id="wStreak"></span></button>
   <button type="button" class="btn-top btn-heritage-top" id="topHeritageBtn">
     <span>🌺 Hawaiian Heritage</span>
     <span class="badge-count" id="topHeritageBadge">0 / 12</span>
@@ -378,6 +420,7 @@ body.walking #mode{display:block}
 <button type="button" id="actionPrompt" aria-live="polite"></button>
 <div id="mode"></div>
 <div id="toast"></div>
+<section id="dispatch" hidden role="dialog" aria-modal="false" aria-labelledby="dTitle"></section>
 <div id="cap"></div>
 
 <!-- Viewpoints Navigation Bar -->

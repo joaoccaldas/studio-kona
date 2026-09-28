@@ -18,10 +18,10 @@ Status: `todo` · `doing` · `done` (verified) · `blocked`.
 | Issue | Item | Status |
 |---|---|---|
 | #3 | B1 public site 404: untrack node_modules symlink, CI build, Pages deploy | doing: symlink untracked in 374c6aa |
-| #4 | B3 phone HUD covers ~70% of the screen | todo |
+| #4 | B3 phone HUD covers ~70% of the screen | doing: speed bar only when riding, smaller toasts, JUMP/action moved clear of the card |
 | #5 | B5 one quest system (real-date week) | todo |
 | #6 | B6 one versioned save schema | todo |
-| #7 | B7/B14 desktop HUD overlap + copy bugs | todo |
+| #7 | B7/B14 desktop HUD overlap + copy bugs | doing: objective pill moved below the top bar; ordinal fixed |
 | #8 | Loading screen + first-load budget | todo |
 
 ## Phase 1 · The loop (due Thu 1 Oct)
@@ -29,7 +29,7 @@ Status: `todo` · `doing` · `done` (verified) · `blocked`.
 | Issue | Item | Status |
 |---|---|---|
 | #9 | Level 0: Pack for Kona | todo |
-| #10 | XP, Credits, medals, ledger | todo |
+| #10 | XP, Credits, medals, ledger | doing: XP, Credits, levels, streak, items, shells, day gate live (local); medals not yet |
 | #11 | Pier racks fill with unlocked bikes | todo |
 | #12 | Locker + Kona town shop | todo |
 | #13 | Guest play + account save (Supabase) | blocked: owner picks the Supabase project |
@@ -39,7 +39,7 @@ Status: `todo` · `doing` · `done` (verified) · `blocked`.
 
 | Issue | Item | Status |
 |---|---|---|
-| #15 | Real-date days, daily challenge, streak, events | todo |
+| #15 | Real-date days, daily challenge, streak, events | doing: days open per day played / real HST date, streak, daily shells |
 | #16 | Race-day live mode | todo |
 | #17 | Museum labels match evidence | todo |
 | #18 | Commit NAIP/USGS imagery swap; remove Esri | doing: `tools/imagery.py` committed, assets not rebuilt |
@@ -54,3 +54,7 @@ Status: `todo` · `doing` · `done` (verified) · `blocked`.
   winners hall, week campaign) committed as 374c6aa on `feat/raceweek-live` and pushed. Milestones and
   issues #3–#22 created. Screenshots: headless Chrome, 60 fps desktop + phone viewport on this Mac; no real
   phone tested.
+- **2026-09-28 (afternoon)** Living island: Blender asset kit (22 assets, 0.63 MB), island phases that change with the
+  race-week day, rewards (XP, Credits, streak ×1.5, rare items, daily shells, honu etiquette, Fast-forward tickets,
+  next-day gate). Fixed the terrain load, ordinal, desktop overlap and phone HUD clutter. Screenshots in `renders/life/`,
+  60 fps phone and desktop viewports on this Mac. See `docs/ISLAND_LIFE.md`.

@@ -19,6 +19,9 @@ import { initArtifactModal } from './artifactModal.js';
 import { KOA, loadPlayer, savePlayer, createExplorer, buildAirport } from './explore.js';
 import { mountFlights } from './flights.js';
 import { createWinnersHall } from './winnersHall.js';
+import { createIslandLife, PHASES } from './islandLife.js';
+import { createRewards, XP_FOR, CREDITS_FOR } from './rewards.js';
+import { createLifeHud } from './lifeHud.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -213,6 +216,7 @@ let saveData = loadGameSave();
 let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
 let pierBikesMesh = null;
+let living = null, rewards = null, lifeHud = null, geocodes = {}, raceWeekData = null, roaming = false;
 let streamer = null;
 let man = null;
 let explorer = null;
@@ -322,9 +326,12 @@ async function load() {
   drawer = initMuseumDrawer(art => artifactViewer.show(art, false), idx => jumpToDay(idx));
 
   console.log('[Kona] Loading the official race week...');
-  await applyOfficialWeek(RACE_WEEK_QUESTS, A).catch(e => console.warn('Official week failed; scripted days remain.', e));
+  raceWeekData = await applyOfficialWeek(RACE_WEEK_QUESTS, A).catch(e => { console.warn('Official week failed; scripted days remain.', e); return null; });
   console.log('[Kona] Initializing game loop...');
   initGameLoop();
+
+  console.log('[Kona] Bringing the island to life...');
+  await initIslandLife().catch(e => console.warn('Island life failed', e));
 
   console.log('[Kona] Load completed successfully!');
   $('#loading').classList.add('done');
@@ -347,12 +354,170 @@ function arrive() {
   setLocomotionMode(player?.last ? 'walk' : 'bike');
   locomotion.teleport(here.x, h + 1.7, here.z, yaw, -0.15);
   const who = player?.name ? player.name : 'Athlete';
-  const times = player?.visits > 1 ? `${player.visits}th time in Kona` : 'first time in Kona';
+  const ord = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th'));
+  const times = player?.visits > 1 ? `${ord(player.visits)} time in Kona` : 'first time in Kona';
   if (player?.last) toast(`${who}, welcome back. Ride south. The island opens as you go.`);
   $('#cap').innerHTML = `<b>${KOA.short}</b><span>${KOA.name}. Ride toward Kailua-Kona.</span>`;
   const sub = document.querySelector('.top-sub');
   if (sub && player?.name) sub.textContent = `${player.name} · ${times}`;
-  mountFlights({ open: !player?.last });
+  mountFlights({ open: false });
+  if (rewards) setTimeout(() => welcomeDispatch(), player?.last ? 600 : 2400);
+}
+
+// ------------------------------------------------------------------ Living island + rewards
+async function initIslandLife() {
+  rewards = createRewards({ onChange: () => lifeHud?.wallet() });
+  lifeHud = createLifeHud({ rewards });
+  geocodes = await (await fetch(A + 'geocodes.json')).json().catch(() => ({}));
+  const player = loadPlayer();
+  living = await createIslandLife({
+    scene, W, heightAt, man, toLocal, coarse,
+    places: raceWeekData?.places || {},
+    playerName: player?.name,
+    setPierBikes: v => { if (pierBikesMesh) pierBikesMesh.visible = v; },
+    base: A,
+  });
+  window.__island = living;
+  const rr = await (await fetch(A + 'routes.json')).json();
+  const run = rr.run.map(([lon, lat]) => toLocal(lat, lon));
+  runLocal = d => { let acc = 0; for (let i = 1; i < run.length; i++) { const l = Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]); if (acc + l >= d) { const t = (d - acc) / l; return [run[i - 1][0] + (run[i][0] - run[i - 1][0]) * t, run[i - 1][1] + (run[i][1] - run[i - 1][1]) * t]; } acc += l; } return null; };
+  placeShells();
+}
+
+// Shells sit on open ground: beaches, the seawall, the lot, the finish and Aliʻi Drive itself (never inside buildings).
+let runLocal = null;
+function shellSpots() {
+  const P = raceWeekData?.places || {};
+  const spots = [];
+  const add = (name, xy, spread = 12) => { if (xy) spots.push({ name, x: xy[0], y: xy[1], spread }); };
+  add('Kamakahonu beach', P.kamakahonu && [P.kamakahonu.x, P.kamakahonu.y], 20);
+  add('the Aliʻi seawall', P.hale && [P.hale.x, P.hale.y], 8);
+  add('the King Kamehameha lot', P.kbr_lot && [P.kbr_lot.x, P.kbr_lot.y], 16);
+  add('the Underpants Run turn', P.upr_turn && [P.upr_turn.x, P.upr_turn.y], 4);
+  if (living) add('the finish line', [living.finish.x, living.finish.y], 6);
+  const g = geocodes.kahaluu;
+  if (g) add('Kahaluʻu Beach', toLocal(g.lat, g.lon), 30);
+  for (const km of [2.5, 4, 5.5, 7, 9]) {
+    const p = runLocal?.(km * 1000);
+    if (p) add(`Aliʻi Drive, run km ${km}`, p, 3);
+  }
+  return spots.filter(s => heightAt(s.x, s.y) > 0.3);
+}
+function placeShells() {
+  if (!living || !rewards) return;
+  const list = rewards.todaysShells(shellSpots()).map(sh => {
+    if (heightAt(sh.x, sh.y) > 0.3) return sh;
+    const spot = shellSpots().find(s => s.name === sh.where);
+    return spot ? { ...sh, x: spot.x, y: spot.y } : sh;
+  });
+  living.setShells(list);
+}
+
+// Apply the island state for the day being played. Shows what changed when the phase moves on.
+function syncIsland(extraGrant = null, eyebrow = null) {
+  if (!living) return;
+  const r = living.setDay(saveData.currentDayIndex || 0, saveData.completedDays);
+  const phaseGrant = r.changed ? rewards.seePhase(r.phase) : null;
+  if (r.changed && (phaseGrant || extraGrant)) {
+    const merged = mergeGrants(extraGrant, phaseGrant);
+    lifeHud.dispatch({
+      eyebrow: eyebrow || `Race week · ${currentDay.title}`,
+      title: r.info.name,
+      news: r.info.news,
+      grant: merged,
+      note: r.phase === 'quiet' ? 'The island changes with every race-week day you play. Come back tomorrow to open the next one.' : '',
+    });
+    return true;
+  }
+  return false;
+}
+function mergeGrants(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+  return { xp: a.xp + b.xp, credits: a.credits + b.credits, items: [...(a.items || []), ...(b.items || [])], levelUp: Math.max(a.levelUp || 0, b.levelUp || 0) };
+}
+function welcomeDispatch() {
+  const gift = rewards.checkIn();
+  resumePendingDay();
+  const shown = syncIsland(gift, gift?.first ? 'Welcome to Kona' : gift ? `Day ${gift.streak} in a row` : null);
+  if (!shown && gift) {
+    lifeHud.dispatch({
+      eyebrow: gift.streak > 1 ? `Day ${gift.streak} in a row · ×${rewards.multiplier.toFixed(1)} on everything you earn` : 'Welcome back',
+      title: `Today on the island: ${PHASES[living?.phase || 'quiet'].name}`,
+      news: ['Five new shells are hidden on beaches and in town.', ...PHASES[living?.phase || 'quiet'].news.slice(0, 2)],
+      grant: gift,
+    });
+  }
+  if (!gift) syncIsland();
+  if (saveData.pendingDay != null) enterFreeRoam();
+}
+// A day finished earlier opens once rewards.daysOpen allows it.
+function resumePendingDay() {
+  const next = saveData.pendingDay;
+  if (next == null || !rewards) return false;
+  if (next >= rewards.daysOpen(RACE_WEEK_QUESTS.length)) return false;
+  saveData.pendingDay = null;
+  roaming = false;
+  saveData.currentDayIndex = next;
+  saveData.currentStepIndex = 0;
+  currentDay = RACE_WEEK_QUESTS[next];
+  currentStep = currentDay.steps[0];
+  saveGameProgress(saveData);
+  setHour(currentDay.startHour || 7.25);
+  $('#hour').value = currentDay.startHour || 7.25;
+  setupActiveStep();
+  updateHUD();
+  return true;
+}
+// While the next day is closed: free roam, with the compass on the nearest shell of the day.
+function enterFreeRoam() {
+  roaming = true;
+  const next = RACE_WEEK_QUESTS[saveData.pendingDay];
+  $('#questDayNum').textContent = `DAY ${currentDay.dayNumber} · DONE`;
+  $('#questDayTitle').textContent = next ? `${next.title} opens tomorrow` : 'Race week complete';
+  $('#questDayDesc').textContent = 'Free roam: find today’s shells, spot honu from 3 m away, ride the Queen K. The island changes with the next day.';
+  $('#questStepCount').textContent = `SHELLS ${rewards.shellsFoundToday()} / 5`;
+  $('#questChecklist').innerHTML = '';
+  $('#questProgressFill').style.width = '100%';
+  aimAtShell();
+}
+function aimAtShell() {
+  if (!living || !echoMarkers) return;
+  const px = camera.position.x, py = -camera.position.z;
+  const left = living.shells.filter(s => s.g.visible);
+  if (!left.length) { $('#compassLabel').textContent = 'All of today’s shells found'; return; }
+  left.sort((a, b) => Math.hypot(a.x - px, a.y - py) - Math.hypot(b.x - px, b.y - py));
+  const s = left[0];
+  echoMarkers.setTarget([s.x, s.y], `🐚 Shell · ${s.where}`, 0, false, 0xffd166);
+  $('#compassLabel').textContent = `Shell near ${s.where}`;
+}
+
+let lifeT = 0, honuWarnT = 0;
+function lifeTick(dt) {
+  if (!living || !rewards) return;
+  lifeT += dt;
+  if (lifeT < 0.25) return;
+  lifeT = 0;
+  const px = camera.position.x, py = -camera.position.z;
+  const onFoot = locomotion?.getState().active;
+  for (const sh of living.shells) {
+    if (!sh.g.visible) continue;
+    const d = Math.hypot(sh.x - px, sh.y - py);
+    if (d < (onFoot ? 4 : 0)) {
+      living.hideShell(sh.id);
+      const g = rewards.pickShell(sh);
+      lifeHud.pop(g, sh.golden ? 'Golden cowrie!' : `Shell found · ${rewards.shellsFoundToday()}/5`);
+      if (roaming) { $('#questStepCount').textContent = `SHELLS ${rewards.shellsFoundToday()} / 5`; aimAtShell(); }
+    }
+  }
+  const h = onFoot ? living.nearestHonu(px, py) : null;
+  if (h && h.dist < 3 && performance.now() - honuWarnT > 15000) {
+    honuWarnT = performance.now();
+    toast('Too close. Give honu at least 3 m (10 ft) of space: it is the rule on Hawaiʻi beaches.');
+  } else if (h && h.dist < 15 && h.dist >= 3) {
+    const g = rewards.spotHonu(h.id);
+    if (g) lifeHud.pop(g, 'Honu spotted');
+  }
 }
 
 // ------------------------------------------------------------------ Quest & Progression Engine
@@ -454,6 +619,7 @@ function setLocomotionMode(targetMode) {
     mode = targetMode ? 'walk' : 'fly';
   }
 
+  document.body.dataset.mode = mode;
   const modeIcon = $('#modeIcon');
   const modeLabel = $('#modeLabel');
   const hint = $('#walkHint');
@@ -608,7 +774,8 @@ function completeCurrentStep() {
     advanceStep();
   } else {
     playUnlockFanfare();
-    toast(`✓ Objective Complete: ${currentStep.text}`);
+    const g = rewards?.grant({ xp: XP_FOR.step, credits: CREDITS_FOR.step, reason: currentStep.text });
+    toast(`✓ ${currentStep.text}${g ? ` · +${g.xp} XP · +${g.credits} Credits` : ''}`);
 
     advanceStep();
   }
@@ -668,6 +835,19 @@ function advanceToNextDayOrFinish() {
   toast(currentDay.lesson ? currentDay.lesson : `Day ${currentDay.dayNumber} complete.`);
 
   const nextDayIdx = saveData.currentDayIndex + 1;
+  const dayGrant = rewards?.grant({ xp: XP_FOR.day, credits: CREDITS_FOR.day, reason: `Finished ${currentDay.title}` });
+  if (rewards && nextDayIdx < RACE_WEEK_QUESTS.length && nextDayIdx >= rewards.daysOpen(RACE_WEEK_QUESTS.length)) {
+    saveData.pendingDay = nextDayIdx;
+    saveGameProgress(saveData);
+    lifeHud.pop(dayGrant, `${currentDay.title} complete`);
+    enterFreeRoam();
+    setTimeout(() => lifeHud.gate({
+      nextTitle: RACE_WEEK_QUESTS[nextDayIdx].title,
+      opensAt: rewards.nextOpening().getTime(),
+      onTicket: () => { if (resumePendingDay()) { syncIsland(null, 'Fast-forward'); toast(`${currentDay.title} is open.`); } },
+    }), 1400);
+    return;
+  }
   if (nextDayIdx < RACE_WEEK_QUESTS.length) {
     saveData.currentDayIndex = nextDayIdx;
     saveData.currentStepIndex = 0;
@@ -683,6 +863,7 @@ function advanceToNextDayOrFinish() {
   saveGameProgress(saveData);
   setupActiveStep();
   updateHUD();
+  if (!syncIsland(dayGrant)) lifeHud?.pop(dayGrant, 'Day complete');
 }
 
 function jumpToDay(dayIdx) {
@@ -701,8 +882,10 @@ function jumpToDay(dayIdx) {
   $('#hour').value = currentDay.startHour || 7.25;
   if (currentDay.cameraStart) go(currentDay.cameraStart);
 
+  roaming = false;
   setupActiveStep();
   updateHUD();
+  living?.setDay(dayIdx, saveData.completedDays);
   toast(`Switched to Day ${currentDay.dayNumber}: ${currentDay.title}`);
 }
 
@@ -910,11 +1093,11 @@ function routes() {
   fetch(A + 'routes.json').then(r => r.json()).then(data => {
     if (data.bike && data.bike.length) {
       const pts = data.bike.map(([lon, lat]) => [(lon - man.origin.lon) * kx, (lat - man.origin.lat) * ky]);
-      ribbon(pts, 3.2, 0x2a9d8f, 1.2);
+      ribbon(pts, 3.2, 0x2a9d8f, 0.2); // low, so riders on the course stay visible
     }
     if (data.run && data.run.length) {
       const pts = data.run.map(([lon, lat]) => [(lon - man.origin.lon) * kx, (lat - man.origin.lat) * ky]);
-      ribbon(pts, 2.4, 0xe76f51, 0.9);
+      ribbon(pts, 2.4, 0xe76f51, 0.15);
     }
   }).catch(e => console.warn('routes.json load err', e));
   queenK();
@@ -1366,6 +1549,10 @@ renderer.setAnimationLoop(() => {
   // Pier Bike Museum update
   pierMuseumStudio?.update(dt, camera);
 
+  // Living island: crowds, athletes, canoes, flags, shells, honu
+  living?.update(dt, camera);
+  lifeTick(dt);
+
   // Fog & depth scaling
   scene.fog.density = 0.00011 / (1 + Math.max(0, camera.position.y) / 150);
   const alt = Math.abs(camera.position.y) + 1;
@@ -1440,7 +1627,15 @@ window.__kona = {
   openHeritageHunt: (id = null) => hawaiianHunt?.open(id),
   go,
   setHour,
-  toast
+  toast,
+  get island() { return living; },
+  controls,
+  W,
+  heightAt: (x, y) => heightAt(x, y),
+  get explorer() { return explorer; },
+  get rewards() { return rewards; },
+  get lifeHud() { return lifeHud; },
+  syncIsland: () => syncIsland(),
 };
 
 function startWorld() {
