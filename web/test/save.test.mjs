@@ -92,3 +92,14 @@ test('daily check-in happens once per day and race-week days open one per day pl
   assert.equal(r.daysOpen(total), Math.min(total, open + 1));
   assert.equal(r.useTicket(), false, 'no ticket, no skip');
 });
+
+test('the bike is built at KOA: a new athlete keeps bikeBuilt false even after a position is saved', () => {
+  fresh();
+  save.writeSection('player', { name: 'Aina', bikeBuilt: false });
+  save.writeSection('player', { ...save.readSection('player'), last: { x: 1, y: 2 } });
+  assert.equal(save.readSection('player').bikeBuilt, false);
+  save.writeSection('player', { ...save.readSection('player'), bikeBuilt: true });
+  assert.equal(save.readSection('player').bikeBuilt, true);
+  save.writeSection('player', { name: 'Old', last: { x: 1, y: 2 } });          // a save from before the flag
+  assert.equal(save.readSection('player').bikeBuilt, true);
+});

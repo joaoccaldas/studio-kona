@@ -41,8 +41,10 @@ export function validPlayer(p) {
     },
   };
   if (p.last && Number.isFinite(p.last.x) && Number.isFinite(p.last.y)) out.last = { x: p.last.x, y: p.last.y };
-  // The bike travels in its box and is built at KOA. Anyone who has already ridden the island has a built bike.
-  if (p.bikeBuilt === true || out.last) out.bikeBuilt = true;
+  // The bike travels in its box and is built at KOA. New athletes carry bikeBuilt: false from creation;
+  // saves from before this flag existed that already have a position on the island rode there, so their bike is built.
+  if (p.bikeBuilt === true || (p.bikeBuilt === undefined && out.last)) out.bikeBuilt = true;
+  else if (p.bikeBuilt === false) out.bikeBuilt = false;
   if (p.packing && typeof p.packing === 'object') {
     const k = p.packing;
     out.packing = {

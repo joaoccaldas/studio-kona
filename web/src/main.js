@@ -650,7 +650,7 @@ function setLocomotionMode(targetMode) {
       hint.textContent = 'WASD Move · Drag/Click Look · Shift Sprint · Space Jump · [B] Ride Bike';
       hint.style.display = 'block';
     }
-    toast('Walk Mode: Explore Kona on foot · [B] Ride Bike');
+    toast(bikeReady() ? 'Walk Mode: Explore Kona on foot · [B] Ride Bike' : 'On foot. Your bike is still in its box.');
   } else if (mode === 'bike') {
     if (locomotion) {
       locomotion.setActive(true);
@@ -1783,6 +1783,7 @@ if (known) {
     savePlayer({
       name: String(f.get('name')).trim().slice(0, 24), country: f.get('country'), visits, firstTime: first, created: Date.now(),
       look: { skin: f.get('skin'), suit: f.get('suit'), helmet: f.get('helmet'), bike: f.get('bike') },
+      bikeBuilt: false,
     });
     beginJourney();
   });
