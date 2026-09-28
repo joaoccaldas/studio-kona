@@ -670,20 +670,31 @@ async function island() {
   };
 
   const G = coarse ? 400 : 800, [tx0, ty0, tx1, ty1] = man.tile;
+  // The whole-island mesh is a ~200 m far-field backdrop. Near Kailua the detailed core tile and the 500 m
+  // streamed ring must always win, so sink the backdrop under that whole zone with a smooth ramp. A hard
+  // clamp at one edge left a vertical cliff (visible from Aliʻi Drive) that poked through the detail.
+  let rects = [[tx0, ty0, tx1, ty1]];
+  try {
+    const ti = await (await fetch(A + 'tiles/index.json')).json();
+    rects = rects.concat(ti.tiles.map(t => [t.x0, t.y0, t.x0 + ti.size, t.y0 + ti.size]));
+  } catch (_) { }
+  const distToDetail = (x, y) => {
+    let d = Infinity;
+    for (const [a, b, c, e] of rects) d = Math.min(d, Math.hypot(Math.max(a - x, 0, x - c), Math.max(b - y, 0, y - e)));
+    return d;
+  };
+  const SINK = 22, RAMP = 700;
   const g = new THREE.PlaneGeometry(1, 1, G, G), p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) {
     const u = uv.getX(i), v = uv.getY(i), x = isl.x0 + u * isl.size, y = isl.y0 + v * isl.size;
     let h = heightAt(x, y);
-    if (x > tx0 + 30 && x < tx1 - 30 && y > ty0 + 30 && y < ty1 - 30) h = Math.min(h, -80);
+    const d = distToDetail(x, y);
+    if (d < RAMP) { const k = Math.min(1, d / RAMP); h -= SINK * (1 - k * k * (3 - 2 * k)); }
     const w = W(x, y, h);
     p.setXYZ(i, w.x, w.y, w.z);
   }
-  const ix = g.index.array;
-  for (let i = 0; i < ix.length; i += 3) {
-    const a = ix[i + 1];
-    ix[i + 1] = ix[i + 2];
-    ix[i + 2] = a;
-  }
+  // PlaneGeometry winding is already correct after W() (x, y, z) -> (x, z, -y); the old index swap
+  // flipped every face so all normals pointed down (inverted lighting, invisible from above).
   g.computeVertexNormals();
 
   const t = tex.load(A + 'island_color.jpg');
@@ -803,16 +814,16 @@ const PLACES = {
   bay: () => ({ pos: W(40, -450, 220), look: W(30, 20, 0), ground: W(22, 10, 2.2), name: 'Kailua Bay', note: 'The swim course runs 1,840 m out along the Aliʻi Drive coast.' }),
   pier: () => ({ pos: W(18, -45, 14), look: W(0, 10, 2.2), ground: W(4, 10, 2.2), name: 'Kailua Pier · Transition', note: 'The spiritual heart of Ironman. All 580 bikes racked here.' }),
   start: () => ({ pos: W(-45, -35, 4), look: W(50, -220, 1), ground: W(-45, -35, 1.2), name: 'Dig Me Beach · Swim Start', note: '6:25 AM cannon blast echoes across the volcanic amphitheater.' }),
-  finish: () => ({ pos: W(175, -55, 12), look: W(125, -20, 2), ground: W(175, -55, 3.5), name: 'Finish line · Aliʻi Drive', note: 'The most famous finish line in endurance sport.' }),
+  finish: () => ({ pos: W(40, -190, 70), look: W(125, -20, 4), ground: W(175, -55, 3.5), name: 'Finish line · Aliʻi Drive', note: 'The most famous finish line in endurance sport.' }),
   hawi: () => {
     const xy = toLocal(20.0545, -155.8306);
-    return { pos: W(xy[0] - 600, xy[1] - 800, 450), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), name: 'Hāwī Turnaround', note: 'Mile 56 turnaround in the Kohala mountain crosswinds.' };
+    return { aerial: true, pos: W(xy[0] - 600, xy[1] - 800, 450), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0] - 70, xy[1] - 90, 0), name: 'Hāwī Turnaround', note: 'Mile 56 turnaround in the Kohala mountain crosswinds.' };
   },
   energylab: () => {
     const xy = toLocal(19.7042, -156.0392);
-    return { pos: W(xy[0] - 350, xy[1] - 400, 180), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), name: 'Natural Energy Lab (NELHA)', note: 'Crushing heat and total isolation on the marathon.' };
+    return { aerial: true, pos: W(xy[0] - 350, xy[1] - 400, 180), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0] + 40, xy[1] - 120, 0), name: 'Natural Energy Lab (NELHA)', note: 'Crushing heat and total isolation on the marathon.' };
   },
-  island: () => ({ pos: W(24000, 18000, 24000), look: W(-2000, 4000, 1200), ground: W(4, 10, 2.2), name: 'Island of Hawaiʻi', note: '159 km from south to north, dominated by Mauna Kea and Mauna Loa.' }),
+  island: () => ({ aerial: true, pos: W(24000, 18000, 24000), look: W(-2000, 4000, 1200), ground: W(4, 10, 2.2), name: 'Island of Hawaiʻi', note: '159 km from south to north, dominated by Mauna Kea and Mauna Loa.' }),
 };
 
 let tween = null;
@@ -820,12 +831,18 @@ function go(k, dur = 2.5) {
   const p = PLACES[k]();
   ride = null;
 
-  if (locomotion && locomotion.getState().active) {
-    // Player is walking or riding a bike on the ground: teleport them to ground level at this landmark!
+  if (locomotion && locomotion.getState().active && p.aerial) {
+    // Aerial-only viewpoints (whole island) make no sense on foot: lift off into fly mode, then glide there.
+    setLocomotionMode('fly');
+  } else if (locomotion && locomotion.getState().active) {
+    // Player is walking or riding a bike on the ground: teleport them to ground level at this landmark,
+    // facing the thing the viewpoint is about (was always yaw 0, e.g. staring out to sea at Energy Lab).
     const target = p.ground || p.look;
     const targetGround = heightAt ? heightAt(target.x, -target.z) : 2.0;
     const groundY = Math.max(targetGround, 1.8);
-    locomotion.teleport(target.x, groundY, target.z, 0, 0);
+    const dx = p.look.x - target.x, dz = p.look.z - target.z;
+    const yaw = (Math.abs(dx) + Math.abs(dz) > 1) ? Math.atan2(-dx, -dz) : 0;
+    locomotion.teleport(target.x, groundY, target.z, yaw, 0);
     toast(`📍 Arrived at ${p.name}: ${p.note}`);
     $('#cap').innerHTML = `<b>${p.name}</b><span>${p.note}</span>`;
     $$('#nav button').forEach(b => b.classList.toggle('active', b.dataset.k === k));
