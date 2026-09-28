@@ -28,6 +28,8 @@ import { createRideRings } from './rideRings.js';
 import { createSfx } from './aptFx.js';
 import { initAppShell, haptic } from './appShell.js';
 import { runTransitionTangle, TRANSITION } from './transitionTangle.js';
+import { runRush } from './rush.js';
+import { showHome } from './home.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 // Hosts that don't serve .glb (e.g. a Claude artifact) get the same models as embedded glTF JSON: the host page sets
@@ -886,10 +888,10 @@ function buildBike() {
 const T1 = [4, 18];                                          // transition on Kailua Pier (raceweek places)
 function openChallenge(id, after) {
   if (document.body.classList.contains('in-challenge')) return;
-  const run = { [TRANSITION.id]: runTransitionTangle }[id];
+  const run = { [TRANSITION.id]: runTransitionTangle, rush: runRush }[id];
   if (!run) { after?.(); return; }
   rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
-  run({ player: loadPlayer(), rewards, base: A, onExit: () => { lifeHud?.wallet(); after?.(); } })
+  run({ player: loadPlayer(), rewards, base: A, onExit: () => { lifeHud?.wallet(); after?.(); }, onGarage: () => after?.('garage') })
     .then(api => { window.__challenge = api; })
     .catch(e => { console.error('Challenge failed', e); document.body.classList.remove('in-challenge'); document.getElementById('tt')?.remove(); after?.(); });
 }
@@ -1817,7 +1819,22 @@ if (known) {
   startWorld();
 }
 }
+// Home is the hub: Kona Rush in one tap, missions, garage, and the Race Week story for those who want it.
+let storyStarted = false;
+function home(focus) {
+  $('#loading').classList.add('done');
+  if ($('#gate')) $('#gate').hidden = true;
+  rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
+  showHome({
+    rewards, player: loadPlayer(), focus,
+    onPlay: () => openChallenge('rush', home),
+    onChallenge: id => openChallenge(id, home),
+    onStory: () => { if (storyStarted) return; storyStarted = true; boot(); },
+  });
+}
+window.__home = home;
+const clearDeep = () => { try { history.replaceState(null, '', location.pathname); } catch { /* sandboxed host */ } };
 if (deepChallenge) {
   $('#loading').classList.add('done');
-  openChallenge(deepChallenge, () => { try { history.replaceState(null, '', location.pathname); } catch { /* sandboxed host */ } boot(); });
-} else boot();
+  openChallenge(deepChallenge, to => { clearDeep(); home(to); });
+} else home();
