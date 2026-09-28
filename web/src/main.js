@@ -26,6 +26,11 @@ import { runApartment } from './apartment.js';
 import { runTransitionTangle, TRANSITION } from './transitionTangle.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+// Hosts that don't serve .glb (e.g. a Claude artifact) get the same models as embedded glTF JSON: the host page sets
+// window.KONA_GLB_SUFFIX = '.json' and every loader asks for "<model>.glb.json" instead. Off by default.
+if (typeof window !== 'undefined' && window.KONA_GLB_SUFFIX) {
+  THREE.DefaultLoadingManager.setURLModifier(u => (/\.glb(\?|$)/.test(u) ? u.replace(/\.glb(?=\?|$)/, '.glb' + window.KONA_GLB_SUFFIX) : u));
+}
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -1757,7 +1762,8 @@ function beginJourney() {
 }
 
 // ?c=<challenge> opens that challenge straight away, no account and no setup: the link a result card shares.
-const deepChallenge = new URLSearchParams(location.search).get('c');
+// Also as a bare #anchor (#transition_tangle): some hosts pass the hash but not the query string.
+const deepChallenge = new URLSearchParams(location.search).get('c') || (/^#[a-z0-9_]{2,40}$/.test(location.hash) ? location.hash.slice(1) : null);
 function boot() {
 const gate = $('#gate');
 const known = loadPlayer();
@@ -1796,5 +1802,5 @@ if (known) {
 }
 if (deepChallenge) {
   $('#loading').classList.add('done');
-  openChallenge(deepChallenge, () => { history.replaceState(null, '', location.pathname); boot(); });
+  openChallenge(deepChallenge, () => { try { history.replaceState(null, '', location.pathname); } catch { /* sandboxed host */ } boot(); });
 } else boot();
