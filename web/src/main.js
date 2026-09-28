@@ -23,6 +23,7 @@ import { createIslandLife, PHASES } from './islandLife.js';
 import { createRewards, XP_FOR, CREDITS_FOR } from './rewards.js';
 import { createLifeHud } from './lifeHud.js';
 import { runApartment } from './apartment.js';
+import { runTransitionTangle, TRANSITION } from './transitionTangle.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -805,10 +806,24 @@ function stepVerb(st) {
   if (st.action) return st.action;
   return st.isEcho ? 'Enter the memory' : 'Interact';
 }
+// ------------------------------------------------------------------ Challenges (challenge.js + one file per activity)
+const T1 = [4, 18];                                          // transition on Kailua Pier (raceweek places)
+function openChallenge(id, after) {
+  if (document.body.classList.contains('in-challenge')) return;
+  const run = { [TRANSITION.id]: runTransitionTangle }[id];
+  if (!run) { after?.(); return; }
+  rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
+  run({ player: loadPlayer(), rewards, base: A, onExit: () => { lifeHud?.wallet(); after?.(); } })
+    .then(api => { window.__challenge = api; })
+    .catch(e => { console.error('Challenge failed', e); document.body.classList.remove('in-challenge'); document.getElementById('tt')?.remove(); after?.(); });
+}
+
 function refreshInteraction(questReached) {
   let it = null;
   if (questReached && currentStep) {
     it = { key: 'quest:' + currentStep.id, label: stepVerb(currentStep), sub: currentStep.text, run: () => completeCurrentStep() };
+  } else if (locomotion?.getState().active && !locomotion.getState().isSwimming && Math.hypot(camera.position.x - T1[0], -camera.position.z - T1[1]) < 22) {
+    it = { key: 'challenge:transition', label: 'Play Transition Tangle', sub: 'T1 · beat your best', run: () => openChallenge(TRANSITION.id) };
   } else if (locomotion?.getState().active && pierMuseumStudio) {
     pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
       it = { key: 'bike:' + idx, label: 'Inspect bike', sub: `${bike.year} · ${bike.name}`, run: () => pierMuseumStudio.open(idx) };
@@ -1509,6 +1524,7 @@ let lastPedestalPrompt = 0;
 let lastFrameTime = performance.now();
 
 renderer.setAnimationLoop(() => {
+  if (document.body.classList.contains('in-challenge')) { lastFrameTime = performance.now(); return; }
   const now = performance.now();
   const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
   lastFrameTime = now;
@@ -1680,6 +1696,9 @@ function beginJourney() {
   }).then(api => { window.__apt = api; }).catch(e => { console.error('Apartment failed', e); startWorld(); });
 }
 
+// ?c=<challenge> opens that challenge straight away, no account and no setup: the link a result card shares.
+const deepChallenge = new URLSearchParams(location.search).get('c');
+function boot() {
 const gate = $('#gate');
 const known = loadPlayer();
 if (known) {
@@ -1713,3 +1732,8 @@ if (known) {
 } else {
   startWorld();
 }
+}
+if (deepChallenge) {
+  $('#loading').classList.add('done');
+  openChallenge(deepChallenge, () => { history.replaceState(null, '', location.pathname); boot(); });
+} else boot();

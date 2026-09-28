@@ -1,5 +1,5 @@
 // One versioned save for the whole game (issue #6). Every system reads and writes its own section through here.
-//   kona-save-v2  { v: 2, player, campaign, rewards, heritage, migratedFrom?, recovered? }
+//   kona-save-v2  { v: 2, player, campaign, rewards, heritage, arena, migratedFrom?, recovered? }
 //   kona-fog-v1   the fog-of-war mask (a PNG data URL), kept apart because it is large and can be rebuilt.
 // On first run the old stores are migrated and left in place as a backup. A save that cannot be parsed is copied
 // aside (kona-save-v2.corrupt-<time>) and play continues from the migrated or empty state; it never blocks the game.
@@ -69,7 +69,28 @@ export function validCampaign(c) {
   };
 }
 
-const VALIDATE = { player: validPlayer, campaign: validCampaign, rewards: x => x ?? null, heritage: x => [...new Set(strList(x))] };
+const ARENA_MEDALS = ['gold', 'silver', 'bronze'];
+// Challenge records (challenge.js), validated storage: { [challengeId]: record }.
+export function validArena(a) {
+  const out = {};
+  if (!a || typeof a !== 'object') return out;
+  for (const [id, r] of Object.entries(a)) {
+    if (!/^[a-z0-9_]{2,40}$/.test(id) || !r || typeof r !== 'object') continue;
+    const n = v => (Number.isFinite(v) && v >= 0 ? v : 0);
+    out[id] = {
+      best: Number.isFinite(r.best) && r.best >= 0 ? r.best : null,
+      bestMedal: ARENA_MEDALS.includes(r.bestMedal) ? r.bestMedal : null,
+      runs: Math.floor(n(r.runs)), finishes: Math.floor(n(r.finishes)),
+      firstAt: Number.isFinite(r.firstAt) ? r.firstAt : null,
+      last: r.last && Number.isFinite(r.last.score) ? { score: r.last.score, medal: ARENA_MEDALS.includes(r.last.medal) ? r.last.medal : null, at: n(r.last.at), mistakes: Math.floor(n(r.last.mistakes)) } : null,
+    };
+    if (out[id].best == null) out[id].bestMedal = null;
+  }
+  return out;
+}
+
+
+const VALIDATE = { player: validPlayer, campaign: validCampaign, rewards: x => x ?? null, heritage: x => [...new Set(strList(x))], arena: validArena };
 
 function store() { return globalThis.localStorage; }
 function readJSON(key) {

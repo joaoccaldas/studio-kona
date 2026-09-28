@@ -373,6 +373,45 @@ body.flying #loading h1{display:none}
 .flight b{font-family:'Space Grotesk',sans-serif;font-size:20px;letter-spacing:.12em;color:var(--gold)}
 .load-retry{margin-top:14px;font:inherit;font-weight:800;min-height:46px;padding:0 20px;border-radius:999px;border:0;background:var(--gold);color:#081420;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.flight .plane{animation:none;offset-distance:50%}}
+
+/* Challenge: Transition Tangle (transitionTangle.js) */
+#tt{position:fixed;inset:0;z-index:950;background:#0b1520;color:var(--ink)}
+#ttCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer}
+#tt .tt-top{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+#tt .tt-chip{display:flex;gap:10px;align-items:baseline;background:rgba(8,20,32,.8);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:9px 14px;backdrop-filter:blur(12px);font-size:13px}
+#tt .tt-chip b{color:var(--gold);letter-spacing:.08em}
+#tt .tt-chip span{font-variant-numeric:tabular-nums;font-weight:800}
+#tt .tt-chip em{font-style:normal;font-weight:800;color:#ff8a70;font-variant-numeric:tabular-nums}
+#tt .tt-tip{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(520px,calc(100vw - 24px));text-align:center;background:rgba(8,20,32,.88);border:1px solid rgba(249,199,79,.45);border-radius:14px;padding:10px 14px;font-size:14px;font-weight:600;line-height:1.4;opacity:0;transition:opacity .2s;pointer-events:none}
+#tt .tt-tip.on{opacity:1}
+#tt .tt-tip.bad{border-color:#ff6b50;background:rgba(60,14,8,.9)}
+#tt.hurt{animation:tthurt .35s}
+@keyframes tthurt{0%,100%{box-shadow:inset 0 0 0 0 rgba(255,80,60,0)}30%{box-shadow:inset 0 0 0 10px rgba(255,80,60,.55)}}
+#tt .tt-bottom{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:center;align-items:center}
+#tt .tt-bottom button{font:inherit;font-weight:800;min-height:52px;padding:0 22px;border-radius:999px;cursor:pointer}
+#tt .tt-primary{background:var(--gold);color:#081420;border:0;flex:0 1 300px;font-size:17px;letter-spacing:.06em}
+#tt .tt-primary[hidden]{display:none}
+#tt .tt-ghost{background:rgba(8,20,32,.8);color:var(--ink);border:1px solid rgba(255,255,255,.2)}
+#ttSheet{position:absolute;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(440px,calc(100vw - 24px));max-height:78vh;overflow:auto;background:rgba(8,20,32,.97);border:1px solid rgba(249,199,79,.45);border-radius:18px;padding:18px;display:grid;gap:12px;z-index:5}
+#ttSheet[hidden]{display:none}
+#ttSheet h2{font-family:'Space Grotesk',sans-serif;font-size:30px;font-variant-numeric:tabular-nums}
+#ttSheet .d-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+#ttSheet .medal-gold{color:#ffd23f}#ttSheet .medal-silver{color:#cfd8dc}#ttSheet .medal-bronze{color:#e0915a}#ttSheet .medal-none{color:var(--mute)}
+#ttSheet ul{list-style:none;display:grid;gap:5px;font-size:13.5px;color:var(--mute)}
+#ttSheet ul li::before{content:'· ';color:var(--coral)}
+#ttSheet .d-note{font-size:13px;color:var(--mute);line-height:1.45}
+#ttSheet .d-note b.bib{color:var(--ink);font-size:15px}
+#ttSheet .d-note.warn{color:#ffcf8a}
+#ttSheet .d-rewards{display:flex;flex-wrap:wrap;gap:6px}
+#ttSheet .chip{font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+#ttSheet .d-actions{display:flex;gap:8px;flex-wrap:wrap}
+#ttSheet .d-actions button{font:inherit;font-weight:800;min-height:46px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer}
+#ttSheet .d-actions button.primary{background:var(--gold);color:#081420;border-color:transparent;flex:1 1 140px}
+#ttLoad{position:absolute;inset:0;display:grid;place-items:center;background:#0b1520}
+#ttLoad div{display:grid;gap:6px;text-align:center}
+#ttLoad b{font-family:'Space Grotesk',sans-serif;font-size:22px;color:var(--gold)}
+#ttLoad span{color:var(--mute);font-size:13px}
+@media (prefers-reduced-motion:reduce){#tt.hurt{animation:none}}
 /* Wallet + island dispatch (rewards.js, islandLife.js) */
 #wallet{gap:8px}
 #wallet b{color:var(--gold);font-variant-numeric:tabular-nums}
