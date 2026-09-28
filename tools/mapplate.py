@@ -46,7 +46,7 @@ json.dump({'cell_m': g, 'origin': osm['origin'], 'cells': index}, open(f'{DATA}/
 # key anchors
 for name, (x, y) in {'Kailua Pier (origin)': (0, 0), 'Ahuʻena Heiau': (-60.4, -30.3), 'Mokuʻaikaua Church': (325, 50)}.items():
     a, b = P(x, y); d.ellipse((a - 9, b - 9, a + 9, b + 9), outline=(255, 40, 40), width=4); d.text((a + 14, b - 14), name, fill=(255, 255, 255), font=big, stroke_width=3, stroke_fill=(0, 0, 0))
-d.text((20, S - 60), 'KONA · Kailua Bay master map · ESRI imagery 0.56 m/px · OSM (ODbL) overlay · 200 m index grid', fill=(255, 255, 255), font=big, stroke_width=3, stroke_fill=(0, 0, 0))
+d.text((20, S - 60), 'KONA · Kailua Bay master map · NAIP imagery (public domain) 0.56 m/px · OSM (ODbL) overlay · 200 m index grid', fill=(255, 255, 255), font=big, stroke_width=3, stroke_fill=(0, 0, 0))
 img.convert('RGB').save(f'{OUT}/kona_master_map.jpg', quality=88)
 # relief + bathymetry panel from the DEM
 dem = np.load(f'{DATA}/dem.npy'); dm = json.load(open(f'{DATA}/dem_meta.json'))

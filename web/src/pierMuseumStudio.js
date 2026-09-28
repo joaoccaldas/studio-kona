@@ -333,6 +333,7 @@ export function createPierMuseumStudio(ctx) {
     });
     const pMesh = new THREE.Mesh(previewBikeGeo, previewBikeMat);
     pMesh.position.y = 0.8;
+    pMesh.visible = false;
     g.add(pMesh);
 
     // Billboard title badge (Distance-attenuated, only visible when near pier)
@@ -350,11 +351,11 @@ export function createPierMuseumStudio(ctx) {
 
     c.font = 'bold 36px system-ui, sans-serif';
     c.fillStyle = '#bde9d9';
-    c.fillText(`${bike.year} · ${bike.brand.split('/')[0]}`, 28, 54);
+    c.fillText(`${bike.year} · empty`, 28, 54);
 
     c.font = '28px system-ui, sans-serif';
     c.fillStyle = '#ffffff';
-    c.fillText(`${bike.name.slice(0, 24)}`, 28, 98);
+    c.fillText('Model not sourced yet', 28, 98);
 
     const spMat = new THREE.SpriteMaterial({
       map: new THREE.CanvasTexture(cv),
@@ -999,7 +1000,8 @@ export function createPierMuseumStudio(ctx) {
     currentPaintMaterial = null;
     currentDiscGroup = null;
 
-    const modelPath = 'assets/bikes/' + (bike.modelFile || 'speedmax_2019_slx.glb');
+    if (bike.confidence !== 'sourced' || !bike.modelFile) return;
+    const modelPath = 'assets/bikes/' + bike.modelFile;
     new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load(modelPath, gltf => {
       currentStudioMesh = gltf.scene;
       let rearWheelNode = null;
@@ -1094,9 +1096,27 @@ export function createPierMuseumStudio(ctx) {
     });
   }
 
+  function modelReady(bike) {
+    return bikeOpen(bike) && bike.confidence === 'sourced' && !!bike.modelFile;
+  }
+
+  function refreshPedestals() {
+    for (const g of pedestalGroup.children) {
+      const bike = g.userData.bike;
+      if (!bike || !modelReady(bike) || g.userData.modelLoaded) continue;
+      g.userData.modelLoaded = true;
+      new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load('assets/bikes/' + bike.modelFile, gltf => {
+        const model = gltf.scene;
+        model.scale.setScalar(0.42);
+        model.position.y = 0.32;
+        g.add(model);
+      });
+    }
+  }
+
   function latestUnlockedIndex() {
-    for (let i = PIER_HERITAGE_BIKES.length - 1; i >= 0; i--) if (bikeOpen(PIER_HERITAGE_BIKES[i])) return i;
-    return PIER_HERITAGE_BIKES.length - 1;
+    for (let i = PIER_HERITAGE_BIKES.length - 1; i >= 0; i--) if (modelReady(PIER_HERITAGE_BIKES[i])) return i;
+    return 0;
   }
 
   function openStudio(index) {
@@ -1134,12 +1154,15 @@ export function createPierMuseumStudio(ctx) {
     if (modal) modal.classList.remove('active');
   }
 
+  refreshPedestals();
+
   return {
     open: openStudio,
     close: closeStudio,
     selectBike,
     pedestals: pedestalGroup,
     getBikes: () => PIER_HERITAGE_BIKES,
+    refresh: refreshPedestals,
     update(dt, camera) {
       if (!camera) return;
       const isNearPier = Math.hypot(camera.position.x - (-6), camera.position.z) < 55.0;

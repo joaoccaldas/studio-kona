@@ -5,16 +5,13 @@
 
 // Museum exhibits keyed by exhibit year (see PIER_HERITAGE_BIKES).
 export const BIKE_UNLOCKS = {
-  '2024': { start: true },                 // today's bike: the one on the pier this week
   '1982': { memory: '1982' },
   '1989': { memory: '1989' },
   '2023': { memory: '2023' },
   '2018': { memory: '2018' },
-  '2019': { memory: '2019' },
+  '2019': { challenge: 'fri2' },           // the one sourced bike, after the arrival ride
   '2004': { heritage: 2 },
-  '2005': { challenge: 'day2' },
   '2007': { heritage: 5 },
-  '2011': { challenge: 'day4' },
 };
 
 // Frame paints in the Canyon studio.
@@ -22,13 +19,22 @@ export const COLOUR_UNLOCKS = {
   '#ffcc33': { start: true },              // Kona Gold
   '#0a101d': { start: true },              // Stealth Carbon
   '#ffffff': { start: true },              // Arctic White
-  '#e62233': { challenge: 'day1' },        // Flash Coral
-  '#00d2ff': { challenge: 'day3' },        // Pacific Cyan
-  '#bde9d9': { challenge: 'day5' },        // Canyon Mint
+  '#e62233': { challenge: 'fri2' },        // Flash Coral — arrival ride
+  '#00d2ff': { challenge: 'sun4' },        // Pacific Cyan — bay swim
+  '#bde9d9': { challenge: 'mon5' },        // Canyon Mint — rehearsal ride
   '#2a9d8f': { heritage: 12 },             // Island Sage: every heritage site
 };
 
-// Optional, one per day. They reward being out in Kona, not speed.
+// Official week. Medals are earned by being out on the island. No purchase path.
+export const OFFICIAL_CHALLENGES = {
+  fri2: { text: 'Level 1 · Ride 8 km south from KOA toward the pier.', metric: 'ride_m', target: 8000, reward: 'Flash Coral paint' },
+  sat3: { text: 'Level 2 · Walk 1.5 km. The town fun run meets at Hale Hālāwai; this shakeout is your own.', metric: 'walk_m', target: 1500, reward: 'the shakeout logged on this device' },
+  sun4: { text: 'Level 3 · Swim 200 m in Kailua Bay. The race swim is 3.8 km.', metric: 'swim_m', target: 200, reward: 'Pacific Cyan paint' },
+  mon5: { text: 'Level 4 · Ride 5 km. The Coffee Boat swim is the open-water rehearsal.', metric: 'ride_m', target: 5000, reward: 'Canyon Mint paint' },
+  fri9: { text: 'Level 5 · Ride 12 km before bike check-in. Hāwī and the Energy Lab open when that check-in is done.', metric: 'ride_m', target: 12000, reward: 'the long ride logged on this device' },
+};
+
+// Retired six-day script. Kept so an old save still resolves if the week file fails to load.
 export const DAILY_CHALLENGES = {
   day1: { text: 'Walk 1 km around Kailua town and the seawall', metric: 'walk_m', target: 1000, reward: 'Flash Coral paint' },
   day2: { text: 'Ride 5 km out toward the Queen K', metric: 'ride_m', target: 5000, reward: 'the 2005 Speedmax exhibit' },
@@ -47,6 +53,10 @@ export function createProgress(saveData, { heritage, save, toast, quests }) {
 
   const heritageFound = () => (heritage && heritage() ? heritage().found : 0);
 
+  function challengeDef(dayId) {
+    return OFFICIAL_CHALLENGES[dayId] || DAILY_CHALLENGES[dayId] || null;
+  }
+
   function met(req) {
     if (!req) return false;
     if (req.start) return true;
@@ -60,8 +70,8 @@ export function createProgress(saveData, { heritage, save, toast, quests }) {
     if (req.memory) return `Relive the ${req.memory} memory (Day ${DAY_OF_MEMORY[req.memory] || '?'})`;
     if (req.heritage) return `Discover ${req.heritage} Hawaiian heritage site${req.heritage > 1 ? 's' : ''} (${Math.min(heritageFound(), req.heritage)}/${req.heritage})`;
     if (req.challenge) {
-      const c = DAILY_CHALLENGES[req.challenge];
-      return `Day ${req.challenge.replace('day', '')} challenge: ${c ? c.text : ''}`;
+      const c = challengeDef(req.challenge);
+      return c ? c.text : 'Finish the day’s challenge';
     }
     return '';
   }
@@ -73,7 +83,7 @@ export function createProgress(saveData, { heritage, save, toast, quests }) {
     colourHint: hex => hint(COLOUR_UNLOCKS[(hex || '').toLowerCase()]),
 
     challengeFor(dayId) {
-      const c = DAILY_CHALLENGES[dayId];
+      const c = challengeDef(dayId);
       if (!c) return null;
       const st = saveData.challenges[dayId] || { value: 0, done: false };
       const value = c.metric === 'heritage' ? Math.max(0, heritageFound() - (st.heritageStart ?? heritageFound())) : st.value;
@@ -91,7 +101,7 @@ export function createProgress(saveData, { heritage, save, toast, quests }) {
     track(metric, metres, dayId) {
       if (!(metres > 0)) return;
       saveData.stats[metric] = (saveData.stats[metric] || 0) + metres;
-      const c = DAILY_CHALLENGES[dayId];
+      const c = challengeDef(dayId);
       if (!c || c.metric !== metric) return;
       const st = saveData.challenges[dayId] || (saveData.challenges[dayId] = { value: 0, done: false });
       if (st.done) return;
@@ -100,7 +110,7 @@ export function createProgress(saveData, { heritage, save, toast, quests }) {
     },
 
     checkHeritage(dayId) {
-      const c = DAILY_CHALLENGES[dayId];
+      const c = challengeDef(dayId);
       if (!c || c.metric !== 'heritage') return;
       const st = saveData.challenges[dayId];
       if (st && !st.done && api.challengeFor(dayId).value >= c.target) api.finish(dayId);
@@ -110,8 +120,8 @@ export function createProgress(saveData, { heritage, save, toast, quests }) {
       const st = saveData.challenges[dayId] || (saveData.challenges[dayId] = { value: 0, done: false });
       if (st.done) return;
       st.done = true;
-      const c = DAILY_CHALLENGES[dayId];
-      toast && toast(`✦ Daily challenge complete: ${c.text}. Unlocked ${c.reward}.`);
+      const c = challengeDef(dayId);
+      toast && toast(`Challenge complete. ${c.text} Unlocked ${c.reward}.`);
       save();
     },
 
@@ -120,7 +130,8 @@ export function createProgress(saveData, { heritage, save, toast, quests }) {
         days: (saveData.completedDays || []).length, totalDays: quests.length,
         memories: saveData.discoveredMemories.length, totalMemories: Object.keys(DAY_OF_MEMORY).length,
         heritage: heritageFound(), totalHeritage: heritage && heritage() ? heritage().total : 12,
-        challenges: Object.values(saveData.challenges).filter(c => c.done).length, totalChallenges: Object.keys(DAILY_CHALLENGES).length,
+        challenges: Object.values(saveData.challenges).filter(c => c.done).length,
+        totalChallenges: quests.filter(q => challengeDef(q.id)).length || Object.keys(OFFICIAL_CHALLENGES).length,
         stats: saveData.stats,
       };
     },

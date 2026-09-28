@@ -237,6 +237,62 @@ body.walking #mode{display:block}
 #loading .trk{width:220px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin:0 auto 10px}
 #loading #bar{height:100%;width:0;background:var(--gold);transition:width .2s}
 #loading p{font-size:11px;letter-spacing:.2em;color:var(--mute);text-transform:uppercase}
+
+#gate{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:#050d15}
+#gate[hidden]{display:none}
+#gate form{width:min(440px,100%);display:grid;gap:14px;background:rgba(8,20,32,.92);border:1px solid rgba(249,199,79,.35);border-radius:18px;padding:22px}
+#gate h1{font-family:'Space Grotesk',sans-serif;letter-spacing:.22em;color:var(--gold);font-size:28px}
+#gate p{color:var(--mute);font-size:14px;line-height:1.45}
+#gate label{display:grid;gap:6px;font-size:13px;font-weight:700}
+#gate input[type=text],#gate input[type=number]{font:inherit;font-weight:500;user-select:text;-webkit-user-select:text;background:#0b1824;color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 14px;min-height:46px}
+#gate .visits{display:flex;gap:10px;flex-wrap:wrap;font-weight:600}
+#gate .visits label{display:flex;align-items:center;gap:8px;font-weight:600}
+#gate button{font:inherit;font-weight:800;min-height:48px;border:0;border-radius:999px;background:var(--gold);color:#081420;cursor:pointer}
+#gate .fine{font-size:12px;font-weight:500}
+
+#rideHud{display:none}
+#rideHud b{font-size:18px;color:var(--gold)}
+#rideHud span{font-size:11px;color:var(--mute);margin-left:4px}
+#briefCard{position:fixed;top:66px;left:340px;width:min(340px,calc(100vw - 380px));z-index:22;background:rgba(8,20,32,.88);border:1px solid rgba(249,199,79,.45);border-radius:14px;padding:12px 14px}
+#briefCard[hidden]{display:none}
+#briefCard b{display:block;color:var(--gold);font-size:13px;margin-bottom:6px}
+#briefCard p{font-size:13px;line-height:1.4;color:#f1f5f9}
+#flightSheet{position:fixed;z-index:40;left:16px;right:16px;bottom:16px;max-height:58vh;overflow:auto;background:rgba(8,20,32,.94);border:1px solid rgba(249,199,79,.4);border-radius:16px;padding:14px;color:#f1f5f9}
+#flightSheet[hidden]{display:none}
+.flight-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.flight-head button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:8px 12px;background:#f9c74f;color:#081420}
+#flightMeta{font-size:12px;line-height:1.4;color:rgba(241,245,249,.7);margin-bottom:10px}
+.flight-row{display:grid;grid-template-columns:88px 1fr auto auto;gap:8px;align-items:baseline;padding:8px 0;border-top:1px solid rgba(255,255,255,.08);font-size:13px}
+.flight-row em{font-style:normal;color:#f9c74f;font-size:12px}
+.flight-group{margin:12px 0 0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#f9c74f}
+.winner-row{display:grid;gap:2px;width:100%;text-align:left;font:inherit;color:#f1f5f9;background:transparent;border:0;border-top:1px solid rgba(255,255,255,.08);padding:8px 0;cursor:pointer}
+.winner-row b{color:#f9c74f;font-size:12px}
+.winner-row span{font-size:13px}
+@media (max-width:760px){
+  .flight-row{grid-template-columns:1fr; gap:2px; padding:10px 0}
+}
+
+@media (max-width:760px){
+  .top-bar{display:none}
+  #topHeritageBtn,#topMuseumBtn,#topMyKonaBtn,.time-box{display:none}
+  .tr-bar{top:8px;right:8px;left:auto;bottom:auto}
+  #compassHud{top:8px;left:8px;right:88px;transform:none;max-width:none;overflow:hidden}
+  #compassLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+  #questCard{top:auto;bottom:56px;left:8px;right:8px;max-width:none;max-height:none}
+  #questCard .quest-desc,#questCard .quest-checklist,#questCard .quest-progress-bar{display:none}
+  #questCard .quest-challenge{display:block}
+  #questCard.open{max-height:46vh;overflow:auto}
+  #questCard.open .quest-desc,#questCard.open .quest-checklist,#questCard.open .quest-progress-bar{display:block}
+  #rideHud{display:flex;position:fixed;top:44px;left:8px;right:8px;z-index:21;gap:16px;align-items:baseline;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:999px;padding:8px 14px;backdrop-filter:blur(16px)}
+  #flightSheet{top:92px;bottom:8px;left:8px;right:8px;max-height:none}
+  #briefCard{top:auto;left:8px;right:8px;bottom:168px;width:auto}
+  #navWrap{bottom:6px;max-width:calc(100vw - 12px)}
+  #nav{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;max-width:100%}
+  #jumpBtn{bottom:210px;right:8px;width:52px;height:52px}
+  #actionPrompt{bottom:210px;max-width:calc(100vw - 84px)}
+  #mode{display:none !important}
+  #walkHint{display:none !important}
+}
 </style>
 </head>
 <body>
@@ -261,6 +317,8 @@ body.walking #mode{display:block}
     <span>🚲 Pier Museum</span>
     <span class="badge-count" id="topBadgeCount">10</span>
   </button>
+  <button type="button" class="btn-top" id="flightBtn">Flights</button>
+  <button type="button" class="btn-top" id="winnersBtn">Winners</button>
   <button type="button" class="btn-top" id="btnModeToggle">
     <span id="modeIcon">🚶</span>
     <span id="modeLabel">Walk</span>
@@ -301,6 +359,18 @@ body.walking #mode{display:block}
   <div class="quest-progress-bar"><div class="quest-progress-fill" id="questProgressFill"></div></div>
 </div>
 
+<div id="winnersSheet" hidden>
+  <div class="flight-head"><b>Winners</b><button type="button" data-close>Close</button></div>
+  <p id="flightMeta">Results only. Statues are not built. A bike is shown only when the model is sourced.</p>
+  <div id="winnersBody"></div>
+</div>
+<div id="flightSheet" hidden>
+  <div class="flight-head"><b>KOA today</b><button type="button" data-close>Close</button></div>
+  <p id="flightMeta"></p>
+  <div id="flightBody"></div>
+</div>
+<div id="rideHud"><div><b id="rideSpeed">0</b><span>km/h</span></div><div><b id="rideDist">0.0</b><span>km ridden</span></div></div>
+<div id="briefCard" hidden></div>
 <div id="walkHint">Drag or Click to Look · WASD Move · Shift Sprint · Space Jump</div>
 <div id="crosshair"></div>
 <div id="touchJoyBase"><div id="touchJoyKnob"></div></div>
@@ -313,6 +383,21 @@ body.walking #mode{display:block}
 <!-- Viewpoints Navigation Bar -->
 <div id="navWrap">
   <div id="nav"></div>
+</div>
+
+<div id="gate" hidden>
+  <form id="gateForm">
+    <h1>K O N A</h1>
+    <p>You are landing at Ellison Onizuka Kona International Airport for race week. The island stays blurred until you ride it open.</p>
+    <label>Your name<input id="gateName" name="name" type="text" autocomplete="nickname" maxlength="40" required placeholder="How should the island greet you?"></label>
+    <div class="visits">
+      <label><input type="radio" name="visit" value="first" checked> First time in Kona</label>
+      <label><input type="radio" name="visit" value="return"> I have been before</label>
+    </div>
+    <label id="gateCount" hidden>How many times, including this one?<input name="count" type="number" min="2" max="40" value="2"></label>
+    <button type="submit">Land at KOA</button>
+    <p class="fine">Saved on this device for now. A cloud login is not wired yet.</p>
+  </form>
 </div>
 
 <!-- Loading overlay -->
