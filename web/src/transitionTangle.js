@@ -6,13 +6,14 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { defineChallenge, submitRun, recordFor, dailySeed, rng, fmt, MEDAL_LABEL, shareText, deepLink } from './challenge.js';
 
 export const TRANSITION = defineChallenge({
   id: 'transition_tangle',
   name: 'Transition Tangle',
   where: 'T1 · Kailua Pier',
-  medals: { gold: 20, silver: 30, bronze: 45 },               // game seconds, elapsed + penalties
+  medals: { gold: 13, silver: 20, bronze: 32 },               // game seconds, elapsed + penalties (clean human run ≈ 10–13 s)
   rewards: {
     first: { xp: 150, credits: 60, items: ['wristband'] },
     bronze: { xp: 30, credits: 10 },
@@ -182,6 +183,23 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
     return g;
   }
 
+  // The rest of the field: one instanced low-poly tri bike (a single draw call for every racked bike on the pier).
+  // Only your own bike is the full reconstructed model. Frame along x, wheels on the deck, like makeBike().
+  function fieldBikeGeometry() {
+    const parts = [];
+    const add = (g, x, y, z, rx = 0, rz = 0) => { g.rotateX(rx); g.rotateZ(rz); g.translate(x, y, z); parts.push(g); };
+    for (const x of [-0.5, 0.5]) add(new THREE.CylinderGeometry(0.34, 0.34, 0.025, 20), x, 0.34, 0, Math.PI / 2);   // disc-like wheels
+    const tube = (ax, ay, bx, by, r = 0.022) => {
+      const len = Math.hypot(bx - ax, by - ay);
+      add(new THREE.CylinderGeometry(r, r, len, 6), (ax + bx) / 2, (ay + by) / 2, 0, 0, Math.atan2(bx - ax, by - ay) * -1);
+    };
+    tube(-0.5, 0.34, 0.0, 0.3); tube(0, 0.3, 0.34, 0.72, 0.03); tube(-0.14, 0.8, 0, 0.3); tube(-0.14, 0.8, 0.34, 0.74, 0.03);
+    tube(0.34, 0.74, 0.5, 0.34); tube(-0.5, 0.34, -0.14, 0.8);
+    add(new THREE.BoxGeometry(0.26, 0.04, 0.08), -0.18, 0.84, 0);                                                  // saddle
+    add(new THREE.BoxGeometry(0.34, 0.03, 0.16), 0.52, 0.84, 0);                                                   // aero bars
+    return mergeGeometries(parts.map(g => g.index ? g.toNonIndexed() : g));
+  }
+
   // ---------------------------------------------------------------- the day's layout (same for everyone today)
   const seed = dailySeed(TRANSITION.id);
   const r0 = rng(seed);
@@ -209,18 +227,24 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
   }
   // Other athletes' bikes, spaced along the rails. Your place is kept free in your row.
   const mySlotX = -3 + Math.floor(r0() * 5) * 1.5;
-  const others = [];
+  const slots = [];
   for (let i = 0; i < ROWS; i++) {
     for (let x = -6; x <= 6; x += 1.5) {
       if (i === myRow && Math.abs(x - mySlotX) < 0.1) continue;
       if (r0() < 0.35) continue;                                // a few already gone: faster athletes
-      const b = makeBike();
-      b.rotation.y = Math.PI / 2 * (r0() < 0.5 ? 1 : -1);
-      b.position.set(x, 0, rowZ(i));
-      scene.add(b);
-      others.push(b);
+      slots.push([x, rowZ(i), r0() < 0.5 ? 1 : -1]);
     }
   }
+  const FRAME = [0x15181b, 0xeeeeee, 0xd81b1b, 0x1b4fd8, 0xf29a0c, 0x1a9a4d, 0x00b4d8].map(c => new THREE.Color(c));
+  const field = new THREE.InstancedMesh(fieldBikeGeometry(), new THREE.MeshStandardMaterial({ roughness: 0.45, metalness: 0.2 }), slots.length);
+  const m4 = new THREE.Matrix4(), rq = new THREE.Quaternion(), one = new THREE.Vector3(1, 1, 1);
+  slots.forEach(([x, z, side], i) => {
+    rq.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, Math.PI / 2 * side);
+    field.setMatrixAt(i, m4.compose(new THREE.Vector3(x, 0, z), rq, one));
+    field.setColorAt(i, FRAME[Math.floor(r0() * FRAME.length)]);
+  });
+  field.castShadow = true;
+  scene.add(field);
   const myBike = makeBike();
   myBike.rotation.y = Math.PI / 2;
   const bikeHome = new THREE.Vector3(mySlotX, 0, rowZ(myRow));
@@ -278,7 +302,8 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
   }
   const portrait = () => innerWidth / innerHeight < 0.8;
   const SHOTS = {
-    rows: () => [new THREE.Vector3(-17, 4.2, 0.5), new THREE.Vector3(-7, 1.2, -0.8)],
+    // All four row signs must fit: portrait phones step back until the sign line (~12.5 m wide) fills the view.
+    rows: () => portrait() ? [new THREE.Vector3(-27, 6.5, -0.9), new THREE.Vector3(-8.6, 1.4, -0.9)] : [new THREE.Vector3(-17, 4.2, 0.5), new THREE.Vector3(-7, 1.2, -0.8)],
     towel: () => [new THREE.Vector3(towelAt.x - (portrait() ? 0.4 : 1.6), portrait() ? 3.0 : 2.4, towelAt.z + (portrait() ? 1.9 : 2.2)), new THREE.Vector3(towelAt.x + 0.15, 0.2, towelAt.z - 0.35)],
     lane: () => [new THREE.Vector3(LINE_X - 3, 3.2, LANE_Z + (portrait() ? 10 : 8)), new THREE.Vector3(LINE_X - 1, 0.6, LANE_Z)],
   };
@@ -439,8 +464,9 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
     const el = $('#ttSheet');
     el.innerHTML = html + `<div class="d-actions">${actions.map((a, i) => `<button type="button" data-a="${i}" class="${a.primary ? 'primary' : ''}">${esc(a.label)}</button>`).join('')}</div>`;
     el.hidden = false;
+    root.classList.add('sheet-open');
     el.querySelectorAll('[data-a]').forEach(b => {
-      b.onclick = () => { const a = actions[+b.dataset.a]; if (!a.keep) el.hidden = true; a.run?.(); };
+      b.onclick = () => { const a = actions[+b.dataset.a]; if (!a.keep) { el.hidden = true; root.classList.remove('sheet-open'); } a.run?.(); };
     });
     el.querySelector('button.primary')?.focus({ preventScroll: true });
   }
@@ -484,7 +510,7 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
   let raf = 0, alive = true, last = performance.now();
   function frame(now) {
     if (!alive) return;
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const dt = Math.min(0.12, (now - last) / 1000);           // the clock is wall time, so motion must be too (slow phones)
     last = now;
     if (phase !== 'intro' && phase !== 'done') $('#ttTime').textContent = ((now - t0) / 1000).toFixed(1);
     const k = 1 - Math.pow(0.0015, dt);
@@ -493,6 +519,10 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
     camera.lookAt(cam.look);
     if (rolling) {
       pushX += dt * 3.6;
+      // Track the runner side-on so the runner, the bike, the white line and the green zone share the frame.
+      const ahead = Math.min(pushX + 2.5, LINE_X + 1);
+      cam.toPos.set(ahead - 1, 2.6, LANE_Z + (portrait() ? 8.5 : 7));
+      cam.toLook.set(ahead, 0.8, LANE_Z);
       runner.position.set(pushX, 0, LANE_Z - 0.55);
       myBike.position.set(pushX + 0.4, 0, LANE_Z);
       myBike.visible = true;
@@ -538,6 +568,6 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
   return {
     get state() { return { phase, bib, myRow, penalties: penalties.slice(), helmetOn, buckled, shoesOn, gels, pushX, elapsed }; },
     project(obj) { const v = obj.getWorldPosition(new THREE.Vector3()).project(camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight }; },
-    signs, items, bikeHit, LINE_X, ZONE, exit,
+    signs, items, bikeHit, LINE_X, ZONE, exit, get drawCalls() { return renderer.info.render.calls; },
   };
 }
