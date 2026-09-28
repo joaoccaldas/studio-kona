@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "coordinateSystem": "WGS84",
+  "anchor": "bellagio-las-vegas",
+  "places": [
+    {
+      "id": "bellagio-las-vegas",
+      "name": "Bellagio",
+      "kind": "memory_world",
+      "lat": 36.1126,
+      "lon": -115.1767,
+      "snapshot": "2022-10",
+      "detail": "interior+exterior",
+      "state": "local_unpushed",
+      "evidence": "Existing Bellagio world referenced by KONA HANDOVER; geometry is intentionally not duplicated in this branch."
+    },
+    {
+      "id": "luxor-las-vegas",
+      "name": "Luxor",
+      "kind": "memory_world",
+      "lat": 36.0955,
+      "lon": -115.1761,
+      "snapshot": "2022-10",
+      "detail": "exterior",
+      "state": "local_unpushed",
+      "evidence": "Visible IDE status: exterior present, interiors not yet reconstructed."
+    },
+    {
+      "id": "st-george-utah",
+      "name": "St. George, Utah",
+      "kind": "historical_place",
+      "lat": 37.0965,
+      "lon": -113.5684,
+      "snapshot": "2022-10",
+      "detail": "atlas_node",
+      "state": "scaffolded",
+      "evidence": "Geographic anchor only. Historical October 2022 streets/buildings/venues must be reconstructed from dated evidence before claiming visual fidelity."
+    },
+    {
+      "id": "kailua-kona",
+      "name": "Kailua-Kona",
+      "kind": "race_world",
+      "lat": 19.639162,
+      "lon": -155.9968082,
+      "snapshot": "2026-10-10",
+      "detail": "high",
+      "state": "implemented",
+      "evidence": "KONA world repository origin at Kailua Pier."
+    }
+  ]
+}
