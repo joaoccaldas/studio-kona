@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { gearModel, setGlow } from './gearModels.js';
 import { defineChallenge, submitRun, recordFor, dailySeed, rng, fmt, MEDAL_LABEL, shareText, deepLink } from './challenge.js';
 
 export const TRANSITION = defineChallenge({
@@ -271,7 +272,8 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
   const order = GEAR.map((g, i) => i).sort(() => r0() - 0.5);
   const items = GEAR.filter(g => gearGeo[g.id]).map((g, i) => {
     const borrowed = missing.includes(g.id);
-    const mesh = new THREE.Mesh(gearGeo[g.id], tintMaterial(borrowed ? 0x8a9096 : g.kind === 'helmet' ? (look.suit || 0xffffff) : 0xffffff));
+    const tint = borrowed ? 0x8a9096 : g.kind === 'helmet' ? (look.suit || 0xffffff) : 0xffffff;
+    const mesh = gearModel(g.id, tint) || new THREE.Mesh(gearGeo[g.id], tintMaterial(tint));
     const [dx, dz] = towelSpots[order[i] % towelSpots.length];
     mesh.position.set(towelAt.x + dx, 0.02, towelAt.z + dz);
     mesh.rotation.y = r0() * Math.PI * 2;
@@ -544,7 +546,7 @@ export async function runTransitionTangle({ player, rewards, base = 'assets/', o
       }
     }
     const glow = phase === 'gear' ? 0.25 + 0.2 * Math.sin(now * 0.006) : 0;
-    for (const it of items) it.mesh.material.emissiveIntensity = it.taken ? 0 : glow;
+    for (const it of items) setGlow(it.mesh, it.taken ? 0 : glow);
     for (const s of signs) s.scale.setScalar(phase === 'rows' ? 1 + Math.sin(now * 0.005 + s.userData.row) * 0.03 : 1);
     renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);

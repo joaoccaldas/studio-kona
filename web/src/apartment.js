@@ -6,6 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { addRoomLight, createBursts, createSfx, confetti } from './aptFx.js';
+import { gearModel, setGlow } from './gearModels.js';
 
 const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y); // Blender (x, y, z-up) -> Three.js
 const MEDALS = [{ id: 'gold', label: 'Gold', t: 45 }, { id: 'silver', label: 'Silver', t: 75 }, { id: 'bronze', label: 'Bronze', t: Infinity }];
@@ -24,6 +25,8 @@ function kitMaterial(tint) {
   };
   return m;
 }
+
+const SHOW = 1.3;   // gear is shown 30% larger than life so it reads and taps well from across the room
 
 export async function runApartment({ player, rewards, base = 'assets/', onDone }) {
   const look = player.look || {};
@@ -127,7 +130,8 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
   const items = wanted.filter(id => geo[id] && byId[id]).map((id, i) => {
     const def = byId[id];
     const tint = def.cat === 'apparel' || def.cat === 'helmet' ? (look.suit || 0xffffff) : 0xffffff;
-    const mesh = new THREE.Mesh(geo[id], kitMaterial(tint));
+    const mesh = gearModel(id, tint) || new THREE.Mesh(geo[id], kitMaterial(tint));   // hand-shaped model where one exists
+    mesh.scale.setScalar(SHOW);
     const spot = free[i % free.length];
     mesh.position.copy(wpos(spot));
     mesh.rotation.y = spot.rotation.y;
@@ -199,10 +203,10 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
   function hover(e) {
     const it = pick(e);
     if (it === hovered) return;
-    if (hovered) hovered.mesh.scale.setScalar(1);
+    if (hovered) hovered.mesh.scale.setScalar(SHOW);
     hovered = it;
     canvas.style.cursor = it ? 'pointer' : 'grab';
-    if (it) { it.mesh.scale.setScalar(1.12); tip(it.def.name); }
+    if (it) { it.mesh.scale.setScalar(SHOW * 1.12); tip(it.def.name); }
   }
 
   // ---------------------------------------------------------------- game state
@@ -387,7 +391,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     items.forEach((it, i) => {
       it.state = 'loose';
       it.mesh.visible = true;
-      it.mesh.scale.setScalar(1);
+      it.mesh.scale.setScalar(SHOW);
       it.mesh.position.copy(it.home || wpos(free[i % free.length]));
     });
     count();
@@ -420,7 +424,7 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
       f.it.mesh.position.lerpVectors(f.from, f.to, e);
       f.it.mesh.position.y += Math.sin(e * Math.PI) * 0.6;
       f.it.mesh.rotation.y += dt * 6;
-      f.it.mesh.scale.setScalar(1 - e * 0.35);
+      f.it.mesh.scale.setScalar(SHOW * (1 - e * 0.35));
       if (f.t >= 1) {
         flights.splice(i, 1);
         f.it.mesh.visible = false;
@@ -437,8 +441,8 @@ export async function runApartment({ player, rewards, base = 'assets/', onDone }
     }
     const glow = 0.18 + 0.12 * Math.sin(now * 0.004);
     for (const it of items) {
-      if (it.state !== 'loose') { it.mesh.material.emissiveIntensity = 0; continue; }
-      it.mesh.material.emissiveIntensity = it.pulse && now - hintAt < 3000 ? 0.9 * (0.5 + 0.5 * Math.sin(now * 0.012)) : glow * 0.35;
+      if (it.state !== 'loose') { setGlow(it.mesh, 0); continue; }
+      setGlow(it.mesh, it.pulse && now - hintAt < 3000 ? 0.9 * (0.5 + 0.5 * Math.sin(now * 0.012)) : glow * 0.35);
     }
     if (!finished && !coach.active && now - lastAct > 15000 && needed.some(i => i.state === 'loose')) { lastAct = now; tip('Stuck? Tap Hint.'); }
     renderer.render(scene, camera);

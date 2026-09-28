@@ -30,6 +30,11 @@ export function createLocomotion(ctx) {
     isSwimming: false,
     isSprinting: false,
     moveInput: new THREE.Vector2(),
+    stick: new THREE.Vector2(),        // on-screen joystick (touchControls.js)
+    fixedStick: false,                 // when the on-screen joystick exists, canvas touches only look around
+    cruise: false,                     // bike: keep pedalling without holding the stick
+    tuckHold: false,                   // bike: tuck button held
+    boostT: 0,                         // seconds of ring boost left
     stepTimer: 0,
     pointerLocked: false,
     lastValidGroundY: 2.15,
@@ -124,7 +129,7 @@ export function createLocomotion(ctx) {
     const w = window.innerWidth;
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
-      if (t.clientX < w * 0.45 && !touch.activeLeft) {
+      if (t.clientX < w * 0.45 && !touch.activeLeft && !state.fixedStick) {
         touch.activeLeft = true;
         touch.leftId = t.identifier;
         touch.leftOrigin = { x: t.clientX, y: t.clientY };
@@ -247,6 +252,11 @@ export function createLocomotion(ctx) {
   }
 
   return {
+    setStick(x, y) { state.stick.set(x, y); },
+    useFixedStick(on) { state.fixedStick = on; },
+    setCruise(on) { state.cruise = !!on; return state.cruise; },
+    setTuck(on) { state.tuckHold = !!on; },
+    boost(sec = 2.5) { state.boostT = Math.max(state.boostT, sec); if (state.bike) state.bike.v = Math.max(state.bike.v, 11); },
     setActive(on) {
       state.active = on;
       document.body.classList.toggle('walking', on);
@@ -313,8 +323,14 @@ export function createLocomotion(ctx) {
         f += state.moveInput.y;
         r += state.moveInput.x;
       }
+      if (state.stick.lengthSq() > 0.01) {
+        f += state.stick.y;
+        r += state.stick.x;
+      }
+      if (state.cruise && state.mode === 'bike' && f > -0.3) f = Math.max(f, 1);   // cruise pedals; pull back to brake
 
-      state.isSprinting = !!(keys.ShiftLeft || keys.ShiftRight);
+      state.isSprinting = !!(keys.ShiftLeft || keys.ShiftRight || state.tuckHold);
+      state.boostT = Math.max(0, state.boostT - dt);
       const boost = (DEBUG_BOOST && keys.KeyQ) ? 4.5 : 1.0;   // dev-only: ?debug=1
 
       // 2. Ground elevation & Swimming check
@@ -333,7 +349,7 @@ export function createLocomotion(ctx) {
         const b = state.bike || (state.bike = { v: 0, steer: 0, power: 0, ring: 50, cog: 14, t: 0 });
         b.t += dt;
         const pedal = Math.max(0, f), brake = Math.max(0, -f);
-        const targetP = pedal * (state.isSprinting ? 420 : 250) * boost;
+        const targetP = pedal * (state.isSprinting ? 420 : 250) * boost * (state.boostT > 0 ? 1.9 : 1);
         b.power += (targetP - b.power) * Math.min(1, dt * 3);
         const wind = windAt(camera.position.x, camera.position.z, b.t);
         const headW = wind.dot(fwd), crossW = wind.dot(right);

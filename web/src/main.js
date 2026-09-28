@@ -23,6 +23,9 @@ import { createIslandLife, PHASES } from './islandLife.js';
 import { createRewards, XP_FOR, CREDITS_FOR } from './rewards.js';
 import { createLifeHud } from './lifeHud.js';
 import { runApartment } from './apartment.js';
+import { mountTouchControls } from './touchControls.js';
+import { createRideRings } from './rideRings.js';
+import { createSfx } from './aptFx.js';
 import { runTransitionTangle, TRANSITION } from './transitionTangle.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -222,7 +225,7 @@ let progress = null, drawer = null, artifactViewer = null;
 let saveData = loadGameSave();
 let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
-let pierBikesMesh = null;
+let pierBikesMesh = null, touchUi = null, highwayPts = null, rideRings = null;
 let living = null, rewards = null, lifeHud = null, geocodes = {}, raceWeekData = null, roaming = false;
 let streamer = null;
 let man = null;
@@ -324,6 +327,7 @@ async function load() {
 
   // Initialize Locomotion, Echo Markers, Canyon Studio Pier Museum & Hawaiian Heritage Hunt
   locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast, onModeRequest: m => setLocomotionMode(m) });
+  if (coarse) touchUi = mountTouchControls({ locomotion, onModeToggle: () => setLocomotionMode(locomotion.getState().mode === 'bike' ? 'walk' : 'bike') });
   echoMarkers = createEchoMarkers({ scene, W, heightAt });
   pierMuseumStudio = createPierMuseumStudio({ scene, camera, W, heightAt, toast, progress: () => progress });
   createWinnersHall({ scene, W, heightAt, addGround, progress: () => progress, base: A, explorer, grounds }).then(hall => { window.__winners = hall; }).catch(e => console.warn('Winners hall failed', e));
@@ -392,6 +396,13 @@ async function initIslandLife() {
     base: A,
   });
   window.__island = living;
+  if (highwayPts) {
+    rideRings = createRideRings({
+      scene, W, pts: highwayPts, surfaceY, rewards, locomotion, sfx: createSfx(),
+      pop: (g, label) => lifeHud.pop(g, label),
+      onCount: (n, total) => { const el = $('#ringHud'); if (el) el.textContent = `Aloha rings ${n} / ${total}`; },
+    });
+  }
   const rr = await (await fetch(A + 'routes.json')).json();
   const run = rr.run.map(([lon, lat]) => toLocal(lat, lon));
   runLocal = d => { let acc = 0; for (let i = 1; i < run.length; i++) { const l = Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]); if (acc + l >= d) { const t = (d - acc) / l; return [run[i - 1][0] + (run[i][0] - run[i - 1][0]) * t, run[i - 1][1] + (run[i][1] - run[i - 1][1]) * t]; } acc += l; } return null; };
@@ -639,6 +650,7 @@ function setLocomotionMode(targetMode) {
     mode = locomotion?.getState().active ? 'walk' : mode === 'bike' ? 'walk' : mode;
   }
   document.body.dataset.mode = mode;
+  touchUi?.sync(mode);
   const modeIcon = $('#modeIcon');
   const modeLabel = $('#modeLabel');
   const hint = $('#walkHint');
@@ -1327,6 +1339,7 @@ function queenK() {
     [19.6392, -155.9968],
   ];
   const pts = densify(wps.map(([lat, lon]) => toLocal(lat, lon)), 80);
+  highwayPts = pts;
   solidRoad(pts, 22, 0.45);
   const along = 0.4;
   highwayStart = [
@@ -1639,6 +1652,7 @@ renderer.setAnimationLoop(() => {
   // Living island: crowds, athletes, canoes, flags, shells, honu
   living?.update(dt, camera);
   lifeTick(dt);
+  rideRings?.update(dt, camera);
 
   // Fog & depth scaling
   scene.fog.density = 0.00011 / (1 + Math.max(0, camera.position.y) / 150);
@@ -1716,6 +1730,7 @@ window.__kona = {
   setHour,
   toast,
   get island() { return living; },
+  get rings() { return rideRings; },
   controls,
   W,
   heightAt: (x, y) => heightAt(x, y),
