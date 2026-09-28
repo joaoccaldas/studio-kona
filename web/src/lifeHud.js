@@ -112,5 +112,5 @@ export function createLifeHud({ rewards, onUseTicket }) {
   $('#wallet')?.addEventListener('click', () => bag({ shellsFound: rewards.shellsFoundToday(), shellsTotal: 5 }));
   window.addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) close(); });
   wallet();
-  return { wallet, dispatch, bag, gate, pop, close, get open() { return !box.hidden; } };
+  return { wallet, dispatch, bag, gate, pop, close, sheet: open, get open() { return !box.hidden; } };
 }

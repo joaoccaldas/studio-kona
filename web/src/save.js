@@ -41,6 +41,8 @@ export function validPlayer(p) {
     },
   };
   if (p.last && Number.isFinite(p.last.x) && Number.isFinite(p.last.y)) out.last = { x: p.last.x, y: p.last.y };
+  // The bike travels in its box and is built at KOA. Anyone who has already ridden the island has a built bike.
+  if (p.bikeBuilt === true || out.last) out.bikeBuilt = true;
   if (p.packing && typeof p.packing === 'object') {
     const k = p.packing;
     out.packing = {

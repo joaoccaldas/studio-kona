@@ -345,22 +345,27 @@ function arrive() {
   const player = loadPlayer();
   const koa = toLocal(KOA.lat, KOA.lon);
   const airport = buildAirport(scene, W, heightAt, koa);
-  const sx = player?.last?.x ?? highwayStart?.[0] ?? airport.stand[0];
-  const sy = player?.last?.y ?? highwayStart?.[1] ?? airport.stand[1];
-  const face = player?.last ? [0, 0] : (highwayAim || airport.look);
+  koaStand = airport.stand;
+  // First arrival: on foot at the terminal curb with a bike box to collect. Returning: where you left off.
+  const boxed = !bikeReady();
+  const sx = player?.last?.x ?? (boxed ? airport.stand[0] : highwayStart?.[0] ?? airport.stand[0]);
+  const sy = player?.last?.y ?? (boxed ? airport.stand[1] : highwayStart?.[1] ?? airport.stand[1]);
+  const face = player?.last ? [0, 0] : boxed ? airport.look : (highwayAim || airport.look);
   explorer?.stamp(koa[0], koa[1], 2800);
   explorer?.stamp(sx, sy, 800);
   const h = Math.max(heightAt(sx, sy), airport.h, 0);
   const look = W(face[0], face[1], h);
   const here = W(sx, sy, h);
   const yaw = Math.atan2(-(look.x - here.x), -(look.z - here.z));
-  setLocomotionMode(player?.last ? 'walk' : 'bike');
+  setLocomotionMode(player?.last || boxed ? 'walk' : 'bike');
   locomotion.teleport(here.x, h + 1.7, here.z, yaw, -0.15);
   const who = player?.name ? player.name : 'Athlete';
   const ord = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th'));
   const times = player?.visits > 1 ? `${ord(player.visits)} time in Kona` : 'first time in Kona';
   if (player?.last) toast(`${who}, welcome back. Ride south. The island opens as you go.`);
-  $('#cap').innerHTML = `<b>${KOA.short}</b><span>${KOA.name}. Ride toward Kailua-Kona.</span>`;
+  else if (boxed) setTimeout(() => toast(`Aloha, ${who}. Your bike box is at baggage claim.`), 900);
+  $('#cap').innerHTML = boxed ? `<b>${KOA.short}</b><span>Baggage claim. Collect your bike box and build your bike.</span>`
+    : `<b>${KOA.short}</b><span>${KOA.name}. Ride toward Kailua-Kona.</span>`;
   const sub = document.querySelector('.top-sub');
   if (sub && player?.name) sub.textContent = `${player.name} · ${times}`;
   arrived = true;
@@ -623,6 +628,11 @@ function setLocomotionMode(targetMode) {
     mode = targetMode ? 'walk' : 'fly';
   }
 
+  if (mode === 'bike' && !bikeReady()) {
+    toast('Your bike is still in its box. Build it at KOA baggage claim first.');
+    if (locomotion?.getState().mode === 'bike') return;
+    mode = locomotion?.getState().active ? 'walk' : mode === 'bike' ? 'walk' : mode;
+  }
   document.body.dataset.mode = mode;
   const modeIcon = $('#modeIcon');
   const modeLabel = $('#modeLabel');
@@ -806,6 +816,54 @@ function stepVerb(st) {
   if (st.action) return st.action;
   return st.isEcho ? 'Enter the memory' : 'Interact';
 }
+// ------------------------------------------------------------------ KOA: collect the bike box, build the bike, first ride
+// The bike flew in its box (Pack for Kona). It is built at baggage claim before the first ride; what you forgot to pack
+// is sorted out here: forgotten pedals are bought (Credits) or borrowed from the mechanic.
+let koaStand = null;
+function bikeReady() { return !!loadPlayer()?.bikeBuilt || !loadPlayer(); }
+function buildBike() {
+  if (!lifeHud) return;
+  const player = loadPlayer();
+  const noPedals = (player?.packing?.missing || []).includes('pedals');
+  const steps = [
+    { id: 'pedals', title: noPedals ? 'No pedals in the box' : 'Fit your pedals',
+      text: noPedals ? 'You left them at home. The mechanic by the carousel has a pair.' : 'They came off to fit the bike in the box. Left pedal threads the other way.' },
+    { id: 'cockpit', title: 'Bars and seatpost', text: 'Aero bars back on, seatpost to your marked height. Torque to spec.' },
+    { id: 'tyres', title: 'Pump the tyres', text: 'Air pressure drops on the flight. Back up to race pressure.' },
+  ];
+  let i = 0;
+  const next = () => {
+    const s = steps[i];
+    if (!s) return done();
+    const actions = [];
+    if (s.id === 'pedals' && noPedals) {
+      const afford = (rewards?.state.credits || 0) >= 40;
+      actions.push({ label: afford ? 'Buy a pair · 40 Credits' : 'Buy a pair · need 40 Credits', primary: afford, disabled: !afford,
+        run: () => { if (rewards?.spend(40, 'Pedals at KOA')) { toast('Pedals bought. −40 Credits.'); i++; setTimeout(next, 250); } } });
+      actions.push({ label: 'Borrow his old ones', primary: !afford, run: () => { toast('Borrowed pedals. Bring them back after the race.'); i++; setTimeout(next, 250); } });
+    } else {
+      actions.push({ label: 'Done', primary: true, run: () => { i++; setTimeout(next, 250); } });
+    }
+    lifeHud.sheet(`<div class="d-eyebrow">Build your bike · ${i + 1} / ${steps.length}</div><h2 id="dTitle">${s.title}</h2><p class="d-note">${s.text}</p>`, actions);
+  };
+  const done = () => {
+    savePlayer({ ...loadPlayer(), bikeBuilt: true });
+    const g = rewards?.grantOnce('arrival:bike_built', { xp: 60, credits: 20, reason: 'Built your bike at KOA' });
+    currentInteraction = null;
+    $('#actionPrompt')?.classList.remove('on');
+    if (highwayStart && locomotion) {
+      const h = Math.max(heightAt(highwayStart[0], highwayStart[1]), 0.4);
+      const here = W(highwayStart[0], highwayStart[1], h), look = W(...(highwayAim || [0, 0]), h);
+      locomotion.teleport(here.x, h + 1.7, here.z, Math.atan2(-(look.x - here.x), -(look.z - here.z)), -0.1);
+    }
+    setLocomotionMode('bike');
+    $('#cap').innerHTML = `<b>${KOA.short}</b><span>${KOA.name}. Ride toward Kailua-Kona.</span>`;
+    lifeHud.pop(g, 'Bike built');
+    setTimeout(() => toast('First ride: south on the Queen K to Kailua-Kona. W to pedal, Shift to tuck.'), 1600);
+  };
+  next();
+}
+
 // ------------------------------------------------------------------ Challenges (challenge.js + one file per activity)
 const T1 = [4, 18];                                          // transition on Kailua Pier (raceweek places)
 function openChallenge(id, after) {
@@ -820,7 +878,9 @@ function openChallenge(id, after) {
 
 function refreshInteraction(questReached) {
   let it = null;
-  if (questReached && currentStep) {
+  if (arrived && !bikeReady() && koaStand && locomotion?.getState().active && Math.hypot(camera.position.x - koaStand[0], -camera.position.z - koaStand[1]) < 40) {
+    it = { key: 'koa:bikebox', label: 'Build your bike', sub: 'Bike box · baggage claim', run: () => buildBike() };
+  } else if (questReached && currentStep) {
     it = { key: 'quest:' + currentStep.id, label: stepVerb(currentStep), sub: currentStep.text, run: () => completeCurrentStep() };
   } else if (locomotion?.getState().active && !locomotion.getState().isSwimming && Math.hypot(camera.position.x - T1[0], -camera.position.z - T1[1]) < 22) {
     it = { key: 'challenge:transition', label: 'Play Transition Tangle', sub: 'T1 · beat your best', run: () => openChallenge(TRANSITION.id) };

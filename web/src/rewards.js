@@ -1,3 +1,4 @@
+import { hstDay, nextHstMidnight, daysBetween } from './clock.js';
 // Rewards that bring you back: XP (your level), Credits (spent later in town and the locker), a daily streak
 // that makes progress faster, rare items, and five shells hidden around town each day.
 // Race-week days open one per day you play (or on their real Hawaiʻi date); a Fast-forward ticket opens one early.
@@ -23,7 +24,7 @@ export const ITEMS = {
   lei: { name: 'Flower lei', rarity: 'rare', icon: '💐', text: 'Given at arrivals, finishes and farewells.' },
   honu_badge: { name: 'Honu sighting', rarity: 'epic', icon: '🐢', text: 'Green sea turtles rest on Kona beaches. Stay 3 m (10 ft) away.' },
   sunrise: { name: 'Pier sunrise print', rarity: 'epic', icon: '🌅', text: 'Race morning: the sun comes up behind Hualālai.' },
-  golden_shell: { name: 'Golden cowrie', rarity: 'legendary', icon: '🐚', text: 'A rare find on the Kona coast. Worth 250 Credits.' },
+  golden_shell: { name: 'Golden cowrie', rarity: 'legendary', icon: '🐚', text: 'A rare find on the Kona coast. Worth 250 Credits.', credits: 250 },
   crawl: { name: 'The Crawl, 1982', rarity: 'legendary', icon: '🏅', text: 'In February 1982 Julie Moss crawled to the finish on Aliʻi Drive.' },
 };
 const POOL = {
@@ -36,10 +37,8 @@ const POOL = {
 export const XP_FOR = { step: 40, day: 150, shell: 25, honu: 30, challenge: 120 };
 export const CREDITS_FOR = { step: 10, day: 50, challenge: 40 };
 
-const pad = n => String(n).padStart(2, '0');
-export function localDate(d = new Date()) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
-function hawaiiDate(now = Date.now()) { return new Date(now - 10 * 3600e3).toISOString().slice(0, 10); }
-function daysBetween(a, b) { return Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 86400e3); }
+// Every daily mechanic runs on the one Hawaiʻi-time clock (clock.js).
+export const localDate = () => hstDay();
 function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function rng(seed) { let s = seed || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; }; }
 
@@ -95,16 +94,27 @@ export function createRewards({ onChange } = {}) {
     const gx = Math.round(xp * k), gc = Math.round(credits * k);
     const before = levelFor(st.xp).level;
     st.xp += gx;
-    st.credits += gc;
-    for (const id of items) {
-      addItem(id);
-      if (id === 'golden_shell') st.credits += 250;
-    }
-    st.log.unshift({ t: Date.now(), reason, xp: gx, credits: gc, items });
+    // Items with a Credit value (a golden cowrie) pay through the same entry, so the log always equals the wallet change.
+    const itemCredits = items.reduce((a, id) => a + (ITEMS[id]?.credits || 0), 0);
+    const total = gc + itemCredits;
+    st.credits += total;
+    for (const id of items) addItem(id);
+    st.log.unshift({ t: Date.now(), reason, xp: gx, credits: total, items });
     st.log.length = Math.min(st.log.length, 40);
     save();
     const after = levelFor(st.xp).level;
-    return { xp: gx, credits: gc, items, levelUp: after > before ? after : 0, multiplier: k };
+    return { xp: gx, credits: total, items, levelUp: after > before ? after : 0, multiplier: k };
+  }
+
+  // Spending goes through the same ledger (a negative entry), never below zero. Returns false if it cannot be afforded.
+  function spend(credits, reason = '') {
+    const c = Math.round(credits);
+    if (!(c > 0) || st.credits < c) return false;
+    st.credits -= c;
+    st.log.unshift({ t: Date.now(), reason, xp: 0, credits: -c, items: [] });
+    st.log.length = Math.min(st.log.length, 40);
+    save();
+    return true;
   }
 
   // First completion pays; replays (going back to an earlier day, a second tap) do not.
@@ -133,7 +143,7 @@ export function createRewards({ onChange } = {}) {
 
   // Race-week days that are open: one per distinct day played, at least up to today's Hawaiʻi date, plus tickets.
   function daysOpen(total) {
-    const idx = daysBetween(WEEK_START, hawaiiDate());
+    const idx = daysBetween(WEEK_START, hstDay());
     const real = idx > total ? total : idx + 1;
     return Math.max(1, Math.min(total, Math.max(st.days.length, real) + st.ticketsUsed));
   }
@@ -144,11 +154,7 @@ export function createRewards({ onChange } = {}) {
     save();
     return true;
   }
-  function nextOpening() {
-    const t = new Date();
-    t.setHours(24, 0, 0, 0);
-    return t;
-  }
+  function nextOpening() { return nextHstMidnight(); }
 
   // Five shells a day at real town and beach spots, the same for everyone on that date.
   function todaysShells(spots) {
@@ -188,7 +194,7 @@ export function createRewards({ onChange } = {}) {
     get state() { return st; },
     get level() { return levelFor(st.xp); },
     get multiplier() { return multiplier(); },
-    grant, grantOnce, claimed, checkIn, daysOpen, useTicket, nextOpening, todaysShells, pickShell, spotHonu, seePhase, roll,
+    grant, grantOnce, claimed, spend, checkIn, daysOpen, useTicket, nextOpening, todaysShells, pickShell, spotHonu, seePhase, roll,
     shellsFoundToday: () => (st.shells[localDate()] || []).length,
   };
   return api;

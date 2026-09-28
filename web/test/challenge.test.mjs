@@ -74,7 +74,8 @@ test('arena records are validated on read', () => {
 });
 
 test('daily seed is the same for everyone on a date and differs across days', () => {
-  const d1 = new Date(Date.UTC(2026, 9, 3, 1)), d1b = new Date(Date.UTC(2026, 9, 3, 23)), d2 = new Date(Date.UTC(2026, 9, 4));
+  // Hawaiʻi days: 3 Oct HST runs from 10:00 UTC on the 3rd to 10:00 UTC on the 4th.
+  const d1 = new Date(Date.UTC(2026, 9, 3, 11)), d1b = new Date(Date.UTC(2026, 9, 4, 9)), d2 = new Date(Date.UTC(2026, 9, 4, 11));
   assert.equal(ch.dailySeed('x', d1), ch.dailySeed('x', d1b));
   assert.notEqual(ch.dailySeed('x', d1), ch.dailySeed('x', d2));
   const r1 = ch.rng(42), r2 = ch.rng(42);

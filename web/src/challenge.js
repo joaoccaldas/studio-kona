@@ -4,6 +4,7 @@
 // medal tier ever reached; replays only improve the personal best. Results live in the versioned save ("arena").
 // Pure logic here (no DOM, no three.js) so every rule is unit-tested; each activity supplies only its own gameplay.
 import { readSection, writeSection, validArena } from './save.js';
+import { hstDay } from './clock.js';
 export { validArena };
 
 export const MEDALS = ['gold', 'silver', 'bronze'];
@@ -83,7 +84,7 @@ export const recordFor = id => readSection('arena')[id] || null;
 
 // Deterministic per-day seed, the same for everyone on that date (fair comparisons, later async ghosts).
 export function dailySeed(id, date = new Date()) {
-  const day = `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()}`;
+  const day = hstDay(date.getTime());                        // Hawaiʻi day (clock.js)
   let h = 2166136261;
   for (const c of id + ':' + day) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
   return h >>> 0;
