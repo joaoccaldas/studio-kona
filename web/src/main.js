@@ -12,6 +12,9 @@ import { createEchoMarkers } from './echoMarkers.js';
 import { createPierMuseumStudio } from './pierMuseumStudio.js';
 import { createHawaiianScavengerHunt } from './hawaiianScavengerHunt.js';
 import { playMemoryChime, playUnlockFanfare } from './audio.js';
+import { createProgress } from './progress.js';
+import { initMuseumDrawer } from './museumDrawer.js';
+import { initArtifactModal } from './artifactModal.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -197,6 +200,7 @@ let locomotion = null;
 let echoMarkers = null;
 let pierMuseumStudio = null;
 let hawaiianHunt = null;
+let progress = null, drawer = null, artifactViewer = null;
 let saveData = loadGameSave();
 let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
@@ -301,8 +305,11 @@ async function load() {
   // Initialize Locomotion, Echo Markers, Canyon Studio Pier Museum & Hawaiian Heritage Hunt
   locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast, onModeRequest: m => setLocomotionMode(m) });
   echoMarkers = createEchoMarkers({ scene, W, heightAt });
-  pierMuseumStudio = createPierMuseumStudio({ scene, camera, W, heightAt });
+  pierMuseumStudio = createPierMuseumStudio({ scene, camera, W, heightAt, toast, progress: () => progress });
   hawaiianHunt = createHawaiianScavengerHunt({ scene, camera, W, heightAt, toast });
+  progress = createProgress(saveData, { heritage: () => hawaiianHunt?.progress, save: () => saveGameProgress(saveData), toast, quests: RACE_WEEK_QUESTS });
+  artifactViewer = initArtifactModal(() => saveGameProgress(saveData));
+  drawer = initMuseumDrawer(art => artifactViewer.show(art, false), idx => jumpToDay(idx));
 
   console.log('[Kona] Initializing game loop...');
   initGameLoop();
@@ -355,9 +362,12 @@ function initGameLoop() {
   const musBtn = $('#topMuseumBtn');
   if (musBtn) {
     musBtn.onclick = () => {
-      if (pierMuseumStudio) pierMuseumStudio.open(7); // Open with Frodeno 2019
+      if (pierMuseumStudio) pierMuseumStudio.open(); // opens on the latest bike you have unlocked
     };
   }
+
+  const myBtn = $('#topMyKonaBtn');
+  if (myBtn) myBtn.onclick = () => openMyKona();
 
   // Top Heritage Button -> Opens Hawaiian Scavenger Hunt Lore Codex
   const herBtn = $('#topHeritageBtn');
@@ -456,7 +466,9 @@ function setupActiveStep() {
   $('#questProgressFill').style.width = `${pct}%`;
   $('#compassLabel').textContent = currentStep.text;
 
+  progress?.beginDay(currentDay.id);
   renderChecklist();
+  renderChallenge();
 }
 
 function renderChecklist() {
@@ -532,7 +544,9 @@ function completeCurrentStep() {
 
     if (pierMuseumStudio) {
       const yearIdx = pierMuseumStudio.getBikes().findIndex(b => b.year.includes(currentStep.echoYear));
-      pierMuseumStudio.open(yearIdx >= 0 ? yearIdx : 7);
+      // A memory reveals its exhibit if the museum has one; otherwise its artifact in the viewer.
+      if (yearIdx >= 0) pierMuseumStudio.open(yearIdx);
+      else if (artifactViewer) artifactViewer.show(currentStep.artifact, true);
     }
 
     saveGameProgress(saveData);
@@ -635,6 +649,34 @@ function jumpToDay(dayIdx) {
 
 function updateHUD() {
   renderChecklist();
+  renderChallenge();
+}
+
+function renderChallenge() {
+  const el = $('#questChallenge');
+  if (!el || !progress || !currentDay) return;
+  const c = progress.challengeFor(currentDay.id);
+  if (!c) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const unit = c.metric === 'heritage' ? '' : ' m';
+  const pct = Math.round(c.value / c.target * 100);
+  el.classList.toggle('done', c.done);
+  el.innerHTML = `<div class="qc-top"><span>${c.done ? '✓ Daily challenge' : '✦ Daily challenge'}</span><em>${Math.round(c.value)}${unit} / ${c.target}${unit}</em></div>
+    <div class="qc-text">${c.text}</div><div class="qc-bar"><i style="width:${pct}%"></i></div><div class="qc-reward">Unlocks ${c.reward}</div>`;
+}
+
+function openMyKona() {
+  if (!drawer) return;
+  drawer.open(saveData, RACE_WEEK_QUESTS);
+  const sm = progress.summary();
+  const bikes = pierMuseumStudio ? pierMuseumStudio.getBikes() : [];
+  const unlocked = bikes.filter(b => progress.isBikeUnlocked(b)).length;
+  $('#statMemories').textContent = `${sm.memories} / ${sm.totalMemories}`;
+  $('#statBikes').textContent = `${unlocked} / ${bikes.length}`;
+  const extra = $('#drawerExtraStats') || (() => { const d = document.createElement('div'); d.id = 'drawerExtraStats'; d.className = 'drawer-stats'; $('#museumDrawer .drawer-stats').after(d); return d; })();
+  extra.innerHTML = `<div class="stat-pill"><b>${sm.heritage} / ${sm.totalHeritage}</b><span>Heritage</span></div>
+    <div class="stat-pill"><b>${sm.challenges} / ${sm.totalChallenges}</b><span>Challenges</span></div>
+    <div class="stat-pill"><b>${((sm.stats.walk_m + sm.stats.ride_m + sm.stats.swim_m) / 1000).toFixed(1)} km</b><span>Explored</span></div>`;
 }
 
 // ------------------------------------------------------------------ Coffee Boat
@@ -954,6 +996,22 @@ function toast(t) {
 // ------------------------------------------------------------------ Main Animation Loop
 let fpsT = 0, frames = 0;
 let lastReachCheck = 0;
+const lastPos = new THREE.Vector3(); let hasLastPos = false, challengeUiT = 0;
+// Distance you actually travel (on foot, by bike, swimming) counts toward the day's challenge.
+function trackExploration(dt) {
+  if (!progress || !currentDay) return;
+  const st = locomotion.getState();
+  const p = camera.position;
+  if (st.active && hasLastPos) {
+    const d = Math.hypot(p.x - lastPos.x, p.z - lastPos.z);
+    if (d < 40 * Math.max(dt, 0.016)) {                   // ignore teleports / "Take me there"
+      progress.track(st.isSwimming ? 'swim_m' : (st.mode === 'bike' ? 'ride_m' : 'walk_m'), d, currentDay.id);
+    }
+  }
+  lastPos.copy(p); hasLastPos = st.active;
+  challengeUiT += dt;
+  if (challengeUiT > 0.5) { challengeUiT = 0; progress.checkHeritage(currentDay.id); renderChallenge(); }
+}
 let lastPedestalPrompt = 0;
 let lastFrameTime = performance.now();
 
@@ -988,6 +1046,7 @@ renderer.setAnimationLoop(() => {
   // Locomotion update
   if (locomotion) {
     locomotion.update(dt);
+    trackExploration(dt);
   }
 
   if (!locomotion?.getState().active && !tween && !ride) {
@@ -1064,6 +1123,8 @@ window.__kona = {
   get pierMuseumStudio() { return pierMuseumStudio; },
   get hawaiianHunt() { return hawaiianHunt; },
   saveData,
+  get progress() { return progress; },
+  openMyKona: () => openMyKona(),
   get currentDay() { return currentDay; },
   get currentStep() { return currentStep; },
   get pierBikes() { return man?.bikes; },

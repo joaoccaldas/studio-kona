@@ -70,6 +70,33 @@ const walk = await p.evaluate(() => window.__kona.locomotion.getState().speedKmh
 await p.keyboard.up('KeyW');
 check(walk >= 5 && walk <= 7, `walking speed is human (${walk} km/h)`);
 
+// 5. progression: museum gating, memories unlock exhibits, challenges track real movement
+await p.evaluate(() => localStorage.clear());
+await p.reload({ waitUntil: 'load' });
+await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('reload timeout')), 240000); p.on('console', m => { if (/Load completed/.test(m.text())) { clearTimeout(t); res(); } }); });
+await sleep(2500);
+const gate0 = await p.evaluate(() => { const k = window.__kona; const b = k.pierMuseumStudio.getBikes(); return b.filter(x => k.progress.isBikeUnlocked(x)).map(x => x.year); });
+check(gate0.length === 1 && gate0[0] === '2024', `only today's bike is open at the start (${gate0.join(',')})`);
+const ch0 = await p.evaluate(() => document.querySelector('#questChallenge').innerText.replace(/\n/g, ' '));
+check(/Daily challenge/i.test(ch0), `daily challenge shown in the day card (${ch0.slice(0, 80)})`);
+await p.keyboard.down('KeyW'); await sleep(6000); await p.keyboard.up('KeyW');
+const walked = await p.evaluate(() => window.__kona.progress.challengeFor('day1').value);
+check(walked > 5, `walking counts toward the day-1 challenge (${walked.toFixed(1)} m)`);
+for (let i = 0; i < 3; i++) {
+  await p.evaluate(() => document.querySelector('#btnTeleportStep').click()); await sleep(1800);
+  await p.keyboard.press('KeyE'); await sleep(1500);
+}
+const gate1 = await p.evaluate(() => { const k = window.__kona; return { mem: k.saveData.discoveredMemories, open: k.pierMuseumStudio.getBikes().filter(x => k.progress.isBikeUnlocked(x)).map(x => x.year), day: k.currentDay.id }; });
+check(gate1.mem.includes('1982') && gate1.open.includes('1982'), `living the 1982 memory unlocks its exhibit (${gate1.open.join(',')})`);
+check(gate1.day === 'day2', `day 1 completes and day 2 begins (${gate1.day})`);
+await sleep(2500);
+await p.screenshot({ path: `${OUT}/smoke_museum_1982.png` });
+await p.evaluate(() => { document.querySelector('#canyonStudioModal')?.classList.remove('active'); window.__kona.openMyKona(); });
+await sleep(900);
+const drawerTxt = await p.evaluate(() => document.querySelector('#museumDrawer').innerText);
+check(/heritage/i.test(drawerTxt) && /challenges/i.test(drawerTxt) && /explored/i.test(drawerTxt), 'My Kona shows memories, heritage, challenges and distance explored');
+await p.screenshot({ path: `${OUT}/smoke_my_kona.png` });
+
 check(errors.length === 0, `no page errors (${errors.slice(0, 3).join(' | ')})`);
 await b.close();
 console.log(fails.length ? `\n${fails.length} FAILED` : '\nALL PASSED');

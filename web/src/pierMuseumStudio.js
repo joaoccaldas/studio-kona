@@ -269,7 +269,10 @@ export const PIER_HERITAGE_BIKES = [
 ];
 
 export function createPierMuseumStudio(ctx) {
-  const { scene, camera, W, heightAt } = ctx;
+  const { scene, camera, W, heightAt, toast } = ctx;
+  const prog = () => (ctx.progress ? ctx.progress() : null);
+  const bikeOpen = b => !prog() || prog().isBikeUnlocked(b);
+  const silhouetteMat = new THREE.MeshStandardMaterial({ color: 0x0b0f14, roughness: 0.9, metalness: 0 });
 
   let activeBikeIndex = 7; // Jan Frodeno 2019 default
   let studioScene, studioCamera, studioRenderer, studioControls;
@@ -525,6 +528,11 @@ export function createPierMuseumStudio(ctx) {
     // Color Swatches
     modal.querySelectorAll('.canyon-swatch').forEach(dot => {
       dot.onclick = () => {
+        const p = prog();
+        if (p && !p.isColourUnlocked(dot.dataset.col)) {
+          toast && toast(`🔒 ${dot.title}: ${p.colourHint(dot.dataset.col)}`);
+          return;
+        }
         modal.querySelectorAll('.canyon-swatch').forEach(d => d.classList.remove('active'));
         dot.classList.add('active');
         applyFrameColor(dot.dataset.col);
@@ -558,8 +566,9 @@ export function createPierMuseumStudio(ctx) {
     if (!bar) return;
 
     bar.innerHTML = PIER_HERITAGE_BIKES.map((b, i) => `
-      <button type="button" class="canyon-year-chip ${i === activeBikeIndex ? 'active' : ''}" data-idx="${i}">
-        ${b.year}
+      <button type="button" class="canyon-year-chip ${i === activeBikeIndex ? 'active' : ''} ${bikeOpen(b) ? '' : 'locked'}" data-idx="${i}"
+        title="${bikeOpen(b) ? b.name : 'Locked · ' + (prog() ? prog().bikeHint(b) : '')}">
+        ${bikeOpen(b) ? '' : '🔒 '}${b.year}
       </button>
     `).join('');
 
@@ -1042,9 +1051,15 @@ export function createPierMuseumStudio(ctx) {
       studioScene.add(currentStudioMesh);
       setCameraPreset('hero');
 
-      if (bike.colorPreset) {
+      if (!bikeOpen(bike)) {
+        // Not yet lived through: show the outline only, and how to earn it.
+        currentStudioMesh.traverse(o => { if (o.isMesh) o.material = silhouetteMat; });
+        const storyBox = document.querySelector('#studioStoryBox');
+        if (storyBox) storyBox.textContent = `🔒 This exhibit opens when you ${prog().bikeHint(bike).replace(/^./, c => c.toLowerCase())}.`;
+      } else if (bike.colorPreset) {
         applyFrameColor(bike.colorPreset);
       }
+      refreshSwatchLocks();
     });
   }
 
@@ -1070,7 +1085,22 @@ export function createPierMuseumStudio(ctx) {
     }
   }
 
-  function openStudio(index = 7) {
+  function refreshSwatchLocks() {
+    const p = prog();
+    document.querySelectorAll('.canyon-swatch').forEach(d => {
+      const locked = p && !p.isColourUnlocked(d.dataset.col);
+      d.classList.toggle('locked', !!locked);
+      d.setAttribute('aria-label', locked ? `${d.title} (locked)` : d.title);
+    });
+  }
+
+  function latestUnlockedIndex() {
+    for (let i = PIER_HERITAGE_BIKES.length - 1; i >= 0; i--) if (bikeOpen(PIER_HERITAGE_BIKES[i])) return i;
+    return PIER_HERITAGE_BIKES.length - 1;
+  }
+
+  function openStudio(index) {
+    if (index === undefined || index === null) index = latestUnlockedIndex();
     const modal = document.querySelector('#canyonStudioModal');
     if (!modal) return;
     modal.classList.add('active');
