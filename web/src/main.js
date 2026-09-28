@@ -271,6 +271,9 @@ async function load() {
       o.renderOrder = -1;
     }
   });
+  // Whole-island DEM must exist before anything samples heightAt (routes, POIs, locomotion, markers).
+  console.log('[Kona] Loading island DEM...');
+  await island().catch(e => console.warn('Island DEM load error; terrain falls back to sea level:', e));
   console.log('[Kona] Loading routes and pois...');
   routes();
   pois();

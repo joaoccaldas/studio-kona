@@ -41,7 +41,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Julie Moss / Early Era Pioneers',
           year: '1982',
           split: '11:10:09 (Epic Finish)',
-          modelFile: 'speedmax_2027_cfr.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             frame: 'Lugged Columbus SL Steel Tube',
             drivetrain: 'Campagnolo Super Record 6-speed down-tube shifters',
@@ -96,7 +97,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Dave Scott & Mark Allen',
           year: '1989',
           split: '8:09:15 Course Record',
-          modelFile: 'trek_equinox_2004.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             frame: 'Custom TIG-Welded Prestige Cromo / Aluminum Hybrid',
             drivetrain: 'Shimano Dura-Ace 7400 7-Speed SIS',
@@ -151,7 +153,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Lucy Charles-Barclay',
           year: '2023',
           split: '8:24:31 Course Record',
-          modelFile: 'speedmax_2027_cfr.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             swimSplit: '49:36 (Fastest Pro Female Swim)',
             bikeSplit: '4:32:29',
@@ -206,7 +209,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Patrick Lange',
           year: '2018',
           split: '7:52:39 (First Sub-8 in Kona History)',
-          modelFile: 'speedmax_2019_slx.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             marathonSplit: '2:41:27 (Course Run Record)',
             shoeType: 'Custom lightweight carbon racing flat',
@@ -256,20 +260,21 @@ export const RACE_WEEK_QUESTS = [
         artifact: {
           id: 'frodeno_speedmax_2019',
           type: 'bike',
-          name: 'Jan Frodeno’s 2019 Canyon Speedmax CF SLX',
+          name: 'Jan Frodeno’s 2019 Canyon Speedmax (XL)',
           athlete: 'Jan Frodeno',
           year: '2019',
           split: '7:51:13 World Championship Record',
           modelFile: 'speedmax_2019_slx.glb',
           specs: {
-            frame: 'Canyon Speedmax CF SLX Carbon with Aero Aeroshield',
-            groupset: 'SRAM Red eTap AXS Wireless / 50-37T chainrings with 10-33T',
-            cockpit: 'Custom Ergonomic Carbon 3D Mono-extension cockpit with integrated straw',
-            wheels: 'DT Swiss ARC 1100 Dicut 85mm Rear / 85mm Front Carbon',
-            tires: 'Continental Grand Prix 5000 TT TR (28mm rear, 25mm front)',
-            weight: '9.1 kg race setup'
+            frame: 'Canyon Speedmax, size XL',
+            groupset: 'SRAM Red eTap AXS 1x, Quarq power meter',
+            cockpit: 'Canyon custom cockpit',
+            wheels: 'Zipp 858 NSW front and rear',
+            tires: 'Continental Grand Prix 5000 TL',
+            weight: 'not published'
           },
-          story: 'Jan Frodeno put together the most complete athletic performance ever seen in triathlon: a 47:31 swim, 4:16:03 bike split on this very Canyon Speedmax, and a 2:42:21 marathon to establish an immortal 7:51:13 course record.',
+          story: 'Jan Frodeno swam 47:31, rode 4:16:02 on this Canyon Speedmax and ran 2:42:43 to win his third world title in a course-record 7:51:13.',
+          sources: ['https://www.slowtwitch.com/news/kona-2019-top-15-men-bike-gear/', 'https://en.wikipedia.org/wiki/2019_Ironman_World_Championship'],
           portalUrl: 'https://triatlas.com/champions/jan-frodeno'
         }
       }
@@ -316,7 +321,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Kona Finisher',
           year: '2026',
           split: 'Official Finisher',
-          modelFile: 'speedmax_2027_cfr.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             title: 'Kona World Championship Finisher',
             swim: '3.8 km Kailua Bay',

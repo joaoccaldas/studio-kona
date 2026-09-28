@@ -1,6 +1,7 @@
 // Advanced Locomotion & Physics Engine for Kona 3D World
 import * as THREE from 'three';
 import { playFootstep, playWaterSplash, playJump } from './audio.js';
+const DEBUG_BOOST = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 
 export function createLocomotion(ctx) {
   const { camera, renderer, scene, W, grounds, heightAt, toast } = ctx;
@@ -302,7 +303,7 @@ export function createLocomotion(ctx) {
       }
 
       state.isSprinting = !!(keys.ShiftLeft || keys.ShiftRight);
-      const boost = keys.KeyQ ? 4.5 : 1.0;
+      const boost = (DEBUG_BOOST && keys.KeyQ) ? 4.5 : 1.0;   // dev-only: ?debug=1
 
       // 2. Ground elevation & Swimming check
       const currentGround = getGroundHeight(camera.position.x, camera.position.z, camera.position.y);
