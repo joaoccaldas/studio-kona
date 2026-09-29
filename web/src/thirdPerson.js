@@ -127,7 +127,7 @@ export function createThirdPerson({ scene, camera, locomotion, heightAt, player,
     const moved = hasLast ? Math.hypot(f.x - last.x, f.z - last.z) : 0;
     st.speed += ((dt > 0 ? moved / dt : 0) - st.speed) * Math.min(1, dt * 8);
     if (moved > 0.02 && moved < 5) st.facing = Math.atan2(f.x - last.x, f.z - last.z);
-    else if (s.mode === 'bike') st.facing = s.yaw + Math.PI;
+    else if (s.mode === 'bike' || moved >= 5 || !hasLast) { st.facing = s.yaw + Math.PI; athlete.rotation.y = st.facing; snapCam = true; }   // riding, just teleported, or first frame: face away from the camera
     last.copy(f); hasLast = true;
     st.dist += moved;
     root.position.copy(f);
@@ -188,11 +188,12 @@ export function createThirdPerson({ scene, camera, locomotion, heightAt, player,
     saved.pos.copy(camera.position);
     saved.quat.copy(camera.quaternion);
     const biking = s.mode === 'bike';
-    const dist = biking ? 5.4 + Math.min(2.5, st.speed * 0.1) : 4.8;
+    const dist = biking ? 7.5 + Math.min(2.5, st.speed * 0.1) : 7;
     const elev = THREE.MathUtils.clamp(0.24 - s.pitch * 0.5, 0.05, 1.0);    // drag down to look from above
     const yaw = s.yaw;
     const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
     target.copy(root.position).add(tmp.set(0, biking ? 1.3 : 1.5, 0));
+    const aim = target.clone().add(tmp.set(fx * 5, 0.6, fz * 5));            // look past the athlete, at the world ahead
     const want = new THREE.Vector3(target.x - fx * dist * Math.cos(elev), target.y + dist * Math.sin(elev) + 0.4, target.z - fz * dist * Math.cos(elev));
     // Never below the ground.
     const gh = heightAt ? heightAt(want.x, -want.z) : null;
@@ -204,12 +205,13 @@ export function createThirdPerson({ scene, camera, locomotion, heightAt, player,
       dir.divideScalar(len || 1);
       ray.set(target, dir);
       ray.far = len;
-      const hit = ray.intersectObjects([...grounds].filter(g => g?.isMesh), false)[0];
+      // Only walls and roofs count: a floor or hillside under the camera is handled by the ground clamp above.
+      const hit = ray.intersectObjects([...grounds].filter(g => g?.isMesh), false).find(h => !h.face || Math.abs(h.face.normal.clone().transformDirection(h.object.matrixWorld).y) < 0.6);
       if (hit) want.copy(target).addScaledVector(dir, Math.max(0.8, hit.distance - 0.35));
     }
-    if (snapCam) { camPos.copy(want); camLook.copy(target); snapCam = false; }
+    if (snapCam) { camPos.copy(want); camLook.copy(aim); snapCam = false; }
     camPos.lerp(want, Math.min(1, dt * 10));
-    camLook.lerp(target, Math.min(1, dt * 14));
+    camLook.lerp(aim, Math.min(1, dt * 14));
     camera.position.copy(camPos);
     camera.up.set(0, 1, 0);
     camera.lookAt(camLook);

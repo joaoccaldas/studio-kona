@@ -658,6 +658,60 @@ body.at-home #tc{display:none}
 #emotes .em-list[hidden]{display:none}
 #emotes .em-list button{box-shadow:none;width:42px;height:42px}
 body.in-challenge #emotes,body.at-home #emotes{display:none}
+/* ---------------- Island map, passport, discovery */
+#islmap{position:fixed;inset:0;z-index:960;background:var(--sand);color:var(--ink);display:flex;flex-direction:column}
+#islmap .im-top{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:var(--linen);border-bottom:1px solid var(--line)}
+#islmap .im-back{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--linen);font:700 26px/1 system-ui;color:var(--ink);cursor:pointer}
+#islmap .im-top>div:nth-child(2){flex:1}
+#islmap .im-top b{display:block;font:700 20px 'Fraunces',Georgia,serif}
+#islmap .im-top span{font-size:11px;opacity:.7}
+#islmap .im-tabs{display:flex;background:var(--sand);border-radius:999px;padding:3px}
+#islmap .im-tabs button{border:0;background:none;font:700 12px system-ui;padding:7px 11px;border-radius:999px;color:var(--ink);cursor:pointer}
+#islmap .im-tabs button.on{background:var(--ink);color:var(--linen)}
+#islmap .im-map{flex:1;overflow:auto;position:relative;background:#0f3a52;-webkit-overflow-scrolling:touch;min-height:40vh}
+#islmap .im-inner{position:relative}
+#islmap .im-inner img{position:absolute;inset:0;width:100%;height:100%;display:block;filter:saturate(1.1)}
+#islmap .im-pins{position:absolute;inset:0}
+#islmap .im-pin{position:absolute;transform:translate(-50%,-100%);display:grid;justify-items:center;background:none;border:0;padding:0;cursor:pointer}
+#islmap .im-pin span{display:grid;place-items:center;width:44px;height:44px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--coral);box-shadow:0 4px 10px rgba(0,0,0,.35);font-size:20px}
+#islmap .im-pin span b{display:block;transform:rotate(45deg);font-weight:900}
+#islmap .im-pin.on span{background:var(--linen);border:3px solid var(--teal)}
+#islmap .im-pin span{color:#fff;font-weight:900}
+#islmap .im-pin em{margin-top:4px;font-style:normal;font:800 11px system-ui;background:var(--ink);color:var(--linen);padding:3px 7px;border-radius:999px;white-space:nowrap}
+#islmap .im-pin.cluster span{background:var(--ink);border:0}
+#islmap .im-me{position:absolute;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:22px solid #ffd36b;filter:drop-shadow(0 0 4px rgba(0,0,0,.6))}
+#islmap .im-card{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:440px;margin:0 auto;background:var(--linen);border-radius:20px;padding:16px;box-shadow:0 16px 40px rgba(19,41,61,.35);display:grid;gap:10px;z-index:2}
+#islmap .im-card[hidden]{display:none}
+#islmap .im-card-head{display:flex;gap:12px;align-items:center}
+#islmap .im-ico{display:grid;place-items:center;width:54px;height:54px;border-radius:16px;background:var(--sand);font-size:28px;flex:none}
+#islmap .im-card p{margin:0}
+#islmap .im-card-head p{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--teal)}
+#islmap .im-card h2{margin:2px 0 0;font:700 22px 'Fraunces',Georgia,serif}
+#islmap .im-fact{font-size:14px;line-height:1.45}
+#islmap .im-row{display:flex;gap:8px}
+#islmap .im-row button{flex:1;min-height:48px;border-radius:999px;font:800 15px system-ui;cursor:pointer}
+#islmap .im-go{background:var(--teal);color:#fff;border:0}
+#islmap .im-x{background:none;border:1px solid var(--line);color:var(--ink)}
+#islmap .im-passport{background:var(--linen);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));max-height:34vh;overflow:auto}
+#islmap .im-passport h3{margin:0 0 8px;font:700 16px 'Fraunces',Georgia,serif}
+#islmap .im-stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px}
+#islmap .im-stamp{display:grid;justify-items:center;gap:2px;padding:8px 4px;border-radius:14px;border:2px dashed rgba(19,41,61,.2);background:none;cursor:pointer;color:var(--ink)}
+#islmap .im-stamp span{font-size:24px;filter:grayscale(1);opacity:.45}
+#islmap .im-stamp em{font-style:normal;font-size:10px;font-weight:700;text-align:center;line-height:1.15;opacity:.6}
+#islmap .im-stamp.on{border:2px solid var(--teal);background:rgba(46,111,115,.08)}
+#islmap .im-stamp.on span{filter:none;opacity:1}
+#islmap .im-stamp.on em{opacity:1}
+#lmCard{position:fixed;left:50%;top:calc(90px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(400px,calc(100vw - 24px));z-index:955;background:var(--linen);color:var(--ink);border-radius:22px;padding:18px 18px 14px;box-shadow:0 20px 50px rgba(19,41,61,.35);text-align:center;display:grid;gap:6px;animation:lmin .5s cubic-bezier(.2,1.4,.4,1)}
+#lmCard.out{opacity:0;transform:translate(-50%,-20px);transition:.3s}
+@keyframes lmin{from{opacity:0;transform:translate(-50%,-30px) scale(.9)}}
+#lmCard .lm-stamp{justify-self:center;display:grid;place-items:center;width:74px;height:74px;border-radius:50%;border:4px double var(--coral);font-size:38px;margin-top:-50px;background:var(--linen);box-shadow:0 8px 20px rgba(19,41,61,.25);animation:lmstamp .6s .15s both cubic-bezier(.2,1.8,.4,1)}
+@keyframes lmstamp{from{transform:scale(2.2) rotate(-25deg);opacity:0}}
+#lmCard p{margin:0}
+#lmCard .lm-eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+#lmCard h2{margin:0;font:700 26px 'Fraunces',Georgia,serif}
+#lmCard .lm-fact{font-size:14px;line-height:1.45;opacity:.85}
+#lmCard .lm-reward{font-weight:800;color:var(--coral);font-size:13px}
+#lmCard button{margin-top:4px;min-height:46px;border:0;border-radius:999px;background:var(--teal);color:#fff;font:800 15px system-ui;cursor:pointer}
 #tt{position:fixed;inset:0;z-index:950;background:#F3EDE2;color:var(--ink)}
 #ttCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer}
 #tt .tt-top{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}

@@ -32,6 +32,9 @@ import { runRush } from './rush.js';
 import { showHome } from './home.js';
 import { showRideMap } from './rideMap.js';
 import { createThirdPerson } from './thirdPerson.js';
+import { createLandmarks } from './landmarks.js';
+import { createIslandDetail } from './islandDetail.js';
+import { showIslandMap, showDiscovery } from './islandMap.js';
 import { runLevel } from './miniShell.js';
 import { GAMES } from './games/index.js';
 
@@ -204,6 +207,20 @@ function addGround(m) {
   grounds.add(m);
 }
 
+// Ground height at survey (x, y): the highest walkable surface (town terrain, tiles, detail), else the island DEM.
+const groundRay = new THREE.Raycaster();
+function groundAt(x, y) {
+  groundRay.set(new THREE.Vector3(x, 5000, -y), new THREE.Vector3(0, -1, 0));
+  groundRay.far = 6000;
+  const hit = groundRay.intersectObjects([...grounds], false)[0];
+  return hit ? hit.point.y : heightAt(x, y);
+}
+// Inside the detailed Kailua core or its streamed tiles?
+function isDetailArea(x, y) {
+  for (const [a, b, c, e] of detailRects) if (x >= a && x <= c && y >= b && y <= e) return true;
+  return false;
+}
+
 const tex = new THREE.TextureLoader();
 function orthoMaterial(file, meta, seabed) {
   const t = tex.load(A + file);
@@ -232,7 +249,7 @@ let progress = null, drawer = null, artifactViewer = null;
 let saveData = loadGameSave();
 let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
-let pierBikesMesh = null, thirdPerson = null, touchUi = null, highwayPts = null, rideRings = null;
+let pierBikesMesh = null, thirdPerson = null, landmarks = null, islandDetail = null, townMeshes = [], coreMeta = null, detailRects = [], touchUi = null, highwayPts = null, rideRings = null;
 let living = null, rewards = null, lifeHud = null, geocodes = {}, raceWeekData = null, roaming = false;
 let streamer = null;
 let man = null;
@@ -250,6 +267,7 @@ async function load() {
   console.log('[Kona] Loaded kona_p1.glb, parsing scene...');
 
   const core = await (await fetch(A + 'sat_core.json')).json();
+  coreMeta = core;
   const protos = {};
 
   gltf.scene.traverse(o => {
@@ -263,6 +281,7 @@ async function load() {
     o.material = Array.isArray(o.material) ? mats : mats[0];
     if (o.name.startsWith('KONA_roofs')) o.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75 });
     if (o.name.startsWith('PROTO_')) { protos[o.name.slice(6)] = o; o.visible = false; }
+    if (/^KONA_(buildings|roofs)/.test(o.name)) townMeshes.push(o);
   });
   scene.add(gltf.scene);
 
@@ -326,6 +345,17 @@ async function load() {
     onGround: (g, add) => g.traverse(o => { if (o.userData.ground) add ? addGround(o) : grounds.delete(o); })
   });
   await streamer.init().catch(e => { console.warn('TileStreamer init error:', e); streamer = null; });
+
+  // Famous places in 3D, and terrain detail everywhere outside town.
+  rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
+  try {
+    landmarks = createLandmarks({ scene, W, toLocal, groundAt, townMeshes, rewards, onDiscover: (l, paid, n, total) => { showDiscovery(l, paid, n, total); playUnlockFanfare?.(); lifeHud?.wallet(); } });
+    window.__landmarks = landmarks;
+  } catch (e) { console.warn('Landmarks failed', e); }
+  try {
+    islandDetail = createIslandDetail({ scene, W, heightAt: (x, y) => heightAt(x, y), isl, base: A, farIsland, isDetailArea, addGround, removeGround: m => grounds.delete(m), coarse });
+    window.__detail = islandDetail;
+  } catch (e) { console.warn('Island detail failed', e); }
 
   console.log('[Kona] Building ocean, coffee boat, systems...');
   coffeeBoat();
@@ -1115,6 +1145,7 @@ async function island() {
     for (const [a, b, c, e] of rects) d = Math.min(d, Math.hypot(Math.max(a - x, 0, x - c), Math.max(b - y, 0, y - e)));
     return d;
   };
+  detailRects = rects;
   const SINK = 22, RAMP = 700;
   const g = new THREE.PlaneGeometry(1, 1, G, G), p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) {
@@ -1574,6 +1605,22 @@ function toast(t) {
   el._t = setTimeout(() => el.classList.remove('on'), 4000);
 }
 
+function openIslandMap() {
+  if (!landmarks || !isl || document.getElementById('islmap')) return;
+  const st = locomotion?.getState();
+  showIslandMap({
+    landmarks, isl, core: coreMeta || { center: [-250, -600], half: 900 }, base: A,
+    player: { x: camera.position.x, y: -camera.position.z, heading: -(st?.yaw || 0) },
+    onTravel: l => {
+      const s = landmarks.spawnFor(l);
+      if (locomotion?.getState().mode === 'bike') setLocomotionMode('walk');
+      const yaw = Math.atan2(-(l.x - s.x), (l.y - s.y));                 // face the landmark
+      locomotion.teleport(s.x, groundAt(s.x, s.y) + 2, -s.y, yaw, -0.05);
+      toast(`${l.found ? l.name : 'Something famous is near'}: walk toward the pin`);
+    },
+  });
+}
+
 // ------------------------------------------------------------------ Emotes and camera view (Roblox-style social bits)
 function mountEmotes() {
   if (document.getElementById('emotes')) return;
@@ -1582,17 +1629,20 @@ function mountEmotes() {
   el.innerHTML = `<button type="button" class="em-open" aria-label="Emotes">😀</button>
     <div class="em-list" hidden>${['👋', '🤙', '💃', '🏆'].map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>
     <button type="button" class="em-view" aria-label="Switch camera view">🎥</button>
+    <button type="button" class="em-map" aria-label="Island map and passport">🗺️</button>
     <button type="button" class="em-home" aria-label="Home: mini-games and Kona Rush">🏠</button>`;
   document.body.appendChild(el);
   const list = el.querySelector('.em-list');
   el.querySelector('.em-open').onclick = () => { list.hidden = !list.hidden; };
   list.addEventListener('click', ev => { const e = ev.target.closest('[data-e]')?.dataset.e; if (e) { thirdPerson?.emote(e); haptic(12); list.hidden = true; } });
   el.querySelector('.em-view').onclick = () => toast(thirdPerson?.toggle() ? 'Third person view' : 'First person view');
+  el.querySelector('.em-map').onclick = () => openIslandMap();
   el.querySelector('.em-home').onclick = () => { if (explorer && lastSeen && loadPlayer()) explorer.persist({ last: lastSeen }, true); location.href = location.pathname; };
   addEventListener('keydown', ev => {
     if (ev.target.closest?.('input, textarea, select') || document.body.classList.contains('in-challenge')) return;
     if (ev.code === 'KeyV') toast(thirdPerson?.toggle() ? 'Third person view' : 'First person view');
     else if (ev.code === 'KeyG') thirdPerson?.emote('👋');
+    else if (ev.code === 'KeyI') openIslandMap();
     else if (ev.code === 'Digit1' && ev.altKey) thirdPerson?.emote('🤙');
   });
 }
@@ -1720,6 +1770,8 @@ renderer.setAnimationLoop(() => {
   }
 
   // Third person: swing the camera out behind the blocky athlete for this render only.
+  landmarks?.update(dt, camera);
+  if (locomotion?.getState().active) islandDetail?.update(camera);
   thirdPerson?.update(dt);
   const putBack = !tween && !ride ? thirdPerson?.apply(dt) : null;
   renderer.render(scene, camera);

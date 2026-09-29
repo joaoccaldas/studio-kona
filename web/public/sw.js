@@ -2,7 +2,7 @@
 // Page (index.html): network first, cached copy when offline, so updates arrive as soon as there is a connection.
 // Game files (assets/, icons/, fonts): cache first, filled as they are used (the full island is ~55 MB, so nothing
 // big is downloaded up front). Bump VERSION when the asset format changes to drop old caches.
-const VERSION = 'kona-v3';
+const VERSION = 'kona-v4';
 const SHELL = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
