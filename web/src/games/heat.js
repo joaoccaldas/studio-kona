@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { LANES, pedal, mat } from '../rideKit.js';
 import { gearModel } from '../gearModels.js';
+import { effects } from '../weather.js';
 
 const DURATION = 70, SPEED = 11, GAP = 14;
 const ITEM = {
@@ -37,6 +38,7 @@ export default {
   scene: '3d',
   create(ctx) {
     const { scene, hud, me, sfx, haptic, course } = ctx;
+    const HEAT = Math.max(0.8, Math.min(1.3, effects().heat));          // today's real Energy Lab heat
     const S = { t: 0, lane: 1, px: 0, heat: 28, energy: 75, green: 0, dist: 0, next: 10, done: false, lean: 0, got: 0, hot: 0 };
     const items = [], patches = [];
     const patchMat = new THREE.MeshBasicMaterial({ color: 0xff7a3d, transparent: true, opacity: 0.35, depthWrite: false });
@@ -77,7 +79,7 @@ export default {
         S.next -= move;
         if (S.next <= 0 && S.t < DURATION - 3) { spawnRow(); S.next = GAP + Math.random() * 6; }
         // The body: heat builds faster as the day goes on; energy burns steadily.
-        let heatRate = 1.8 + (S.t / DURATION) * 1.4, inShade = false, onHot = false;
+        let heatRate = (1.8 + (S.t / DURATION) * 1.4) * HEAT, inShade = false, onHot = false;
         for (const p of patches) {
           p.z += move; p.m.position.z = p.z;
           if (p.lane === S.lane && Math.abs(p.z) < p.len / 2) { if (p.hot) onHot = true; else inShade = true; }

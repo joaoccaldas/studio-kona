@@ -5,6 +5,8 @@
 // energy faster, Aliʻi Drive has the crowds and the finish arch. Credits from every run buy upgrades you feel next run.
 // Rules and numbers live in rushRules.js (unit-tested); this file is the scene, the input and the loop.
 import * as THREE from 'three';
+import { effects } from './weather.js';
+import { ambience } from './ambience.js';
 import { LANES, esc, makeRider, pedal, makeCone, makePickup, createCourse, makeArch } from './rideKit.js';
 import { haptic } from './appShell.js';
 import { createSfx, confetti } from './aptFx.js';
@@ -78,6 +80,8 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
   for (const [kind, n] of [['gel', 6], ['bottle', 5], ['ring', 8], ['shell', 2]]) for (let i = 0; i < n; i++) { const m = makePickup(kind); m.visible = false; scene.add(m); pickups.push({ kind, mesh: m, live: false }); }
 
   const sfx = createSfx();
+  const FX = effects(), amb = ambience();
+  root.classList.add('vignette');
   const garage0 = validGarage(readSection('garage'));
   const stats = statsFor(garage0.levels);
 
@@ -417,7 +421,7 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
 
     if (riding) {
       // Energy: steady burn, more in the heat, a lot more when tucked, less in a slipstream.
-      const drain = (0.85 * (S.zone === 'energylab' ? 1.8 : 1) + (S.tuck ? 3.2 * stats.tuckCost : 0)) * (S.draftT > 0 ? 0.6 : 1);
+      const drain = (0.85 * (S.zone === 'energylab' ? 1.8 * Math.max(0.85, Math.min(1.25, FX.heat)) : 1) + (S.tuck ? 3.2 * stats.tuckCost : 0)) * (S.draftT > 0 ? 0.6 : 1);
       S.energy -= drain * dt;
       if (S.energy < S.tank * 0.3 && tutorial) tip('fuel', 'Energy is low: ride through gels and bottles', true);
       if (S.energy <= 0) { S.energy = 0; end('bonk'); bannerMsg('Bonk', 'Out of energy'); }
@@ -438,7 +442,7 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
             if (S.tuck) { addCombo(20, 'Held the line'); }
             else { const n = Math.max(0, Math.min(2, S.lane + S.gust.dir)); if (n !== S.lane) { S.lane = n; S.lean = S.gust.dir * 0.5; } else S.energy -= 6; S.shake = 0.25; haptic(30); pop('Blown sideways', 'bad'); }
             S.gust = null;
-            S.nextGust = S.t + 4 + Math.random() * 3.5;
+            S.nextGust = S.t + (4 + Math.random() * 3.5) / Math.max(0.7, Math.min(1.4, FX.wind));
             $('#rsGust').classList.remove('on');
           }
         }
@@ -550,6 +554,7 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
   }
 
   function render(dt) {
+    amb.set({ wind: FX.wind * (S.zone === 'hawi' ? 1.3 : 0.7), surf: S.zone === 'queenk' ? 0.5 : 0.25, birds: 0.4, crowd: S.zone === 'alii' ? 1 : 0, rain: FX.rain, speed: S.phase === 'ride' ? S.speed / 32 : 0, night: false });
     // Chase camera: behind and above, drifting with the lane; wider and lower as speed builds.
     if (S.shake > 0) S.shake = Math.max(0, S.shake - dt);
     course.chase(S.px, Math.min(1, S.speed / 45), dt, { tuck: S.tuck, shake: S.shake, fovKick: S.boost > 0 ? 6 : 0 });
@@ -565,6 +570,7 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
     removeEventListener('keyup', onKey);
     document.removeEventListener('visibilitychange', onHide);
     course.dispose();
+    amb.set({ speed: 0, crowd: 0 });
     root.remove();
     document.body.classList.remove('in-challenge');
     if (to === 'garage') onGarage?.(); else onExit?.();

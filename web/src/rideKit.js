@@ -2,6 +2,7 @@
 // palettes per part of the course, and the low-poly riders, cones and pickups. One place to make every ride look good.
 import * as THREE from 'three';
 import { gearModel } from './gearModels.js';
+import { weatherNow, effects } from './weather.js';
 
 export const LANES = [-3, 0, 3];
 export const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -181,7 +182,8 @@ export function setPropKind(p, kind) {
 
 // ------------------------------------------------------------------ the course: renderer, scene, chase camera, scrolling road
 // The athlete stays near z = 0 and the world moves toward +z. `advance(move)` scrolls everything by `move` metres.
-export function createCourse({ canvas, zone = 'queenk', shoreX = -36 }) {
+export function createCourse({ canvas, zone = 'queenk', shoreX = -36, weather = effects(weatherNow()) }) {
+  const FX = weather;
   const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -240,11 +242,57 @@ export function createCourse({ canvas, zone = 'queenk', shoreX = -36 }) {
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), groundMat);
   ground.rotation.x = -Math.PI / 2; ground.position.set(shoreX + 206, 0, -180);    // the ocean shows on the left, west of the road
   ground.receiveShadow = true;
-  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: 0x1b6f95, roughness: 0.2, metalness: 0.2 }));
+  const waterN = waterNormals();
+  waterN.repeat.set(60, 60);
+  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: 0x14688f, roughness: 0.12, metalness: 0.35, normalMap: waterN, normalScale: new THREE.Vector2(0.9 + FX.surf * 0.6, 0.9 + FX.surf * 0.6) }));
   ocean.rotation.x = -Math.PI / 2; ocean.position.set(shoreX - 444, -0.3, -200);
   const shore = new THREE.Mesh(new THREE.PlaneGeometry(14, 400), new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1 }));
   shore.rotation.x = -Math.PI / 2; shore.position.set(shoreX, -0.05, -180);
   scene.add(road, ground, ocean, shore);
+  // Surf line along the shore.
+  const foam = new THREE.Mesh(new THREE.PlaneGeometry(3, 400), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false }));
+  foam.rotation.x = -Math.PI / 2; foam.position.set(shoreX - 7.5, -0.12, -180);
+  scene.add(foam);
+  // Roadside reflector posts every 25 m: they stream past and sell the speed.
+  const postGeo = new THREE.BoxGeometry(0.12, 0.9, 0.12); postGeo.translate(0, 0.45, 0);
+  const posts = new THREE.InstancedMesh(postGeo, new THREE.MeshLambertMaterial({ color: 0xfbf8f2 }), 32);
+  const refl = new THREE.InstancedMesh(new THREE.BoxGeometry(0.13, 0.16, 0.13), new THREE.MeshBasicMaterial({ color: 0xff8a3d }), 32);
+  const postZ = Array.from({ length: 16 }, (_, i) => -i * 25);
+  const m4 = new THREE.Matrix4();
+  function placePosts() { postZ.forEach((z, i) => { for (const [k, x] of [[0, -5.4], [1, 5.4]]) { m4.makeTranslation(x, 0, z); posts.setMatrixAt(i * 2 + k, m4); m4.makeTranslation(x, 0.75, z); refl.setMatrixAt(i * 2 + k, m4); } }); posts.instanceMatrix.needsUpdate = refl.instanceMatrix.needsUpdate = true; }
+  placePosts();
+  scene.add(posts, refl);
+  // Clouds: soft billboards, more and greyer with the real cloud cover.
+  const cloudTex = softBlob();
+  const clouds = [];
+  const nClouds = Math.round(4 + FX.cloud * 14);
+  for (let i = 0; i < nClouds; i++) {
+    const grey = 1 - FX.cloud * 0.35 - FX.rain * 0.25;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudTex, color: new THREE.Color(grey, grey, grey * 1.02), transparent: true, opacity: 0.55 + FX.cloud * 0.35, depthWrite: false, fog: false }));
+    sp.scale.set(90 + Math.random() * 120, 30 + Math.random() * 30, 1);
+    sp.position.set((Math.random() - 0.5) * 700, 70 + Math.random() * 60, -150 - Math.random() * 350);
+    scene.add(sp); clouds.push(sp);
+  }
+  // Rain, when it is really raining in Kona.
+  const RAIN = Math.round(FX.rain * 900);
+  let rain = null;
+  if (RAIN > 20) {
+    const pos = new Float32Array(RAIN * 6);
+    for (let i = 0; i < RAIN; i++) { const x = (Math.random() - 0.5) * 40, y = Math.random() * 20, z = -Math.random() * 60 + 8; pos.set([x, y, z, x + 0.05, y - 0.7, z], i * 6); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    rain = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0xcfe0ea, transparent: true, opacity: 0.45 }));
+    scene.add(rain);
+  }
+  // Sun glare.
+  const glare = new THREE.Sprite(new THREE.SpriteMaterial({ map: softBlob(true), color: 0xfff1d0, transparent: true, opacity: 0.7 * (1 - FX.cloud * 0.7), depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
+  glare.scale.setScalar(160); glare.position.set(170, 130, -420);
+  scene.add(glare);
+  // Speed streaks close to the camera.
+  const NS = 60, spos = new Float32Array(NS * 6);
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(spos, 3));
+  const streaks = new THREE.LineSegments(sg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+  const sp = Array.from({ length: NS }, () => ({ x: (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 6), y: 0.3 + Math.random() * 4, z: -Math.random() * 40 }));
+  scene.add(streaks);
   const hills = new THREE.Group();
   for (const [x, z, r, h] of [[140, -420, 140, 70], [60, -520, 170, 95], [240, -360, 90, 40], [-40, -560, 120, 45]]) {
     const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 24), new THREE.MeshBasicMaterial({ color: 0x7d8e99, fog: false }));
@@ -267,8 +315,10 @@ export function createCourse({ canvas, zone = 'queenk', shoreX = -36 }) {
   // Palette changes glide over ~1.6 s.
   let palFrom = null, palT = 1;
   const palTo = { sky: new THREE.Color(), fog: new THREE.Color(), ground: new THREE.Color() };
+  const tint = (hex, isSky) => { const c = new THREE.Color(hex); const g = FX.cloud * 0.35 + FX.rain * 0.3; const grey = new THREE.Color(isSky ? 0x8d9aa3 : 0xc9cfd3); return c.lerp(grey, Math.min(0.6, g)); };
   function setZone(id, instant) {
-    const p = PALETTE[id] || PALETTE.queenk;
+    const p0 = PALETTE[id] || PALETTE.queenk;
+    const p = { ...p0, sky: tint(p0.sky, true), fog: tint(p0.fog, false) };
     course.zone = id;
     palFrom = { sky: skyMat.uniforms.top.value.clone(), fog: scene.fog.color.clone(), ground: groundMat.color.clone() };
     palTo.sky.set(p.sky); palTo.fog.set(p.fog); palTo.ground.set(p.ground);
@@ -285,7 +335,20 @@ export function createCourse({ canvas, zone = 'queenk', shoreX = -36 }) {
     skyMat.uniforms.bottom.value.copy(scene.fog.color); scene.background.copy(scene.fog.color);
     groundMat.color.copy(palFrom.ground).lerp(palTo.ground, palT);
   }
+  let wt = 0, speedNow = 0;
   function advance(move, t = 0) {
+    wt += 1 / 60;
+    waterN.offset.set(wt * 0.012, -wt * 0.02 - move * 0);
+    foam.material.opacity = 0.35 + 0.25 * Math.sin(wt * 0.8) * FX.surf;
+    for (let i = 0; i < postZ.length; i++) { postZ[i] += move; if (postZ[i] > 12) postZ[i] -= 16 * 25; }
+    placePosts();
+    for (const c of clouds) { c.position.x += (FX.wind * 0.6) * (1 / 60) * 8; if (c.position.x > 380) c.position.x -= 760; }
+    if (rain) { rain.position.z = (rain.position.z + move + 0.4) % 20; rain.position.y = -((wt * 26) % 20); }
+    if (move > 0) speedNow = move * 60;
+    const k = Math.max(0, Math.min(1, (speedNow - 18) / 18));
+    streaks.material.opacity = k * 0.35;
+    if (k > 0) for (let i = 0; i < NS; i++) { const q = sp[i]; q.z += move * 1.6; if (q.z > 6) { q.z = -40; q.x = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 6); } spos.set([q.x, q.y, q.z, q.x, q.y, q.z - 1.5 - k * 3], i * 6); }
+    sg.attributes.position.needsUpdate = k > 0;
     roadTex.offset.y += move / 10;
     gTex.offset.y += (move / 400) * 30;
     for (const p of props) {
@@ -313,7 +376,7 @@ export function createCourse({ canvas, zone = 'queenk', shoreX = -36 }) {
   }
   function render() { renderer.render(scene, camera); }
   function dispose() { removeEventListener('resize', resize); renderer.dispose(); renderer.forceContextLoss?.(); }
-  return Object.assign(course, { setZone, tick, advance, chase, render, dispose, props, road, groundMat, skyMat });
+  return Object.assign(course, { setZone, tick, advance, chase, render, dispose, props, road, groundMat, skyMat, get speedNow() { return speedNow; } });
 }
 
 // A finish-style arch with a banner (the Rush finish, mini-game start and finish lines).
@@ -356,4 +419,27 @@ export function makePerson({ shirt = 0xd9785b, skin = 0xb07a52, pants = 0x13293d
   } else g.add(hand);
   g.userData = { armL: L, armR: R, hand };
   return g;
+}
+
+// Tileable water ripples as a normal map (cheap animated ocean with sun glitter).
+function waterNormals() {
+  const n = 128, cv = document.createElement('canvas'); cv.width = cv.height = n;
+  const c = cv.getContext('2d'), img = c.createImageData(n, n);
+  const h = (x, y) => Math.sin((x / n) * Math.PI * 2 * 3 + Math.sin((y / n) * Math.PI * 2 * 2)) * 0.5 + Math.sin((y / n) * Math.PI * 2 * 5 + (x / n) * Math.PI * 2 * 2) * 0.35 + Math.sin(((x + y) / n) * Math.PI * 2 * 7) * 0.15;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const dx = h(x + 1, y) - h(x - 1, y), dy = h(x, y + 1) - h(x, y - 1);
+    const i = (y * n + x) * 4; img.data[i] = 128 - dx * 90; img.data[i + 1] = 128 - dy * 90; img.data[i + 2] = 255; img.data[i + 3] = 255;
+  }
+  c.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+// A soft round blob (clouds) or a bright core with a halo (sun glare).
+function softBlob(sun = false) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const c = cv.getContext('2d');
+  if (sun) { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,240,1)'); g.addColorStop(0.12, 'rgba(255,240,200,.8)'); g.addColorStop(0.4, 'rgba(255,220,160,.18)'); g.addColorStop(1, 'rgba(255,220,160,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); }
+  else for (let i = 0; i < 7; i++) { const x = 30 + Math.random() * 68, y = 50 + Math.random() * 28, r = 22 + Math.random() * 20; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }

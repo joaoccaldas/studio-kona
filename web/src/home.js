@@ -7,6 +7,9 @@ import { claimRushMission } from './rush.js';
 import { nextLevel, totalStars, MAX_STARS } from './rideLevels.js';
 import { CARDS, unlockedCards } from './lore.js';
 import { progressSnapshot, checkUnlocks } from './unlocks.js';
+import { mountKonaToday } from './konaToday.js';
+import { ambience } from './ambience.js';
+import { effects, weatherNow, onWeather } from './weather.js';
 import { canInstall, offerInstall, haptic } from './appShell.js';
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -39,6 +42,7 @@ export function showHome({ rewards, player, onPlay, onLevel, onMap, onAlmanac, o
       <div class="hm">
         <header class="hm-top">
           <div class="hm-chip" title="Daily streak"><b>${st.streak || 0}</b><span>day streak</span></div>
+          <button type="button" class="hm-chip hm-sound" id="hmSound" aria-label="Sound">${ambience().muted ? '🔇' : '🔊'}</button>
           <div class="hm-chip" title="Credits"><b id="hmCredits">${(st.credits || 0).toLocaleString()}</b><span>Credits</span></div>
         </header>
         <section class="hm-hero">
@@ -54,6 +58,7 @@ export function showHome({ rewards, player, onPlay, onLevel, onMap, onAlmanac, o
             <button type="button" id="hmLocker"><b>👕 Locker</b><span>Dress your athlete</span></button>
           </div>
         </section>
+        <div id="hmToday"></div>
         ${gift ? `<p class="hm-gift">${gift.first ? 'Welcome to Kona' : `Day ${gift.streak} streak`} · +${gift.credits} Credits${gift.items?.length ? ' and a gift' : ''}</p>` : ''}
         <section class="hm-card" id="hmMissions">
           <h2>Today's missions <span>new in ${hoursLeft()} h</span></h2>
@@ -79,6 +84,8 @@ export function showHome({ rewards, player, onPlay, onLevel, onMap, onAlmanac, o
         <p class="hm-foot">Medals: bronze ${MEDALS.bronze} km · silver ${MEDALS.silver} km · gold ${MEDALS.gold} km · finish ${MEDALS.finish} km</p>
       </div>`;
     root.querySelector('#hmPlay').onclick = () => { haptic(12); close(); onLevel?.(nl.id); };
+    mountKonaToday(root.querySelector('#hmToday'), { rewards, onLevel: id => { close(); onLevel?.(id); } });
+    root.querySelector('#hmSound').onclick = ev => { const on = ambience().toggle(); ev.currentTarget.textContent = on ? '🔊' : '🔇'; ambience().start(); };
     root.querySelector('#hmMap').onclick = () => { close(); onMap?.(); };
     root.querySelector('#hmAlmanac').onclick = () => { close(); onAlmanac?.(); };
     root.querySelector('#hmLocker').onclick = () => { close(); onLocker?.(); };
@@ -97,6 +104,8 @@ export function showHome({ rewards, player, onPlay, onLevel, onMap, onAlmanac, o
     }));
   }
   function close() { root.remove(); document.body.classList.remove('at-home'); }
+  const fxh = effects(weatherNow());
+  ambience().set({ wind: fxh.wind * 0.55, surf: 0.5 + fxh.surf * 0.3, birds: 0.7, crowd: 0, rain: fxh.rain, speed: 0, night: fxh.night });
   render();
   if (focus === 'garage') root.querySelector('#hmGarage')?.scrollIntoView({ block: 'center' });
   return { close, render };

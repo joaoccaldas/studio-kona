@@ -40,6 +40,9 @@ import { showAlmanac, showLocker } from './almanac.js';
 import { checkUnlocks, addDistance, foundEgg, lookNow, toast as unlockToast } from './unlocks.js';
 import { EMOTES, EMOTE_NAMES } from './athlete.js';
 import { readSection } from './save.js';
+import { weatherNow, refreshWeather, effects, onWeather } from './weather.js';
+import { ambience } from './ambience.js';
+import { mountKonaToday, liveChallenge } from './konaToday.js';
 import { runLevel } from './miniShell.js';
 import { GAMES } from './games/index.js';
 
@@ -362,6 +365,7 @@ async function load() {
     window.__detail = islandDetail;
   } catch (e) { console.warn('Island detail failed', e); }
   checkUnlocks(rewards, { announce: false });
+  initLiveWorld();
 
   console.log('[Kona] Building ocean, coffee boat, systems...');
   coffeeBoat();
@@ -1632,12 +1636,86 @@ function openIslandMap() {
   });
 }
 
+// ------------------------------------------------------------------ Live Kona: real weather and (in daylight) real time
+let liveWx = null, liveTimeOn = true, liveNoteShown = false, clouds = null, rainFx = null, ambT = 0;
+const hstHour = () => { const d = new Date(); return ((d.getUTCHours() + 14) % 24) + d.getUTCMinutes() / 60; };
+function initLiveWorld() {
+  try { liveTimeOn = localStorage.getItem('kona-livetime') !== 'off'; } catch { /* storage blocked */ }
+  applyLiveWeather(weatherNow());
+  onWeather(applyLiveWeather);
+  refreshWeather();
+  setInterval(() => refreshWeather(), 20 * 60 * 1000);
+}
+function applyLiveWeather(w) {
+  liveWx = w;
+  const fx = effects(w);
+  skyU.turbidity.value = 2.2 + fx.cloud * 6 + fx.rain * 4;
+  skyU.rayleigh.value = 1.4 + fx.cloud * 1.4;
+  // Clouds that drift with the real wind, spread around the athlete.
+  if (!clouds) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+    const c = cv.getContext('2d');
+    for (let i = 0; i < 7; i++) { const x = 30 + Math.random() * 68, y = 50 + Math.random() * 28, r = 22 + Math.random() * 20; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); }
+    const tx = new THREE.CanvasTexture(cv);
+    clouds = Array.from({ length: 26 }, () => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, transparent: true, depthWrite: false, fog: false })); sp.scale.set(700 + Math.random() * 900, 220 + Math.random() * 200, 1); sp.userData.off = new THREE.Vector3((Math.random() - 0.5) * 7000, 700 + Math.random() * 600, (Math.random() - 0.5) * 7000); scene.add(sp); return sp; });
+  }
+  const shown = Math.round(4 + fx.cloud * 22), grey = 1 - fx.cloud * 0.3 - fx.rain * 0.3;
+  clouds.forEach((c, i) => { c.visible = i < shown; c.material.color.setRGB(grey, grey, grey); c.material.opacity = 0.5 + fx.cloud * 0.4; });
+  // Rain near the athlete when it is really raining.
+  if (rainFx) { scene.remove(rainFx); rainFx = null; }
+  const N = Math.round(fx.rain * 1400);
+  if (N > 30) {
+    const pos = new Float32Array(N * 6);
+    for (let i = 0; i < N; i++) { const x = (Math.random() - 0.5) * 60, y = Math.random() * 30, z = (Math.random() - 0.5) * 60; pos.set([x, y, z, x + 0.1, y - 0.9, z], i * 6); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    rainFx = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0xcfe0ea, transparent: true, opacity: 0.4 }));
+    scene.add(rainFx);
+  }
+  const chip = document.querySelector('#emotes .em-wx');
+  if (chip) chip.innerHTML = `${w.icon}<small>${Math.round(w.kailua.tempC)}°</small>`;
+  syncLiveHour(true);
+}
+function syncLiveHour(announce) {
+  if (!liveTimeOn) return;
+  const h = hstHour();
+  if (h >= 6 && h < 19) setHour(h);
+  else if (announce && !liveNoteShown) { liveNoteShown = true; toast(`It is ${Math.floor(h)}:${String(Math.floor((h % 1) * 60)).padStart(2, '0')} at night in Kona right now, so you play in daylight. The weather is live.`); }
+}
+function tickLiveWorld(dt) {
+  if (clouds) { const wind = effects(liveWx || weatherNow()).wind; for (const c of clouds) { c.userData.off.x += wind * 6 * dt; if (c.userData.off.x > 3500) c.userData.off.x -= 7000; c.position.set(camera.position.x + c.userData.off.x, c.userData.off.y, camera.position.z + c.userData.off.z); } }
+  if (rainFx) rainFx.position.set(camera.position.x, camera.position.y - 20 + ((performance.now() / 1000 * -28) % 30 + 30) % 30, camera.position.z);
+  ambT += dt;
+  if (ambT > 0.4) {
+    ambT = 0;
+    const fx = effects(liveWx || weatherNow()), st = locomotion?.getState();
+    const x = camera.position.x, y = -camera.position.z, h = heightAt(x, y);
+    const coast = h < 12 ? 1 - Math.max(0, h) / 12 : 0;
+    const crowd = Math.hypot(x - 100, y - 60) < 350 ? 0.45 : 0;
+    const night = hour >= 19 || hour < 6;
+    ambience().set({ wind: fx.wind * (0.5 + Math.min(1, Math.max(0, h) / 400)), surf: 0.15 + coast * (0.7 + fx.surf * 0.4) + (st?.isSwimming ? 0.6 : 0), birds: coast < 0.9 ? 0.6 : 0.2, crowd, rain: fx.rain, speed: st?.mode === 'bike' ? (st.speedKmh || 0) / 45 : 0, night });
+    if (liveTimeOn && Math.random() < 0.02) syncLiveHour(false);
+  }
+}
+function openKonaToday() {
+  if (document.getElementById('ktSheet')) return;
+  const el = document.createElement('div');
+  el.id = 'ktSheet';
+  el.innerHTML = `<div class="kt-wrap"><button type="button" class="kt-close" aria-label="Close">✕</button><div class="kt-host"></div>
+    <label class="kt-toggle"><input type="checkbox" ${liveTimeOn ? 'checked' : ''}> Real Kona time of day (in daylight)</label></div>`;
+  document.body.appendChild(el);
+  mountKonaToday(el.querySelector('.kt-host'), { base: A, rewards, onLevel: () => { el.remove(); location.href = location.pathname + '?c=' + liveChallenge().id; } });
+  el.querySelector('.kt-close').onclick = () => el.remove();
+  el.addEventListener('click', ev => { if (ev.target === el) el.remove(); });
+  el.querySelector('.kt-toggle input').onchange = ev => { liveTimeOn = ev.target.checked; try { localStorage.setItem('kona-livetime', liveTimeOn ? 'on' : 'off'); } catch { /* storage blocked */ } if (liveTimeOn) syncLiveHour(true); else setHour(currentDay.startHour || 7.25); };
+}
+
 // ------------------------------------------------------------------ Emotes and camera view (Roblox-style social bits)
 function mountEmotes() {
   if (document.getElementById('emotes')) return;
   const el = document.createElement('div');
   el.id = 'emotes';
-  el.innerHTML = `<button type="button" class="em-open" aria-label="Emotes">😀</button>
+  el.innerHTML = `<button type="button" class="em-wx" aria-label="Kona right now: live weather">☀️</button>
+    <button type="button" class="em-open" aria-label="Emotes">😀</button>
     <div class="em-list" hidden>${EMOTES.map(e => `<button type="button" data-e="${e}" title="${EMOTE_NAMES[e]}">${e}</button>`).join('')}</div>
     <button type="button" class="em-locker" aria-label="Locker: dress your athlete">👕</button>
     <button type="button" class="em-almanac" aria-label="Kona Almanac">📖</button>
@@ -1650,6 +1728,8 @@ function mountEmotes() {
   list.addEventListener('click', ev => { const e = ev.target.closest('[data-e]')?.dataset.e; if (e) { thirdPerson?.emote(e); haptic(12); list.hidden = true; } });
   el.querySelector('.em-view').onclick = () => toast(thirdPerson?.toggle() ? 'Third person view' : 'First person view');
   el.querySelector('.em-map').onclick = () => openIslandMap();
+  el.querySelector('.em-wx').onclick = () => openKonaToday();
+  { const w = weatherNow(); el.querySelector('.em-wx').innerHTML = `${w.icon}<small>${Math.round(w.kailua.tempC)}°</small>`; }
   el.querySelector('.em-locker').onclick = () => openLocker();
   el.querySelector('.em-almanac').onclick = () => showAlmanac({ rewards });
   el.querySelector('.em-home').onclick = () => { if (explorer && lastSeen && loadPlayer()) explorer.persist({ last: lastSeen }, true); location.href = location.pathname; };
@@ -1805,6 +1885,7 @@ renderer.setAnimationLoop(() => {
     window.__eggs = eggs;
   }
   eggs?.update(dt, camera);
+  tickLiveWorld(dt);
   unlockT += dt;
   if (unlockT > 4 && rewards) { unlockT = 0; checkUnlocks(rewards); }
   if (locomotion?.getState().active) islandDetail?.update(camera);

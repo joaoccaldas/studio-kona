@@ -2,6 +2,7 @@
 // Drag to steer (the further you drag, the harder you lean); ride between the coral flags.
 import * as THREE from 'three';
 import { pedal, mat } from '../rideKit.js';
+import { effects } from '../weather.js';
 
 const GATES = 24, GAP_M = 26, SPEED = 12, EDGE = 4.4;
 
@@ -9,6 +10,7 @@ export default {
   scene: '3d',
   create(ctx) {
     const { scene, hud, me, sfx, haptic, course } = ctx;
+    const LIVE = Math.max(0.6, Math.min(1.45, effects().wind));          // today's real wind at Hāwī
     const S = { x: 0, vx: 0, steer: 0, keys: 0, wind: 0, windTo: 0.6, gustAt: 4, gustDir: 1, warn: 0, dist: 0, passed: 0, missed: 0, combo: 0, gi: 0, done: false, t: 0 };
     let drag = null;
 
@@ -49,7 +51,7 @@ export default {
         S.t += dt;
         // Wind: a steady breeze that turns into gusts from either side, telegraphed 0.8 s ahead.
         if (S.t >= S.gustAt - 0.8 && !S.warn) { S.warn = 1; S.gustDir = Math.random() < 0.5 ? -1 : 1; hud.banner(S.gustDir < 0 ? '⟵ GUST' : 'GUST ⟶'); haptic(20); }
-        if (S.t >= S.gustAt) { S.windTo = S.gustDir * (1.6 + Math.random() * 0.9 + S.gi * 0.03); S.gustAt = S.t + 2.4 + Math.random() * 2; S.warn = 0; setTimeout(() => { S.windTo = S.gustDir * 0.5; }, 900 + Math.random() * 600); }
+        if (S.t >= S.gustAt) { S.windTo = S.gustDir * (1.6 + Math.random() * 0.9 + S.gi * 0.03) * LIVE; S.gustAt = S.t + 2.4 + Math.random() * 2; S.warn = 0; setTimeout(() => { S.windTo = S.gustDir * 0.5; }, 900 + Math.random() * 600); }
         S.wind += (S.windTo - S.wind) * Math.min(1, dt * 3);
         const steer = drag ? drag.s : S.keys;
         S.vx += (steer * 10 + S.wind * 3.2 - S.vx * 2.4) * dt;

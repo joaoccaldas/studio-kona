@@ -7,6 +7,9 @@ import { haptic } from './appShell.js';
 import { createSfx, confetti } from './aptFx.js';
 import { readSection, writeSection } from './save.js';
 import { levelById, recordLevel, isUnlocked, STAR_REWARD, starKey, LEVELS } from './rideLevels.js';
+import { weatherNow, effects } from './weather.js';
+import { ambience } from './ambience.js';
+import { liveChallenge, liveKey } from './konaToday.js';
 
 const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
 
@@ -113,6 +116,10 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
     end: (score, extra = {}) => finish(score, extra),
   };
   const g = game.create(ctx);
+  // Sound of the place, following today's weather.
+  const fx = effects(), amb = ambience();
+  amb.set({ wind: fx.wind * (id === 'crosswind' ? 1.3 : 0.7), surf: id === 'honu' ? 1 + fx.surf * 0.4 : 0.3, birds: 0.5, crowd: id === 'highfive' ? 1 : id === 'handoff' ? 0.45 : 0, rain: fx.rain, speed: 0, night: false });
+  root.classList.add('vignette');
 
   // ---------------------------------------------------------------- intro → countdown → play
   function intro() {
@@ -121,6 +128,7 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
     sh.innerHTML = `
       <div class="mg-intro-head"><span class="mg-icon">${level.icon}</span><div><p class="mg-eyebrow">Level ${level.n} · ${esc(level.where)}</p><h2>${esc(level.name)}</h2></div></div>
       <p class="mg-skill">Skill: <b>${esc(level.skill)}</b></p>
+      <p class="mg-live">${liveLine()}</p>
       <p class="mg-blurb">${esc(level.blurb)}</p>
       <ol class="mg-how">${level.how.map(h => `<li>${esc(h)}</li>`).join('')}</ol>
       <div class="mg-targets">${level.stars.map((s, i) => `<div class="${(rec?.stars || 0) > i ? 'got' : ''}"><span class="st">${STAR.repeat(i + 1)}</span><b>${level.better === 'low' ? '≤ ' : ''}${s}</b><span>${esc(level.unit)}</span></div>`).join('')}</div>
@@ -138,6 +146,14 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
     phase = 'count';
     countT = 3.2;
   }
+  function liveLine() {
+    const w = weatherNow(), s = w.live ? 'Live in Kona' : 'Typical Kona';
+    if (id === 'crosswind') return `${w.icon} ${s}: Hāwī wind ${Math.round(w.hawi.windKmh)} km/h, gusts ${Math.round(w.hawi.gustKmh)}. Your gusts follow it.`;
+    if (id === 'heat') return `${w.icon} ${s}: the Energy Lab feels like ${Math.round(w.lab.feelsC)} °C. Your heat follows it.`;
+    if (id === 'honu') return `${w.icon} ${s}: waves ${w.sea.waveM.toFixed(1)} m, sea ${w.sea.seaC.toFixed(1)} °C.`;
+    return `${w.icon} ${s}: ${Math.round(w.kailua.tempC)} °C, ${w.desc.toLowerCase()}, wind ${w.windLabel}.`;
+  }
+  const lc = liveChallenge();
   const fmtScore = v => (level.unit === 's' ? `${v.toFixed(1)} s` : level.unit === '%' ? `${Math.round(v)}%` : `${Math.round(v)} ${level.unit}`);
   const validRecord = () => readSection('levels')?.[id] || null;
 
@@ -152,6 +168,8 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
     let credits = 0;
     for (const k of r.newStars) credits += rewards?.grantOnce(starKey(id, k), { ...STAR_REWARD[k], reason: `${level.name} · ${k} star${k > 1 ? 's' : ''}` })?.credits || 0;
     credits += rewards?.grant({ xp: 10 + r.stars * 10, credits: 5 + r.stars * 5, reason: `${level.name}` })?.credits || 0;
+    const liveBonus = !failed && r.stars >= 1 && lc.id === id ? rewards?.grantOnce(liveKey(), { xp: 60, credits: 40, reason: 'Live challenge' }) : null;
+    credits += liveBonus?.credits || 0;
     const nextL = LEVELS[level.n];
     const unlockedNow = nextL && !isUnlocked(before, nextL.id) && isUnlocked(r.levels, nextL.id);
     result = { score, stars: r.stars, newStars: r.newStars, pb: r.pb, credits, failed: !!failed };
@@ -165,6 +183,7 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
         <div class="mg-score-big"><b>${failed ? '—' : fmtScore(score)}</b>${r.pb ? '<em>New best!</em>' : ''}</div>
         <p class="mg-next-star">${r.stars < 3 ? `Next star at ${level.better === 'low' ? '≤ ' : ''}${fmtScore(level.stars[r.stars])}` : 'All three stars'}</p>
         <p class="mg-earn">+${credits} Credits${r.newStars.length ? ` · ${r.newStars.length} new star${r.newStars.length > 1 ? 's' : ''}` : ''}</p>
+        ${liveBonus ? '<p class="mg-unlock live">⚡ Today’s live challenge complete</p>' : ''}
         ${unlockedNow ? `<p class="mg-unlock">Unlocked: Level ${nextL.n} · ${esc(nextL.name)} ${nextL.icon}</p>` : ''}
         <div class="mg-row"><button type="button" class="mg-primary" data-a="retry">Try again</button>
           ${nextL && isUnlocked(r.levels, nextL.id) ? `<button type="button" class="mg-primary alt" data-a="next">Next level</button>` : ''}</div>
@@ -235,6 +254,7 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
       else if (course) course.chase(me.position.x, 0, dt);
     }
     course?.tick(dt);
+    amb.set({ speed: phase === 'play' ? (course?.speedNow || 0) / 32 : 0 });
     if (g.render) g.render(dt); else course?.render();
     raf = requestAnimationFrame(frame);
   }
@@ -247,6 +267,7 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
     removeEventListener('keyup', onKey);
     document.removeEventListener('visibilitychange', onHide);
     g.dispose?.();
+    amb.set({ speed: 0, crowd: 0 });
     course?.dispose();
     root.remove();
     document.body.classList.remove('in-challenge');
