@@ -125,7 +125,7 @@ export default {
         let nearest = null;
         for (const r of S.rows) {
           r.z += move;
-          if (r.z > -45) arm(r);
+          if (r.z > -45 && r === S.rows.find(x => !x.called)) arm(r);   // only the current row carries the current call
           for (const v of r.vols) {
             v.z += move;
             v.mesh.position.z = v.z;

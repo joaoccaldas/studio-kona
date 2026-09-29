@@ -123,7 +123,7 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
       <p class="mg-skill">Skill: <b>${esc(level.skill)}</b></p>
       <p class="mg-blurb">${esc(level.blurb)}</p>
       <ol class="mg-how">${level.how.map(h => `<li>${esc(h)}</li>`).join('')}</ol>
-      <div class="mg-targets">${level.stars.map((s, i) => `<div class="${(rec?.stars || 0) > i ? 'got' : ''}">${STAR.repeat(i + 1)}<b>${level.better === 'low' ? '≤ ' : ''}${s}</b><span>${esc(level.unit)}</span></div>`).join('')}</div>
+      <div class="mg-targets">${level.stars.map((s, i) => `<div class="${(rec?.stars || 0) > i ? 'got' : ''}"><span class="st">${STAR.repeat(i + 1)}</span><b>${level.better === 'low' ? '≤ ' : ''}${s}</b><span>${esc(level.unit)}</span></div>`).join('')}</div>
       ${rec?.best != null ? `<p class="mg-best">Your best: <b>${fmtScore(rec.best)}</b></p>` : ''}
       <div class="mg-row"><button type="button" class="mg-primary" data-a="start">Start</button></div>
       <div class="mg-row"><button type="button" class="mg-ghost" data-a="map">Back to map</button></div>`;
@@ -220,7 +220,7 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
   let raf = 0, last = performance.now(), alive = true;
   function frame(now) {
     if (!alive) return;
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const rdt = Math.min(0.25, (now - last) / 1000), dt = Math.min(0.05, rdt);   // rdt: real time, for stopwatch games
     last = now;
     if (!paused) {
       if (phase === 'count') {
@@ -230,8 +230,9 @@ export async function runLevel({ id, game, player, rewards, onExit }) {
         if (el.textContent !== txt) { el.textContent = txt; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); sfx.step(); }
         if (countT <= 0) { phase = 'play'; g.start?.(); setTimeout(() => { if (el.textContent === 'GO!') el.textContent = ''; }, 500); }
       }
-      if (phase === 'play') { t += dt; g.step(dt); }
-      else g.idle?.(dt);
+      if (phase === 'play') { t += dt; g.step(dt, rdt); }
+      else if (g.idle) g.idle(dt);
+      else if (course) course.chase(me.position.x, 0, dt);
     }
     course?.tick(dt);
     if (g.render) g.render(dt); else course?.render();

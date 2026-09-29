@@ -22,7 +22,7 @@ export const LEVELS = [
   { id: 'honu', n: 5, name: 'Honu Spotter', where: 'Kawaihae coast', zone: 'coast', skill: 'Observation', icon: '🐢',
     blurb: 'An easy spin along the coast. Snap the sea life before it slips away, but not the rocks pretending to be turtles.',
     how: ['Tap an animal to take its photo', 'Whales and golden honu are rare and worth the most', 'Rocks and logs cost points'],
-    unit: 'pts', better: 'high', stars: [14, 24, 34] },
+    unit: 'pts', better: 'high', stars: [18, 30, 44] },
   { id: 'flatfix', n: 6, name: 'Flat Fix', where: 'Energy Lab road', zone: 'energylab', skill: 'Hands', icon: '🔧',
     blurb: 'Pssssst. Rear flat. Change the tube against the clock, and find the thorn or it flats again.',
     how: ['Follow the steps: lever, wheel, tyre, thorn, tube, air', 'Hold the CO₂ and let go in the green', 'Find the thorn before the new tube goes in'],
@@ -34,7 +34,7 @@ export const LEVELS = [
   { id: 'highfive', n: 8, name: 'Aliʻi High-Fives', where: 'Aliʻi Drive finish chute', zone: 'alii', skill: 'Rhythm', icon: '🙌',
     blurb: 'The whole town is out. Hit every high-five on the beat all the way to the finish line.',
     how: ['Tap the left or right side as a hand reaches you', 'Both hands out? Tap both sides together', 'Keep the chain for the crowd roar'],
-    unit: 'pts', better: 'high', stars: [60, 90, 112] },
+    unit: 'pts', better: 'high', stars: [60, 95, 125] },
 ];
 export const levelById = id => LEVELS.find(l => l.id === id) || null;
 export const MAX_STARS = LEVELS.length * 3;

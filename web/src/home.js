@@ -4,12 +4,13 @@ import { readSection, writeSection } from './save.js';
 import { hstDay, nextHstMidnight } from './clock.js';
 import { UPGRADES, MAX_LEVEL, nextCost, buy, missionsFor, validGarage, MEDALS } from './rushRules.js';
 import { claimRushMission } from './rush.js';
+import { nextLevel, totalStars, MAX_STARS } from './rideLevels.js';
 import { canInstall, offerInstall, haptic } from './appShell.js';
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmtN = n => (Number.isInteger(n) ? n : n.toFixed(1));
 
-export function showHome({ rewards, player, onPlay, onStory, onChallenge, focus }) {
+export function showHome({ rewards, player, onPlay, onLevel, onMap, onStory, onChallenge, focus }) {
   document.getElementById('home')?.remove();
   const root = document.createElement('div');
   root.id = 'home';
@@ -29,7 +30,7 @@ export function showHome({ rewards, player, onPlay, onStory, onChallenge, focus 
   function render() {
     const g = garage();
     const st = rewards?.state || { credits: 0, streak: 0 };
-    const medal = g.best ? (g.totalKm && g.zonesSeen >= 4 ? 'All zones seen' : `${g.zonesSeen}/4 zones seen`) : 'Ride from the lava fields to Aliʻi Drive';
+    const lv = readSection('levels') || {}, nl = nextLevel(lv);
     root.innerHTML = `
       <div class="hm">
         <header class="hm-top">
@@ -39,11 +40,13 @@ export function showHome({ rewards, player, onPlay, onStory, onChallenge, focus 
         <section class="hm-hero">
           <img src="icons/logo-512.png" alt="" width="96" height="96">
           <p class="hm-eyebrow">Kailua-Kona · Hawaiʻi</p>
-          <h1>Kona Rush</h1>
-          <p class="hm-sub">${esc(medal)}</p>
-          ${g.best ? `<p class="hm-best">Best <b>${g.best.toLocaleString()}</b> · ${g.runs} run${g.runs === 1 ? '' : 's'}</p>` : ''}
-          <button type="button" class="hm-play" id="hmPlay">${g.runs ? 'Ride again' : 'Play'}</button>
-          <p class="hm-how">Tap left / right to change lanes · hold to tuck · stay out of the coral draft zones</p>
+          <h1>Kona Ride</h1>
+          <p class="hm-sub">Eight rides along the course, eight skills. Then race it all in Kona Rush.</p>
+          <button type="button" class="hm-play" id="hmPlay"><span>Play · Level ${nl.n}</span><b>${nl.icon} ${esc(nl.name)}</b></button>
+          <div class="hm-tiles">
+            <button type="button" id="hmMap"><b>Ride Map</b><span>★ ${totalStars(lv)} / ${MAX_STARS} stars</span></button>
+            <button type="button" id="hmRush"><b>Kona Rush</b><span>${g.best ? `Best ${g.best.toLocaleString()}` : 'Endless race'}</span></button>
+          </div>
         </section>
         ${gift ? `<p class="hm-gift">${gift.first ? 'Welcome to Kona' : `Day ${gift.streak} streak`} · +${gift.credits} Credits${gift.items?.length ? ' and a gift' : ''}</p>` : ''}
         <section class="hm-card" id="hmMissions">
@@ -69,7 +72,9 @@ export function showHome({ rewards, player, onPlay, onStory, onChallenge, focus 
         </section>
         <p class="hm-foot">Medals: bronze ${MEDALS.bronze} km · silver ${MEDALS.silver} km · gold ${MEDALS.gold} km · finish ${MEDALS.finish} km</p>
       </div>`;
-    root.querySelector('#hmPlay').onclick = () => { haptic(12); close(); onPlay?.(); };
+    root.querySelector('#hmPlay').onclick = () => { haptic(12); close(); onLevel?.(nl.id); };
+    root.querySelector('#hmMap').onclick = () => { close(); onMap?.(); };
+    root.querySelector('#hmRush').onclick = () => { haptic(12); close(); onPlay?.(); };
     root.querySelector('#hmStory').onclick = () => { close(); onStory?.(); };
     root.querySelector('#hmT1').onclick = () => { close(); onChallenge?.('transition_tangle'); };
     root.querySelector('#hmInstall')?.addEventListener('click', offerInstall);

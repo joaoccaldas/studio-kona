@@ -30,6 +30,10 @@ import { initAppShell, haptic } from './appShell.js';
 import { runTransitionTangle, TRANSITION } from './transitionTangle.js';
 import { runRush } from './rush.js';
 import { showHome } from './home.js';
+import { showRideMap } from './rideMap.js';
+import { createThirdPerson } from './thirdPerson.js';
+import { runLevel } from './miniShell.js';
+import { GAMES } from './games/index.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 // Hosts that don't serve .glb (e.g. a Claude artifact) get the same models as embedded glTF JSON: the host page sets
@@ -228,7 +232,7 @@ let progress = null, drawer = null, artifactViewer = null;
 let saveData = loadGameSave();
 let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
-let pierBikesMesh = null, touchUi = null, highwayPts = null, rideRings = null;
+let pierBikesMesh = null, thirdPerson = null, touchUi = null, highwayPts = null, rideRings = null;
 let living = null, rewards = null, lifeHud = null, geocodes = {}, raceWeekData = null, roaming = false;
 let streamer = null;
 let man = null;
@@ -330,6 +334,9 @@ async function load() {
 
   // Initialize Locomotion, Echo Markers, Canyon Studio Pier Museum & Hawaiian Heritage Hunt
   locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast, onModeRequest: m => setLocomotionMode(m) });
+  thirdPerson = createThirdPerson({ scene, camera, locomotion, heightAt: (x, y) => heightAt(x, y), player: loadPlayer(), grounds });
+  window.__third = thirdPerson;
+  mountEmotes();
   if (coarse) touchUi = mountTouchControls({ locomotion, onModeToggle: () => setLocomotionMode(locomotion.getState().mode === 'bike' ? 'walk' : 'bike') });
   echoMarkers = createEchoMarkers({ scene, W, heightAt });
   pierMuseumStudio = createPierMuseumStudio({ scene, camera, W, heightAt, toast, progress: () => progress });
@@ -1567,6 +1574,29 @@ function toast(t) {
   el._t = setTimeout(() => el.classList.remove('on'), 4000);
 }
 
+// ------------------------------------------------------------------ Emotes and camera view (Roblox-style social bits)
+function mountEmotes() {
+  if (document.getElementById('emotes')) return;
+  const el = document.createElement('div');
+  el.id = 'emotes';
+  el.innerHTML = `<button type="button" class="em-open" aria-label="Emotes">😀</button>
+    <div class="em-list" hidden>${['👋', '🤙', '💃', '🏆'].map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>
+    <button type="button" class="em-view" aria-label="Switch camera view">🎥</button>
+    <button type="button" class="em-home" aria-label="Home: mini-games and Kona Rush">🏠</button>`;
+  document.body.appendChild(el);
+  const list = el.querySelector('.em-list');
+  el.querySelector('.em-open').onclick = () => { list.hidden = !list.hidden; };
+  list.addEventListener('click', ev => { const e = ev.target.closest('[data-e]')?.dataset.e; if (e) { thirdPerson?.emote(e); haptic(12); list.hidden = true; } });
+  el.querySelector('.em-view').onclick = () => toast(thirdPerson?.toggle() ? 'Third person view' : 'First person view');
+  el.querySelector('.em-home').onclick = () => { if (explorer && lastSeen && loadPlayer()) explorer.persist({ last: lastSeen }, true); location.href = location.pathname; };
+  addEventListener('keydown', ev => {
+    if (ev.target.closest?.('input, textarea, select') || document.body.classList.contains('in-challenge')) return;
+    if (ev.code === 'KeyV') toast(thirdPerson?.toggle() ? 'Third person view' : 'First person view');
+    else if (ev.code === 'KeyG') thirdPerson?.emote('👋');
+    else if (ev.code === 'Digit1' && ev.altKey) thirdPerson?.emote('🤙');
+  });
+}
+
 // ------------------------------------------------------------------ Main Animation Loop
 let fpsT = 0, frames = 0;
 let lastReachCheck = 0;
@@ -1689,7 +1719,11 @@ renderer.setAnimationLoop(() => {
     }
   }
 
+  // Third person: swing the camera out behind the blocky athlete for this render only.
+  thirdPerson?.update(dt);
+  const putBack = !tween && !ride ? thirdPerson?.apply(dt) : null;
   renderer.render(scene, camera);
+  putBack?.();
 
   // Dynamic Resolution (FPS holding)
   frames++;
@@ -1828,13 +1862,36 @@ function home(focus) {
   showHome({
     rewards, player: loadPlayer(), focus,
     onPlay: () => openChallenge('rush', home),
+    onLevel: id => playLevel(id),
+    onMap: () => rideMap(),
     onChallenge: id => openChallenge(id, home),
     onStory: () => { if (storyStarted) return; storyStarted = true; boot(); },
   });
 }
+// Ride mini-games: the map and each level (games/*.js inside miniShell.js).
+function rideMap() {
+  $('#loading').classList.add('done');
+  rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
+  showRideMap({ rewards, onLevel: playLevel, onRush: () => openChallenge('rush', home), onBack: () => home() });
+}
+function playLevel(id) {
+  if (!GAMES[id] || document.body.classList.contains('in-challenge')) return;
+  $('#loading').classList.add('done');
+  rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
+  runLevel({ id, game: GAMES[id], player: loadPlayer(), rewards, onExit: next => (next?.to === 'level' ? playLevel(next.id) : rideMap()) })
+    .then(api => { window.__level = api; })
+    .catch(e => { console.error('Level failed', e); document.body.classList.remove('in-challenge'); document.getElementById('mg')?.remove(); rideMap(); });
+}
 window.__home = home;
+window.__playLevel = playLevel;
 const clearDeep = () => { try { history.replaceState(null, '', location.pathname); } catch { /* sandboxed host */ } };
-if (deepChallenge) {
+if (deepChallenge && GAMES[deepChallenge]) {
+  clearDeep();
+  playLevel(deepChallenge);
+} else if (deepChallenge === 'map') {
+  clearDeep();
+  rideMap();
+} else if (deepChallenge) {
   $('#loading').classList.add('done');
   openChallenge(deepChallenge, to => { clearDeep(); home(to); });
 } else home();

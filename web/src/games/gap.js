@@ -37,8 +37,8 @@ export default {
         // The pacer's plan: a telegraph (standing on the pedals or sitting up) 1 s before each change.
         if (!S.tele && S.t >= S.nextChange - 1) { S.teleTo = plan[pi++ % plan.length]; S.tele = 1; hud.banner(S.teleTo > S.target ? 'Surge!' : 'Easing off', S.teleTo > S.target ? 'They are standing on the pedals' : 'They sat up'); }
         if (S.tele && S.t >= S.nextChange) { S.target = S.teleTo; S.tele = 0; S.nextChange = S.t + 3 + Math.random() * 2.5; }
-        S.vp += Math.sign(S.target - S.vp) * Math.min(Math.abs(S.target - S.vp), 2.4 * dt);
-        S.v += (S.hold ? 2.7 : -1.7) * dt;
+        S.vp += Math.sign(S.target - S.vp) * Math.min(Math.abs(S.target - S.vp), 1.6 * dt);
+        S.v += (S.hold ? 2.8 : -2.6) * dt;
         S.v = Math.max(7, Math.min(19, S.v));
         S.d = Math.max(0.5, Math.min(60, S.d + (S.vp - S.v) * dt));
         S.grace = Math.max(0, S.grace - dt);
