@@ -5,192 +5,19 @@
 // energy faster, Aliʻi Drive has the crowds and the finish arch. Credits from every run buy upgrades you feel next run.
 // Rules and numbers live in rushRules.js (unit-tested); this file is the scene, the input and the loop.
 import * as THREE from 'three';
-import { gearModel } from './gearModels.js';
+import { LANES, esc, makeRider, pedal, makeCone, makePickup, createCourse, makeArch } from './rideKit.js';
 import { haptic } from './appShell.js';
 import { createSfx, confetti } from './aptFx.js';
 import { readSection, writeSection } from './save.js';
 import { hstDay } from './clock.js';
 import { statsFor, zoneAt, ZONES, MEDALS, medalFor, scoreRun, creditsFor, applyRunToMissions, validGarage } from './rushRules.js';
 
-const LANES = [-3, 0, 3];
 const KM_PER_M = 2.6 / 1000;                 // course compression: ~2.5 km of course every ~40 s of riding
 const FINISH_KM = MEDALS.finish;
 const SPAWN_Z = -170;
 const DRAFT_LEN = 10, DRAFT_CARD = 1.5;      // metres of draft zone behind a rider; seconds in it before a card
 const MEDAL_TXT = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold', finish: 'Finisher' };
 const MEDAL_BONUS = { bronze: 40, silver: 80, gold: 150, finish: 300 };
-const PALETTE = {
-  queenk: { sky: 0x3f8fd0, fog: 0xcfe6f2, ground: 0x2c2624, prop: 'rock' },
-  hawi: { sky: 0x5a9fc4, fog: 0xd9ebe6, ground: 0x5f7f45, prop: 'bush' },
-  energylab: { sky: 0xd99a5a, fog: 0xf6e0b8, ground: 0xb99462, prop: 'rock' },
-  alii: { sky: 0xd0705a, fog: 0xf8d2b0, ground: 0x4f7a47, prop: 'crowd' },
-};
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-// ------------------------------------------------------------------ textures
-function roadTexture() {
-  const cv = document.createElement('canvas');
-  cv.width = 256; cv.height = 512;
-  const c = cv.getContext('2d');
-  c.fillStyle = '#3b3d42'; c.fillRect(0, 0, 256, 512);
-  for (let i = 0; i < 2600; i++) { const g = 50 + Math.random() * 30; c.fillStyle = `rgba(${g},${g},${g + 4},.55)`; c.fillRect(Math.random() * 256, Math.random() * 512, 2, 2); }
-  c.fillStyle = '#f4efe4';
-  c.fillRect(6, 0, 6, 512); c.fillRect(244, 0, 6, 512);                 // edge lines
-  c.fillStyle = '#e8c35a';
-  for (const x of [256 / 3, 512 / 3]) for (let y = 0; y < 512; y += 128) c.fillRect(x - 3, y, 6, 64);   // lane dashes
-  const t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
-  return t;
-}
-function groundTexture() {
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = 256;
-  const c = cv.getContext('2d');
-  c.fillStyle = '#fff'; c.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 900; i++) { const k = 150 + Math.random() * 105; c.fillStyle = `rgb(${k},${k},${k})`; c.beginPath(); c.arc(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 5, 0, 7); c.fill(); }
-  const t = new THREE.CanvasTexture(cv);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-function bannerTexture(text) {
-  const cv = document.createElement('canvas');
-  cv.width = 1024; cv.height = 160;
-  const c = cv.getContext('2d');
-  c.fillStyle = '#13293D'; c.fillRect(0, 0, 1024, 160);
-  c.fillStyle = '#D9785B'; c.fillRect(0, 140, 1024, 20);
-  c.fillStyle = '#FBF8F2'; c.font = '900 96px system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.fillText(text, 512, 72);
-  const t = new THREE.CanvasTexture(cv);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
-// ------------------------------------------------------------------ models (shared geometry, a few cached materials)
-const mats = new Map();
-const mat = (color, o = {}) => {
-  const k = color + JSON.stringify(o);
-  if (!mats.has(k)) mats.set(k, new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.05, ...o }));
-  return mats.get(k);
-};
-const G = {
-  wheel: new THREE.TorusGeometry(0.34, 0.035, 8, 28),
-  disc: new THREE.CylinderGeometry(0.33, 0.33, 0.03, 24),
-  tube: new THREE.CylinderGeometry(0.025, 0.025, 1, 6),
-  torso: new THREE.CapsuleGeometry(0.17, 0.5, 4, 10),
-  limb: new THREE.CapsuleGeometry(0.06, 0.45, 3, 8),
-  head: new THREE.SphereGeometry(0.12, 12, 10),
-  helmet: new THREE.SphereGeometry(0.15, 14, 10),
-  cone: new THREE.ConeGeometry(0.32, 0.8, 14),
-  coneBase: new THREE.BoxGeometry(0.62, 0.06, 0.62),
-  rock: new THREE.DodecahedronGeometry(1, 0),
-  bush: new THREE.IcosahedronGeometry(1, 1),
-  trunk: new THREE.CylinderGeometry(0.12, 0.2, 5, 6),
-  frond: new THREE.ConeGeometry(1.8, 1.2, 7, 1, true),
-  person: new THREE.CapsuleGeometry(0.25, 0.9, 3, 8),
-  ring: new THREE.TorusGeometry(1.25, 0.12, 10, 36),
-  halo: new THREE.CircleGeometry(0.9, 24),
-};
-
-function makeRider(suit, helmetColor, disc = false) {
-  const g = new THREE.Group();
-  const frame = mat(0x1a1d22, { metalness: 0.4, roughness: 0.35 });
-  const w1 = new THREE.Mesh(G.wheel, frame), w2 = new THREE.Mesh(G.wheel, frame);
-  w1.rotation.y = w2.rotation.y = Math.PI / 2;
-  w1.position.set(0, 0.36, -0.52); w2.position.set(0, 0.36, 0.52);
-  g.add(w1, w2);
-  if (disc) { const d = new THREE.Mesh(G.disc, mat(0x2b2f36, { metalness: 0.5, roughness: 0.3 })); d.rotation.z = Math.PI / 2; d.position.copy(w2.position); g.add(d); }
-  const bar = (x1, y1, z1, x2, y2, z2) => {
-    const a = new THREE.Vector3(x1, y1, z1), b = new THREE.Vector3(x2, y2, z2), m = new THREE.Mesh(G.tube, frame);
-    m.position.copy(a).add(b).multiplyScalar(0.5);
-    m.scale.y = a.distanceTo(b);
-    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.sub(a).normalize());
-    g.add(m);
-  };
-  bar(0, 0.36, 0.52, 0, 0.95, 0.1); bar(0, 0.95, 0.1, 0, 0.9, -0.42); bar(0, 0.9, -0.42, 0, 0.36, -0.52); bar(0, 0.36, 0.52, 0, 0.5, 0.05); bar(0, 0.5, 0.05, 0, 0.95, 0.1);
-  const body = new THREE.Group();                                        // leans forward; tucks lower
-  body.position.set(0, 1.02, 0.12);
-  const skin = mat(0xb07a52), kit = mat(suit), lid = mat(helmetColor, { roughness: 0.25, metalness: 0.2 });
-  const torso = new THREE.Mesh(G.torso, kit);
-  torso.rotation.x = -1.15; torso.position.set(0, 0.2, -0.22); torso.scale.set(1.45, 1, 1.15);
-  const head = new THREE.Mesh(G.head, skin); head.position.set(0, 0.42, -0.58);
-  const hel = new THREE.Mesh(G.helmet, lid); hel.scale.set(0.95, 0.8, 1.5); hel.position.set(0, 0.47, -0.52);
-  const armL = new THREE.Mesh(G.limb, kit), armR = new THREE.Mesh(G.limb, kit);
-  for (const [a, x] of [[armL, -0.13], [armR, 0.13]]) { a.rotation.x = -0.35; a.position.set(x, 0.05, -0.6); body.add(a); }
-  const legL = new THREE.Mesh(G.limb, kit), legR = new THREE.Mesh(G.limb, kit);
-  for (const [l, x] of [[legL, -0.12], [legR, 0.12]]) { l.position.set(x, -0.3, 0.05); g.add(l); }
-  body.add(torso, head, hel);
-  g.add(body);
-  g.userData = { body, legs: [legL, legR], wheels: [w1, w2] };
-  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  return g;
-}
-function pedal(r, t) {
-  const { legs, wheels } = r.userData;
-  legs.forEach((l, i) => { const a = t * 9 + i * Math.PI; l.position.set(i ? 0.12 : -0.12, 0.62 + Math.sin(a) * 0.12, 0.08 + Math.cos(a) * 0.12); l.rotation.x = 0.35 + Math.cos(a) * 0.35; });
-  wheels.forEach(w => { w.rotation.x = -t * 20; });
-}
-function makeCone() {
-  const g = new THREE.Group();
-  const c = new THREE.Mesh(G.cone, mat(0xff7a3d, { roughness: 0.5 }));
-  c.position.y = 0.43;
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 0.14, 14), mat(0xfbf8f2));
-  band.position.y = 0.5;
-  g.add(c, band, new THREE.Mesh(G.coneBase, mat(0x222222)));
-  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  return g;
-}
-function makePickup(kind) {
-  const g = new THREE.Group();
-  const halo = new THREE.Mesh(G.halo, new THREE.MeshBasicMaterial({ color: kind === 'bottle' ? 0x7fd3e6 : kind === 'shell' ? 0xffd36b : 0xf3d9a4, transparent: true, opacity: 0.45, depthWrite: false }));
-  halo.rotation.x = -Math.PI / 2; halo.position.y = 0.03;
-  g.add(halo);
-  let model;
-  if (kind === 'ring') {
-    model = new THREE.Mesh(G.ring, new THREE.MeshStandardMaterial({ color: 0x3e8ea0, emissive: 0x2e6f73, emissiveIntensity: 0.9, roughness: 0.3 }));
-    model.position.y = 1.35;
-    halo.visible = false;
-  } else if (kind === 'shell') {
-    model = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffcf5c, emissive: 0xc98a1c, emissiveIntensity: 0.6, metalness: 0.7, roughness: 0.25 }));
-    model.scale.set(1, 0.7, 1.35);
-    model.position.y = 0.9;
-  } else {
-    model = gearModel(kind === 'gel' ? 'nutrition' : 'bottle', 0x3e8ea0) || new THREE.Mesh(G.head, mat(0xd9785b));
-    model.scale.setScalar(kind === 'gel' ? 5 : 3.6);
-    model.position.y = 0.8;
-  }
-  g.add(model);
-  g.userData.model = model;
-  return g;
-}
-function makeProp() {
-  // One recyclable roadside slot holding every look; the zone decides which child shows.
-  const g = new THREE.Group();
-  const rock = new THREE.Mesh(G.rock, mat(0x1e1a19, { roughness: 0.95, flatShading: true }));
-  const bush = new THREE.Mesh(G.bush, mat(0x587a3a, { roughness: 0.9, flatShading: true }));
-  const palm = new THREE.Group();
-  const trunk = new THREE.Mesh(G.trunk, mat(0x8a6a48, { roughness: 0.9 })); trunk.position.y = 2.5; trunk.rotation.z = 0.08;
-  const frond = new THREE.Mesh(G.frond, mat(0x3f7a3a, { roughness: 0.8, side: THREE.DoubleSide, flatShading: true })); frond.position.y = 5.1; frond.scale.y = -1;
-  palm.add(trunk, frond);
-  const crowd = new THREE.Group();
-  const cols = [0xd9785b, 0x2e6f73, 0xf3d9a4, 0x13293d, 0xe8c35a, 0xfbf8f2];
-  for (let i = 0; i < 4; i++) { const p = new THREE.Mesh(G.person, mat(cols[(Math.random() * cols.length) | 0])); p.position.set((i % 2) * 0.7 - 0.35, 0.7, i * 0.9 - 1.3); crowd.add(p); }
-  g.add(rock, bush, palm, crowd);
-  g.userData = { rock, bush, palm, crowd };
-  return g;
-}
-function setPropKind(p, kind) {
-  const u = p.userData;
-  const k = kind === 'rock' && Math.random() < 0.15 ? 'bush' : kind === 'crowd' && Math.random() < 0.35 ? 'palm' : kind === 'bush' && Math.random() < 0.3 ? 'rock' : kind;
-  for (const n of ['rock', 'bush', 'palm', 'crowd']) u[n].visible = n === k;
-  const s = 0.5 + Math.random() * 1.1;
-  u.rock.scale.set(s * 1.3, s * 0.7, s);
-  u.bush.scale.set(s, s * 0.8, s);
-  u.kind = k;
-}
-
 // ------------------------------------------------------------------ the run
 export async function runRush({ player, rewards, onExit, onGarage }) {
   const look = player?.look || {};
@@ -223,91 +50,9 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
 
   // ---------------------------------------------------------------- renderer, scene, light
   const canvas = $('#rushCanvas');
-  const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: 'high-performance' });
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.AgXToneMapping;
-  renderer.toneMappingExposure = 1.15;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setPixelRatio(Math.min(devicePixelRatio, coarse ? 1.5 : 2));
-  const scene = new THREE.Scene();
-  const skyCol = new THREE.Color(PALETTE.queenk.sky), fogCol = new THREE.Color(PALETTE.queenk.fog), groundCol = new THREE.Color(PALETTE.queenk.ground);
-  scene.background = fogCol.clone();
-  scene.fog = new THREE.Fog(fogCol.clone(), 60, 190);
-  // Gradient sky with a soft sun: zenith colour down to the fog colour at the horizon.
-  const skyMat = new THREE.ShaderMaterial({
-    side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { top: { value: skyCol.clone() }, bottom: { value: fogCol.clone() }, sunDir: { value: new THREE.Vector3(0.35, 0.28, -1).normalize() } },
-    vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: `uniform vec3 top; uniform vec3 bottom; uniform vec3 sunDir; varying vec3 vDir;
-      void main(){ float h = clamp(vDir.y * 2.2, 0.0, 1.0); vec3 c = mix(bottom, top, pow(h, 0.7));
-        float s = max(dot(normalize(vDir), sunDir), 0.0); c += vec3(1.0, 0.9, 0.7) * (pow(s, 400.0) * 1.2 + pow(s, 12.0) * 0.18);
-        gl_FragColor = vec4(c, 1.0); }`,
-  });
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(500, 24, 16), skyMat);
-  scene.add(sky);
-  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 600);
-  scene.add(new THREE.HemisphereLight(0xeaf4ff, 0x6b5846, 1.4));
-  const sun = new THREE.DirectionalLight(0xfff0d2, 2.4);
-  sun.position.set(-8, 14, 6);
-  sun.target.position.set(0, 0, -6);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
-  Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 14, bottom: -14, near: 1, far: 40 });
-  scene.add(sun, sun.target);
-
-  function resize() {
-    renderer.setSize(innerWidth, innerHeight, false);
-    camera.aspect = innerWidth / innerHeight;
-    baseFov = camera.aspect < 0.8 ? 74 : 58;
-    camera.updateProjectionMatrix();
-  }
-  let baseFov = 60;
-  addEventListener('resize', resize);
-  resize();
-
-  // Road, ground, ocean and far volcanoes.
-  const roadTex = roadTexture();
-  roadTex.repeat.set(1, 40);
-  const road = new THREE.Mesh(new THREE.PlaneGeometry(9.4, 400), new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.85 }));
-  road.rotation.x = -Math.PI / 2; road.position.set(0, 0.01, -180);
-  road.receiveShadow = true;
-  const gTex = groundTexture();
-  gTex.repeat.set(30, 30);
-  const groundMat = new THREE.MeshStandardMaterial({ map: gTex, color: groundCol.clone(), roughness: 1 });
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), groundMat);
-  ground.rotation.x = -Math.PI / 2; ground.position.set(170, 0, -180);    // the ocean shows on the left, west of the Queen K
-  ground.receiveShadow = true;
-  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: 0x1b6f95, roughness: 0.2, metalness: 0.2 }));
-  ocean.rotation.x = -Math.PI / 2; ocean.position.set(-480, -0.3, -200);
-  const shore = new THREE.Mesh(new THREE.PlaneGeometry(14, 400), new THREE.MeshStandardMaterial({ color: 0x1c1816, roughness: 1 }));
-  shore.rotation.x = -Math.PI / 2; shore.position.set(-36, -0.05, -180);
-  scene.add(road, ground, ocean, shore);
-  const hills = new THREE.Group();
-  for (const [x, z, r, h] of [[140, -420, 140, 70], [60, -520, 170, 95], [240, -360, 90, 40], [-40, -560, 120, 45]]) {
-    const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 24), new THREE.MeshBasicMaterial({ color: 0x7d8e99, fog: false }));
-    m.position.set(x, h / 2 - 2, z);
-    hills.add(m);
-  }
-  scene.add(hills);
-
-  // Recycled roadside props on both shoulders.
-  const props = [];
-  for (let i = 0; i < 34; i++) {
-    const p = makeProp();
-    p.position.set((i % 2 ? 1 : -1) * (7.5 + Math.random() * 14), 0, -i * 11 - Math.random() * 6);
-    setPropKind(p, 'rock');
-    scene.add(p);
-    props.push(p);
-  }
-
-  // The finish arch appears on Aliʻi Drive when you are close.
-  const arch = new THREE.Group();
-  for (const x of [-5.4, 5.4]) { const post = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 0.5), mat(0x13293d)); post.position.set(x, 3, 0); arch.add(post); }
-  const banner = new THREE.Mesh(new THREE.PlaneGeometry(11.3, 1.8), new THREE.MeshBasicMaterial({ map: bannerTexture('FINISH · KONA'), side: THREE.DoubleSide }));
-  banner.position.set(0, 5.4, 0);
-  arch.add(banner);
+  const course = createCourse({ canvas, zone: 'queenk' });
+  const { scene, renderer, coarse } = course;
+  const arch = makeArch('FINISH · KONA');
   arch.visible = false;
   scene.add(arch);
 
@@ -522,16 +267,7 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
   });
 
   // ---------------------------------------------------------------- zones
-  let palFrom = null, palT = 1;
-  const palTo = { sky: new THREE.Color(), fog: new THREE.Color(), ground: new THREE.Color() };
-  function applyPalette(id, instant) {
-    const p = PALETTE[id];
-    palFrom = { sky: skyMat.uniforms.top.value.clone(), fog: scene.fog.color.clone(), ground: groundMat.color.clone() };
-    palTo.sky.set(p.sky); palTo.fog.set(p.fog); palTo.ground.set(p.ground);
-    palT = instant ? 1 : 0;
-    if (instant) { skyMat.uniforms.top.value.copy(palTo.sky); scene.fog.color.copy(palTo.fog); groundMat.color.copy(palTo.ground); }
-    skyMat.uniforms.bottom.value.copy(scene.fog.color); scene.background.copy(scene.fog.color);
-  }
+  const applyPalette = (id, instant) => course.setZone(id, instant);
   function enterZone(z) {
     S.zone = z.id;
     applyPalette(z.id);
@@ -541,7 +277,6 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
     haptic([10, 40, 10]);
     sfx.step();
     if (z.id === 'hawi') S.nextGust = S.t + 2.5;
-    for (const p of props) if (p.position.z < -50) setPropKind(p, PALETTE[z.id].prop);    // the new zone is already visible ahead
     const medal = medalFor(S.km);
     if (medal) pop(`${MEDAL_TXT[medal]} medal reached`, 'medal');
   }
@@ -624,7 +359,6 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
 
   // ---------------------------------------------------------------- the loop
   let raf = 0, last = performance.now(), alive = true;
-  const camPos = new THREE.Vector3(0, 3.4, 7), camLook = new THREE.Vector3(0, 1.1, -10);
   function hud(force) {
     $('#rsKm').textContent = S.km.toFixed(2);
     $('#rsScore').textContent = (scoreRun(S) + Math.round(S.bonus / 5)).toLocaleString();
@@ -652,13 +386,7 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
 
   function step(dt) {
     S.t += dt;
-    if (palT < 1) {
-      palT = Math.min(1, palT + dt / 1.6);
-      skyMat.uniforms.top.value.copy(palFrom.sky).lerp(palTo.sky, palT);
-      scene.fog.color.copy(palFrom.fog).lerp(palTo.fog, palT);
-      skyMat.uniforms.bottom.value.copy(scene.fog.color); scene.background.copy(scene.fog.color);
-      groundMat.color.copy(palFrom.ground).lerp(palTo.ground, palT);
-    }
+    course.tick(dt);
     if (S.phase === 'count') {
       S.countT -= dt;
       const n = Math.ceil(S.countT - 0.2);
@@ -685,8 +413,7 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
     const move = S.speed * dt;
     S.dist += move;
     if (riding) S.km += move * KM_PER_M;
-    roadTex.offset.y += move / 10;
-    gTex.offset.y += (move / 400) * 30;
+    course.advance(move, S.t);
 
     if (riding) {
       // Energy: steady burn, more in the heat, a lot more when tucked, less in a slipstream.
@@ -788,15 +515,6 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
       if (p.got) { p.mesh.scale.multiplyScalar(1 - dt * 6); p.mesh.position.y += dt * 4; if (p.mesh.scale.x < 0.05) { p.live = false; p.mesh.visible = false; } }
     }
     // Props and the finish arch.
-    for (const p of props) {
-      p.position.z += move;
-      if (p.position.z > 12) {
-        p.position.z -= 34 * 11;
-        p.position.x = (p.position.x > 0 ? 1 : -1) * (S.zone === 'alii' ? 6.4 + Math.random() * 3 : 7.5 + Math.random() * (p.position.x > 0 ? 18 : 14));
-        setPropKind(p, PALETTE[S.zone].prop);
-      }
-      if (p.userData.kind === 'crowd') p.userData.crowd.children.forEach((c, i) => { c.position.y = 0.7 + Math.max(0, Math.sin(S.t * 9 + i + p.position.z)) * 0.18; });
-    }
     if (S.km > FINISH_KM - 0.5 || S.over === 'finish') {
       arch.visible = true;
       if (S.over !== 'finish') arch.position.z = -(FINISH_KM - S.km) / KM_PER_M;
@@ -833,28 +551,20 @@ export async function runRush({ player, rewards, onExit, onGarage }) {
 
   function render(dt) {
     // Chase camera: behind and above, drifting with the lane; wider and lower as speed builds.
-    const sp = Math.min(1, S.speed / 45);
-    camPos.lerp(new THREE.Vector3(S.px * 0.85, 4.3 - sp * 0.5 + (S.tuck ? -0.25 : 0), 7.6 - sp * 0.8), Math.min(1, dt * 5));
-    camLook.lerp(new THREE.Vector3(S.px * 0.6, 0.4, -20), Math.min(1, dt * 6));
-    camera.position.copy(camPos);
-    sky.position.copy(camPos);
-    if (S.shake > 0) { S.shake = Math.max(0, S.shake - dt); camera.position.x += (Math.random() - 0.5) * S.shake * 0.8; camera.position.y += (Math.random() - 0.5) * S.shake * 0.5; }
-    camera.lookAt(camLook);
-    const fov = baseFov + sp * 10 + (S.boost > 0 ? 6 : 0);
-    if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * Math.min(1, dt * 4); camera.updateProjectionMatrix(); }
+    if (S.shake > 0) S.shake = Math.max(0, S.shake - dt);
+    course.chase(S.px, Math.min(1, S.speed / 45), dt, { tuck: S.tuck, shake: S.shake, fovKick: S.boost > 0 ? 6 : 0 });
     scene.fog.near = S.zone === 'energylab' ? 40 : 60;
-    renderer.render(scene, camera);
+    course.render();
   }
 
   function exit(to) {
     if (!alive) return;
     alive = false;
     cancelAnimationFrame(raf);
-    removeEventListener('resize', resize);
     removeEventListener('keydown', onKey);
     removeEventListener('keyup', onKey);
     document.removeEventListener('visibilitychange', onHide);
-    renderer.dispose();
+    course.dispose();
     root.remove();
     document.body.classList.remove('in-challenge');
     if (to === 'garage') onGarage?.(); else onExit?.();

@@ -1,4 +1,5 @@
 import { validGarage } from './rushRules.js';
+import { validLevels } from './rideLevels.js';
 // One versioned save for the whole game (issue #6). Every system reads and writes its own section through here.
 //   kona-save-v2  { v: 2, player, campaign, rewards, heritage, arena, migratedFrom?, recovered? }
 //   kona-fog-v1   the fog-of-war mask (a PNG data URL), kept apart because it is large and can be rebuilt.
@@ -96,7 +97,7 @@ export function validArena(a) {
 }
 
 
-const VALIDATE = { player: validPlayer, campaign: validCampaign, rewards: x => x ?? null, heritage: x => [...new Set(strList(x))], arena: validArena, garage: validGarage };
+const VALIDATE = { player: validPlayer, campaign: validCampaign, rewards: x => x ?? null, heritage: x => [...new Set(strList(x))], arena: validArena, garage: validGarage, levels: validLevels };
 
 function store() { return globalThis.localStorage; }
 function readJSON(key) {
