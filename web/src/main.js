@@ -60,12 +60,20 @@ const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y); // survey (x east, y nor
 const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
 
 // ------------------------------------------------------------------ Renderer
-const renderer = new THREE.WebGLRenderer({ canvas: $('#c'), antialias: !coarse, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({
+  canvas: $('#c'),
+  antialias: !coarse,
+  powerPreference: 'high-performance',
+  // Kona spans centimetre-scale bike detail and a 420 km camera range.
+  // Log depth materially reduces mobile z-fighting / flashing road surfaces while moving.
+  logarithmicDepthBuffer: true,
+});
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.AgXToneMapping;
 renderer.toneMappingExposure = 1.0;
 renderer.xr.enabled = false;
-let dpr = Math.min(devicePixelRatio, coarse ? 1.25 : 1.75);
+const maxDpr = Math.min(devicePixelRatio, coarse ? 1.35 : 2);
+let dpr = Math.min(maxDpr, coarse ? 1.15 : 1.65);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.4, 420000);
@@ -1901,11 +1909,13 @@ renderer.setAnimationLoop(() => {
     const fps = frames / fpsT;
     frames = 0;
     fpsT = 0;
-    if (fps < 45 && dpr > 0.75) {
-      dpr = Math.max(0.75, dpr - 0.15);
+    if (fps < 47 && dpr > 0.75) {
+      dpr = Math.max(0.75, dpr - (coarse ? 0.12 : 0.15));
       resize();
-    } else if (fps > 58 && dpr < Math.min(devicePixelRatio, 2)) {
-      dpr = Math.min(devicePixelRatio, dpr + 0.1);
+    } else if (fps > 59 && dpr < maxDpr) {
+      // Raise resolution conservatively. On phones we deliberately never climb to 2× DPR:
+      // a stable 60-ish fps world is more valuable than extra pixels during movement.
+      dpr = Math.min(maxDpr, dpr + (coarse ? 0.05 : 0.1));
       resize();
     }
   }
