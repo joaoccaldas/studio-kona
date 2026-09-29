@@ -5,12 +5,14 @@ import { hstDay, nextHstMidnight } from './clock.js';
 import { UPGRADES, MAX_LEVEL, nextCost, buy, missionsFor, validGarage, MEDALS } from './rushRules.js';
 import { claimRushMission } from './rush.js';
 import { nextLevel, totalStars, MAX_STARS } from './rideLevels.js';
+import { CARDS, unlockedCards } from './lore.js';
+import { progressSnapshot, checkUnlocks } from './unlocks.js';
 import { canInstall, offerInstall, haptic } from './appShell.js';
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmtN = n => (Number.isInteger(n) ? n : n.toFixed(1));
 
-export function showHome({ rewards, player, onPlay, onLevel, onMap, onStory, onChallenge, focus }) {
+export function showHome({ rewards, player, onPlay, onLevel, onMap, onAlmanac, onLocker, onStory, onChallenge, focus }) {
   document.getElementById('home')?.remove();
   const root = document.createElement('div');
   root.id = 'home';
@@ -19,6 +21,7 @@ export function showHome({ rewards, player, onPlay, onLevel, onMap, onStory, onC
 
   // Daily check-in: the streak and its gift, once per Hawaiʻi day.
   const gift = rewards?.checkIn?.();
+  setTimeout(() => checkUnlocks(rewards), 1200);                  // coming back opens things: say so
 
   function garage() {
     const g = validGarage(readSection('garage'));
@@ -31,6 +34,7 @@ export function showHome({ rewards, player, onPlay, onLevel, onMap, onStory, onC
     const g = garage();
     const st = rewards?.state || { credits: 0, streak: 0 };
     const lv = readSection('levels') || {}, nl = nextLevel(lv);
+    const al = { cards: unlockedCards(progressSnapshot(rewards)).length };
     root.innerHTML = `
       <div class="hm">
         <header class="hm-top">
@@ -46,6 +50,8 @@ export function showHome({ rewards, player, onPlay, onLevel, onMap, onStory, onC
           <div class="hm-tiles">
             <button type="button" id="hmMap"><b>Ride Map</b><span>★ ${totalStars(lv)} / ${MAX_STARS} stars</span></button>
             <button type="button" id="hmRush"><b>Kona Rush</b><span>${g.best ? `Best ${g.best.toLocaleString()}` : 'Endless race'}</span></button>
+            <button type="button" id="hmAlmanac"><b>📖 Almanac</b><span>${al.cards} / ${CARDS.length} cards</span></button>
+            <button type="button" id="hmLocker"><b>👕 Locker</b><span>Dress your athlete</span></button>
           </div>
         </section>
         ${gift ? `<p class="hm-gift">${gift.first ? 'Welcome to Kona' : `Day ${gift.streak} streak`} · +${gift.credits} Credits${gift.items?.length ? ' and a gift' : ''}</p>` : ''}
@@ -74,6 +80,8 @@ export function showHome({ rewards, player, onPlay, onLevel, onMap, onStory, onC
       </div>`;
     root.querySelector('#hmPlay').onclick = () => { haptic(12); close(); onLevel?.(nl.id); };
     root.querySelector('#hmMap').onclick = () => { close(); onMap?.(); };
+    root.querySelector('#hmAlmanac').onclick = () => { close(); onAlmanac?.(); };
+    root.querySelector('#hmLocker').onclick = () => { close(); onLocker?.(); };
     root.querySelector('#hmRush').onclick = () => { haptic(12); close(); onPlay?.(); };
     root.querySelector('#hmStory').onclick = () => { close(); onStory?.(); };
     root.querySelector('#hmT1').onclick = () => { close(); onChallenge?.('transition_tangle'); };

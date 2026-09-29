@@ -35,6 +35,11 @@ import { createThirdPerson } from './thirdPerson.js';
 import { createLandmarks } from './landmarks.js';
 import { createIslandDetail } from './islandDetail.js';
 import { showIslandMap, showDiscovery } from './islandMap.js';
+import { createEggs } from './eggs.js';
+import { showAlmanac, showLocker } from './almanac.js';
+import { checkUnlocks, addDistance, foundEgg, lookNow, toast as unlockToast } from './unlocks.js';
+import { EMOTES, EMOTE_NAMES } from './athlete.js';
+import { readSection } from './save.js';
 import { runLevel } from './miniShell.js';
 import { GAMES } from './games/index.js';
 
@@ -249,7 +254,7 @@ let progress = null, drawer = null, artifactViewer = null;
 let saveData = loadGameSave();
 let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
-let pierBikesMesh = null, thirdPerson = null, landmarks = null, islandDetail = null, townMeshes = [], coreMeta = null, detailRects = [], touchUi = null, highwayPts = null, rideRings = null;
+let pierBikesMesh = null, thirdPerson = null, eggs = null, coffeeXY = null, landmarks = null, islandDetail = null, townMeshes = [], coreMeta = null, detailRects = [], touchUi = null, highwayPts = null, rideRings = null;
 let living = null, rewards = null, lifeHud = null, geocodes = {}, raceWeekData = null, roaming = false;
 let streamer = null;
 let man = null;
@@ -349,13 +354,14 @@ async function load() {
   // Famous places in 3D, and terrain detail everywhere outside town.
   rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
   try {
-    landmarks = createLandmarks({ scene, W, toLocal, groundAt, townMeshes, rewards, onDiscover: (l, paid, n, total) => { showDiscovery(l, paid, n, total); playUnlockFanfare?.(); lifeHud?.wallet(); } });
+    landmarks = createLandmarks({ scene, W, toLocal, groundAt, townMeshes, rewards, onDiscover: (l, paid, n, total) => { showDiscovery(l, paid, n, total); playUnlockFanfare?.(); lifeHud?.wallet(); setTimeout(() => checkUnlocks(rewards), 1500); } });
     window.__landmarks = landmarks;
   } catch (e) { console.warn('Landmarks failed', e); }
   try {
     islandDetail = createIslandDetail({ scene, W, heightAt: (x, y) => heightAt(x, y), isl, base: A, farIsland, isDetailArea, addGround, removeGround: m => grounds.delete(m), coarse });
     window.__detail = islandDetail;
   } catch (e) { console.warn('Island detail failed', e); }
+  checkUnlocks(rewards, { announce: false });
 
   console.log('[Kona] Building ocean, coffee boat, systems...');
   coffeeBoat();
@@ -364,7 +370,7 @@ async function load() {
 
   // Initialize Locomotion, Echo Markers, Canyon Studio Pier Museum & Hawaiian Heritage Hunt
   locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast, onModeRequest: m => setLocomotionMode(m) });
-  thirdPerson = createThirdPerson({ scene, camera, locomotion, heightAt: (x, y) => heightAt(x, y), player: loadPlayer(), grounds });
+  thirdPerson = createThirdPerson({ scene, camera, locomotion, heightAt: (x, y) => heightAt(x, y), player: loadPlayer(), grounds, look: lookNow() });
   window.__third = thirdPerson;
   mountEmotes();
   if (coarse) touchUi = mountTouchControls({ locomotion, onModeToggle: () => setLocomotionMode(locomotion.getState().mode === 'bike' ? 'walk' : 'bike') });
@@ -928,7 +934,7 @@ function openChallenge(id, after) {
   const run = { [TRANSITION.id]: runTransitionTangle, rush: runRush }[id];
   if (!run) { after?.(); return; }
   rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
-  run({ player: loadPlayer(), rewards, base: A, onExit: () => { lifeHud?.wallet(); after?.(); }, onGarage: () => after?.('garage') })
+  run({ player: loadPlayer(), rewards, base: A, onExit: () => { lifeHud?.wallet(); checkUnlocks(rewards); after?.(); }, onGarage: () => { checkUnlocks(rewards); after?.('garage'); } })
     .then(api => { window.__challenge = api; })
     .catch(e => { console.error('Challenge failed', e); document.body.classList.remove('in-challenge'); document.getElementById('tt')?.remove(); after?.(); });
 }
@@ -1066,6 +1072,7 @@ let coffee;
 function coffeeBoat() {
   const [sx, sy] = man.start, [dx, dy] = man.dir, rx = dy, ry = -dx;
   const xy = [sx + dx * 420 - rx * 40, sy + dy * 420 - ry * 40];
+  coffeeXY = xy;
   const g = new THREE.Group();
   g.position.copy(W(xy[0], xy[1], 0));
 
@@ -1605,6 +1612,10 @@ function toast(t) {
   el._t = setTimeout(() => el.classList.remove('on'), 4000);
 }
 
+function openLocker() {
+  rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
+  showLocker({ rewards, player: loadPlayer(), onChange: look => thirdPerson?.dress(look) });
+}
 function openIslandMap() {
   if (!landmarks || !isl || document.getElementById('islmap')) return;
   const st = locomotion?.getState();
@@ -1627,7 +1638,9 @@ function mountEmotes() {
   const el = document.createElement('div');
   el.id = 'emotes';
   el.innerHTML = `<button type="button" class="em-open" aria-label="Emotes">😀</button>
-    <div class="em-list" hidden>${['👋', '🤙', '💃', '🏆'].map(e => `<button type="button" data-e="${e}">${e}</button>`).join('')}</div>
+    <div class="em-list" hidden>${EMOTES.map(e => `<button type="button" data-e="${e}" title="${EMOTE_NAMES[e]}">${e}</button>`).join('')}</div>
+    <button type="button" class="em-locker" aria-label="Locker: dress your athlete">👕</button>
+    <button type="button" class="em-almanac" aria-label="Kona Almanac">📖</button>
     <button type="button" class="em-view" aria-label="Switch camera view">🎥</button>
     <button type="button" class="em-map" aria-label="Island map and passport">🗺️</button>
     <button type="button" class="em-home" aria-label="Home: mini-games and Kona Rush">🏠</button>`;
@@ -1637,12 +1650,16 @@ function mountEmotes() {
   list.addEventListener('click', ev => { const e = ev.target.closest('[data-e]')?.dataset.e; if (e) { thirdPerson?.emote(e); haptic(12); list.hidden = true; } });
   el.querySelector('.em-view').onclick = () => toast(thirdPerson?.toggle() ? 'Third person view' : 'First person view');
   el.querySelector('.em-map').onclick = () => openIslandMap();
+  el.querySelector('.em-locker').onclick = () => openLocker();
+  el.querySelector('.em-almanac').onclick = () => showAlmanac({ rewards });
   el.querySelector('.em-home').onclick = () => { if (explorer && lastSeen && loadPlayer()) explorer.persist({ last: lastSeen }, true); location.href = location.pathname; };
   addEventListener('keydown', ev => {
     if (ev.target.closest?.('input, textarea, select') || document.body.classList.contains('in-challenge')) return;
     if (ev.code === 'KeyV') toast(thirdPerson?.toggle() ? 'Third person view' : 'First person view');
     else if (ev.code === 'KeyG') thirdPerson?.emote('👋');
     else if (ev.code === 'KeyI') openIslandMap();
+    else if (ev.code === 'KeyL') openLocker();
+    else if (ev.code === 'KeyK') showAlmanac({ rewards });
     else if (ev.code === 'Digit1' && ev.altKey) thirdPerson?.emote('🤙');
   });
 }
@@ -1662,6 +1679,7 @@ function trackExploration(dt) {
     const d = Math.hypot(p.x - lastPos.x, p.z - lastPos.z);
     if (d < 40 * Math.max(dt, 0.016)) {                   // ignore teleports / "Take me there"
       progress.track(st.isSwimming ? 'swim_m' : (st.mode === 'bike' ? 'ride_m' : 'walk_m'), d, currentDay.id);
+      addDistance(st.isSwimming ? 'swimM' : (st.mode === 'bike' ? 'rideM' : 'walkM'), d);
     }
   }
   lastPos.copy(p); hasLastPos = st.active;
@@ -1681,7 +1699,7 @@ function trackExploration(dt) {
     readNearbyBriefing();
   }
 }
-let lastPedestalPrompt = 0;
+let lastPedestalPrompt = 0, unlockT = 0;
 let lastFrameTime = performance.now();
 
 renderer.setAnimationLoop(() => {
@@ -1771,6 +1789,24 @@ renderer.setAnimationLoop(() => {
 
   // Third person: swing the camera out behind the blocky athlete for this render only.
   landmarks?.update(dt, camera);
+  if (!eggs && landmarks && highwayPts) {
+    eggs = createEggs({
+      scene, W, groundAt, toLocal, landmarks, highwayPts, coffee: coffeeXY,
+      isFound: id => (readSection('almanac')?.eggs || []).includes(id),
+      onFind: e => {
+        foundEgg(e.id);
+        const paid = rewards?.grantOnce(`egg:${e.id}`, { xp: 40, credits: 20, reason: `Found ${e.name}` });
+        unlockToast(`<b>🥚 You found ${e.name}!</b><span>${paid ? `+${paid.xp} XP · +${paid.credits} Credits · ` : ''}see your Almanac</span>`, 'egg');
+        playMemoryChime?.();
+        lifeHud?.wallet();
+        setTimeout(() => checkUnlocks(rewards), 900);
+      },
+    });
+    window.__eggs = eggs;
+  }
+  eggs?.update(dt, camera);
+  unlockT += dt;
+  if (unlockT > 4 && rewards) { unlockT = 0; checkUnlocks(rewards); }
   if (locomotion?.getState().active) islandDetail?.update(camera);
   thirdPerson?.update(dt);
   const putBack = !tween && !ride ? thirdPerson?.apply(dt) : null;
@@ -1916,6 +1952,8 @@ function home(focus) {
     onPlay: () => openChallenge('rush', home),
     onLevel: id => playLevel(id),
     onMap: () => rideMap(),
+    onAlmanac: () => showAlmanac({ rewards, onClose: () => home() }),
+    onLocker: () => showLocker({ rewards, player: loadPlayer(), onClose: () => home() }),
     onChallenge: id => openChallenge(id, home),
     onStory: () => { if (storyStarted) return; storyStarted = true; boot(); },
   });
@@ -1930,7 +1968,7 @@ function playLevel(id) {
   if (!GAMES[id] || document.body.classList.contains('in-challenge')) return;
   $('#loading').classList.add('done');
   rewards = rewards || createRewards({ onChange: () => lifeHud?.wallet() });
-  runLevel({ id, game: GAMES[id], player: loadPlayer(), rewards, onExit: next => (next?.to === 'level' ? playLevel(next.id) : rideMap()) })
+  runLevel({ id, game: GAMES[id], player: loadPlayer(), rewards, onExit: next => { checkUnlocks(rewards); next?.to === 'level' ? playLevel(next.id) : rideMap(); } })
     .then(api => { window.__level = api; })
     .catch(e => { console.error('Level failed', e); document.body.classList.remove('in-challenge'); document.getElementById('mg')?.remove(); rideMap(); });
 }

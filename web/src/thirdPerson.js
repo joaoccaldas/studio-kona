@@ -4,38 +4,8 @@
 // the camera is swung out behind the avatar and put back afterwards, so all the game logic that reads
 // camera.position (quests, prompts, rings, tiles) keeps working unchanged.
 import * as THREE from 'three';
-import { makeRider, pedal } from './rideKit.js';
+import { makeAthlete, makeBike, pose } from './athlete.js';
 
-const BOX = new THREE.BoxGeometry(1, 1, 1);
-const lambert = c => new THREE.MeshLambertMaterial({ color: c });
-
-function faceTexture(skin) {
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = 128;
-  const c = cv.getContext('2d');
-  c.fillStyle = skin; c.fillRect(0, 0, 128, 128);
-  c.fillStyle = '#13293D';
-  c.fillRect(34, 46, 14, 20); c.fillRect(80, 46, 14, 20);             // eyes
-  c.fillStyle = '#fff'; c.fillRect(38, 48, 5, 6); c.fillRect(84, 48, 5, 6);
-  c.strokeStyle = '#13293D'; c.lineWidth = 7; c.lineCap = 'round';
-  c.beginPath(); c.arc(64, 78, 20, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke();   // smile
-  const t = new THREE.CanvasTexture(cv);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.magFilter = THREE.NearestFilter;
-  return t;
-}
-function bibTexture(n) {
-  const cv = document.createElement('canvas');
-  cv.width = 128; cv.height = 96;
-  const c = cv.getContext('2d');
-  c.fillStyle = '#FBF8F2'; c.fillRect(0, 0, 128, 96);
-  c.fillStyle = '#D9785B'; c.fillRect(0, 0, 128, 16);
-  c.fillStyle = '#13293D'; c.font = '900 50px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.fillText(String(n), 64, 58);
-  const t = new THREE.CanvasTexture(cv);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
 function tagSprite(text) {
   const cv = document.createElement('canvas');
   cv.width = 512; cv.height = 128;
@@ -65,40 +35,22 @@ function emojiSprite() {
   return s;
 }
 
-// The blocky athlete. Parts pivot at the joints so walking, waving and swimming are simple rotations.
-export function makeBlockyAthlete({ skin = '#b07a52', suit = '#1d3557', bib = 1 } = {}) {
-  const g = new THREE.Group();
-  const mSkin = lambert(skin), mSuit = lambert(suit), mShoe = lambert(0xfbf8f2), mDark = lambert(0x13293d);
-  const box = (m, sx, sy, sz, x, y, z, parent = g) => { const b = new THREE.Mesh(BOX, m); b.scale.set(sx, sy, sz); b.position.set(x, y, z); b.castShadow = true; parent.add(b); return b; };
-  const joint = (x, y, z, parent = g) => { const j = new THREE.Group(); j.position.set(x, y, z); parent.add(j); return j; };
-  const hips = joint(0, 0.86, 0);
-  const legL = joint(-0.17, 0, 0, hips), legR = joint(0.17, 0, 0, hips);
-  for (const l of [legL, legR]) { box(mSkin, 0.3, 0.52, 0.32, 0, -0.26, 0, l); box(mSuit, 0.32, 0.26, 0.34, 0, -0.08, 0, l); box(mShoe, 0.32, 0.14, 0.44, 0, -0.8, 0.05, l); box(mSkin, 0.28, 0.2, 0.3, 0, -0.64, 0, l); }
-  const chest = joint(0, 0, 0, hips);
-  box(mSuit, 0.72, 0.8, 0.4, 0, 0.4, 0, chest);
-  const bibM = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.3), new THREE.MeshLambertMaterial({ map: bibTexture(bib) }));
-  bibM.position.set(0, 0.34, 0.205); chest.add(bibM);
-  const armL = joint(-0.47, 0.72, 0, chest), armR = joint(0.47, 0.72, 0, chest);
-  for (const a of [armL, armR]) { box(mSuit, 0.24, 0.3, 0.3, 0, -0.1, 0, a); box(mSkin, 0.22, 0.52, 0.26, 0, -0.48, 0, a); }
-  const neck = joint(0, 0.82, 0, chest);
-  const faceMats = [mSkin, mSkin, mSkin, mSkin, new THREE.MeshLambertMaterial({ map: faceTexture(skin) }), mSkin];
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.56, 0.56), faceMats);
-  head.position.y = 0.3; head.castShadow = true; neck.add(head);
-  box(mDark, 0.6, 0.12, 0.62, 0, 0.62, 0, neck);                                  // visor cap
-  box(mDark, 0.6, 0.04, 0.3, 0, 0.58, 0.38, neck);
-  box(mDark, 0.5, 0.09, 0.03, 0, 0.36, 0.29, neck);                               // sunglasses
-  g.userData = { hips, chest, legL, legR, armL, armR, neck };
-  return g;
-}
-
-export function createThirdPerson({ scene, camera, locomotion, heightAt, player, grounds }) {
+export function createThirdPerson({ scene, camera, locomotion, heightAt, player, grounds, look: gear = {} }) {
   const look = player?.look || {};
-  const athlete = makeBlockyAthlete({ skin: look.skin || '#b07a52', suit: look.suit || '#1d3557', bib: player?.bib || 1 });
-  const bike = makeRider(look.suit || '#1d3557', 0xfbf8f2, true);
-  const tag = tagSprite(player?.name || 'Athlete');
-  const emoji = emojiSprite();
+  const bibNo = player?.bib || 1 + [...(player?.name || 'A')].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 2400, 7);
+  let athlete, bike;
   const root = new THREE.Group();
-  root.add(athlete, bike, tag, emoji);
+  function dress(g) {
+    if (athlete) { root.remove(athlete, bike); }
+    athlete = makeAthlete({ skin: look.skin || '#b07a52', suit: look.suit || '#1d3557', bib: bibNo, look: g });
+    bike = makeBike(g);
+    root.add(athlete, bike);
+  }
+  dress(gear);
+  const flag = /^[A-Z]{2}$/.test(player?.country || '') && player.country !== 'XX' ? String.fromCodePoint(...[...player.country].map(c => 127397 + c.charCodeAt(0))) + ' ' : '';
+  const tag = tagSprite(`${flag}${player?.name || 'Athlete'} · #${bibNo}`);
+  const emoji = emojiSprite();
+  root.add(tag, emoji);
   root.visible = false;
   scene.add(root);
 
@@ -127,57 +79,37 @@ export function createThirdPerson({ scene, camera, locomotion, heightAt, player,
     const moved = hasLast ? Math.hypot(f.x - last.x, f.z - last.z) : 0;
     st.speed += ((dt > 0 ? moved / dt : 0) - st.speed) * Math.min(1, dt * 8);
     if (moved > 0.02 && moved < 5) st.facing = Math.atan2(f.x - last.x, f.z - last.z);
-    else if (s.mode === 'bike' || moved >= 5 || !hasLast) { st.facing = s.yaw + Math.PI; athlete.rotation.y = st.facing; snapCam = true; }   // riding, just teleported, or first frame: face away from the camera
+    else if (moved >= 5 || !hasLast) { st.facing = s.yaw + Math.PI; st.yaw = st.facing; snapCam = true; }   // just teleported or first frame: face away from the camera
+    else if (s.mode === 'bike') st.facing = s.yaw + Math.PI;
     last.copy(f); hasLast = true;
     st.dist += moved;
     root.position.copy(f);
     // Turn smoothly toward the direction of travel.
-    let d = st.facing - athlete.rotation.y;
+    let d = st.facing - (st.yaw || 0);
     d = Math.atan2(Math.sin(d), Math.cos(d));
-    const yaw = athlete.rotation.y + d * Math.min(1, dt * 10);
-    athlete.rotation.y = bike.rotation.y = yaw;
+    const yaw = st.yaw = (st.yaw || 0) + d * Math.min(1, dt * 10);
 
     const biking = s.mode === 'bike' && !s.isSwimming;
-    athlete.visible = !biking;
     bike.visible = biking;
+    bike.rotation.y = yaw;
+    bike.rotation.z = biking ? -s.roll * 1.2 : 0;
     tag.position.set(0, biking ? 2.35 : 2.55, 0);
     emoji.position.set(0, biking ? 3.05 : 3.25, 0);
-    const u = athlete.userData;
+    if (!biking) { st.walk += dt * (4 + st.speed * 1.6); }
     if (biking) {
-      bike.rotation.z = -s.roll * 1.2;
-      pedal(bike, st.dist / 7);
-      bike.userData.body.position.y = s.isSprinting ? 0.9 : 1.02;
-    } else if (s.isSwimming) {
-      athlete.rotation.x = Math.PI / 2 * 0.92;
-      athlete.position.y = 0.1;
-      const a = st.t * 5;
-      u.armL.rotation.x = a % (Math.PI * 2); u.armR.rotation.x = (a + Math.PI) % (Math.PI * 2);
-      u.legL.rotation.x = Math.sin(a * 2) * 0.35; u.legR.rotation.x = -Math.sin(a * 2) * 0.35;
-    } else {
-      athlete.rotation.x = 0;
-      athlete.position.y = 0;
-      const run = Math.min(1, st.speed / 6);
-      st.walk += dt * (4 + st.speed * 1.6);
-      const sw = Math.sin(st.walk) * (0.25 + run * 0.75) * (st.speed > 0.3 ? 1 : 0);
-      u.legL.rotation.x = sw; u.legR.rotation.x = -sw;
-      const airborne = !s.isGrounded;
-      u.armL.rotation.x = airborne ? -2.6 : -sw * 0.9; u.armR.rotation.x = airborne ? -2.6 : sw * 0.9;
-      u.armL.rotation.z = u.armR.rotation.z = 0;
-      u.chest.rotation.x = run * 0.15;
-      u.hips.position.y = 0.86 + (st.speed > 0.3 ? Math.abs(Math.cos(st.walk)) * 0.06 * (0.5 + run) : Math.sin(st.t * 2) * 0.01);
-      if (st.emote) {
-        st.emoteT += dt;
-        if (st.emote === '👋') { u.armR.rotation.x = -2.9; u.armR.rotation.z = 0.35 + Math.sin(st.emoteT * 14) * 0.35; }
-        else if (st.emote === '🤙') { u.armR.rotation.x = -1.6; u.armR.rotation.z = Math.sin(st.emoteT * 10) * 0.25; }
-        else if (st.emote === '💃') { u.hips.rotation.y = Math.sin(st.emoteT * 8) * 0.5; u.armL.rotation.z = -1.2 + Math.sin(st.emoteT * 8) * 0.5; u.armR.rotation.z = 1.2 + Math.sin(st.emoteT * 8) * 0.5; u.hips.position.y = 0.86 + Math.abs(Math.sin(st.emoteT * 8)) * 0.12; }
-        else if (st.emote === '🏆') { u.armL.rotation.x = u.armR.rotation.x = -2.9; u.hips.position.y = 0.86 + Math.abs(Math.sin(st.emoteT * 7)) * 0.25; }
-      } else u.hips.rotation.y = 0;
-    }
+      bike.userData.front.rotation.x = bike.userData.rear.rotation.x = -st.dist / 0.34;
+      // The athlete rides in the bike's frame of reference.
+      if (athlete.parent !== bike) { root.remove(athlete); bike.add(athlete); }
+      athlete.rotation.y = 0;
+    } else if (athlete.parent !== root) { bike.remove(athlete); root.add(athlete); }
+    if (biking && st.emote) { st.emote = null; emoji.visible = false; }
+    if (st.emote) st.emoteT += dt;
+    pose(athlete, { mode: biking ? 'bike' : s.isSwimming ? 'swim' : 'walk', t: st.t, walk: st.walk, speed: st.speed, airborne: !s.isGrounded, emote: biking ? null : st.emote, emoteT: st.emoteT, pedal: st.dist / 0.55 });
+    if (!biking) athlete.rotation.y = yaw;
     if (st.emote) {
-      st.emoteT = st.emoteT || 0;
       emoji.visible = true;
       emoji.scale.setScalar(0.9 + Math.sin(Math.min(1, st.emoteT * 4) * Math.PI) * 0.3);
-      if (st.emoteT > 2.4 || (st.speed > 1.5 && st.emoteT > 0.4)) { st.emote = null; emoji.visible = false; u.hips.rotation.y = 0; }
+      if (st.emoteT > 2.6 || (st.speed > 1.5 && st.emoteT > 0.4)) { st.emote = null; emoji.visible = false; }
     }
   }
 
@@ -224,5 +156,6 @@ export function createThirdPerson({ scene, camera, locomotion, heightAt, player,
     toggle() { enabled = !enabled; snapCam = true; try { localStorage.setItem('kona-view', enabled ? 'third' : 'first'); } catch { /* storage blocked */ } return enabled; },
     emote(e) { st.emote = e; st.emoteT = 0; emoji.userData.set(e); emoji.visible = true; },
     rename(name) { const t = tagSprite(name); tag.material = t.material; },
+    dress(g) { const wasOnBike = athlete.parent === bike; dress(g); if (wasOnBike) { root.remove(athlete); bike.add(athlete); } },
   };
 }

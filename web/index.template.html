@@ -712,6 +712,45 @@ body.in-challenge #emotes,body.at-home #emotes{display:none}
 #lmCard .lm-fact{font-size:14px;line-height:1.45;opacity:.85}
 #lmCard .lm-reward{font-weight:800;color:var(--coral);font-size:13px}
 #lmCard button{margin-top:4px;min-height:46px;border:0;border-radius:999px;background:var(--teal);color:#fff;font:800 15px system-ui;cursor:pointer}
+/* ---------------- Almanac, Locker, unlock toasts */
+#almanac,#locker{position:fixed;inset:0;z-index:965;background:var(--sand);color:var(--ink);display:flex;flex-direction:column}
+#almanac .al-top,#locker .al-top{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:var(--linen);border-bottom:1px solid var(--line)}
+.al-back{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--linen);font:700 26px/1 system-ui;color:var(--ink);cursor:pointer}
+.al-top b{display:block;font:700 20px 'Fraunces',Georgia,serif}
+.al-top span{font-size:11px;opacity:.7}
+.al-bar{height:6px;background:rgba(19,41,61,.1)}
+.al-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--coral))}
+.al-tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;-webkit-overflow-scrolling:touch;flex:none}
+.al-tabs button{flex:none;border:1px solid var(--line);background:var(--linen);color:var(--ink);border-radius:999px;padding:8px 12px;font:700 13px system-ui;cursor:pointer;white-space:nowrap}
+.al-tabs button.on{background:var(--ink);color:var(--linen);border-color:var(--ink)}
+.al-list{flex:1;overflow:auto;padding:0 12px 12px;display:grid;gap:10px;align-content:start;max-width:560px;width:100%;margin:0 auto;box-sizing:border-box}
+.al-card{background:var(--linen);border:1px solid var(--line);border-radius:16px;padding:14px}
+.al-card h3{margin:0 0 6px;font:700 17px 'Fraunces',Georgia,serif}
+.al-card p{margin:0;font-size:14px;line-height:1.5}
+.al-card.locked{background:transparent;border-style:dashed}
+.al-card.locked h3{font:800 13px system-ui;opacity:.55}
+.al-card.locked p{font-size:13px;font-weight:600;color:var(--teal)}
+.al-foot{margin:0;padding:8px 16px calc(12px + env(safe-area-inset-bottom,0px));font-size:11px;opacity:.6;text-align:center}
+#locker .lk-stage{position:relative;height:38vh;min-height:220px;background:radial-gradient(circle at 50% 70%,#fbf8f2,#e9dfcd);flex:none}
+#locker .lk-stage canvas{width:100%;height:100%;display:block;cursor:pointer}
+#locker .lk-ride{position:absolute;right:12px;bottom:12px;border:0;border-radius:999px;background:var(--ink);color:var(--linen);font:700 13px system-ui;padding:9px 13px;cursor:pointer}
+#locker .lk-grid{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:0 12px calc(12px + env(safe-area-inset-bottom,0px));align-content:start}
+.lk-item{display:grid;gap:4px;text-align:left;background:var(--linen);border:2px solid var(--line);border-radius:14px;padding:12px;font:inherit;color:inherit;cursor:pointer}
+.lk-item b{font-size:14px}
+.lk-item span{font-size:11px;opacity:.7;line-height:1.3}
+.lk-item.on{border-color:var(--teal);background:rgba(46,111,115,.08)}
+.lk-item.on span{color:var(--teal);opacity:1;font-weight:800}
+.lk-item.locked{background:transparent;border-style:dashed;cursor:not-allowed}
+.lk-item.locked b{opacity:.5}
+#unlockToasts{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:990;display:grid;gap:6px;width:min(360px,calc(100vw - 24px));pointer-events:none}
+#unlockToasts .ut{display:grid;gap:2px;background:var(--ink);color:var(--linen);border-radius:14px;padding:10px 14px;box-shadow:0 10px 26px rgba(19,41,61,.35);animation:utin .4s cubic-bezier(.2,1.5,.4,1);transition:opacity .4s,transform .4s}
+#unlockToasts .ut b{font-size:14px}
+#unlockToasts .ut span{font-size:12px;opacity:.8}
+#unlockToasts .ut.egg{background:linear-gradient(90deg,#6b4ea0,#d9785b)}
+#unlockToasts .ut.gear{background:var(--teal)}
+#unlockToasts .ut.out{opacity:0;transform:translateY(-10px)}
+@keyframes utin{from{opacity:0;transform:translateY(-16px) scale(.95)}}
+#home .hm-tiles{grid-template-columns:1fr 1fr}
 #tt{position:fixed;inset:0;z-index:950;background:#F3EDE2;color:var(--ink)}
 #ttCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer}
 #tt .tt-top{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
