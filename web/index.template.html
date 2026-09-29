@@ -922,6 +922,42 @@ body.app #gateInstall{display:none!important}
   #wallet .w-label{display:none}
 }
 
+/* Beta 0.1 world-first play contract.
+   During active locomotion the 3D world gets the screen; navigation returns when play stops. */
+@media (max-width:760px){
+  body.walking #navWrap,
+  body.walking #flightBtn,
+  body.walking #winnersBtn{display:none!important}
+  body.walking .tr-bar{top:calc(8px + env(safe-area-inset-top,0px));right:8px;gap:5px}
+  body.walking #wallet{padding:6px 9px;opacity:.86}
+  body.walking #btnModeToggle{padding:7px 10px}
+  body.walking #compassHud{
+    top:calc(8px + env(safe-area-inset-top,0px));
+    left:8px;right:138px;padding:6px 10px;background:rgba(251,248,242,.76)
+  }
+  body.walking #questCard{
+    left:8px;right:78px;bottom:calc(10px + env(safe-area-inset-bottom,0px));
+    padding:8px 10px;border-radius:12px;background:rgba(251,248,242,.78);
+    box-shadow:0 5px 18px rgba(19,41,61,.12)
+  }
+  body.walking #questCard .quest-day-title,
+  body.walking #questCard .quest-desc,
+  body.walking #questCard .quest-checklist,
+  body.walking #questCard .quest-challenge,
+  body.walking #questCard .quest-card-actions,
+  body.walking #questCard .quest-progress-bar{display:none!important}
+  body.walking #questCard .quest-day-tag{font-size:9px;letter-spacing:.12em}
+  body.walking #actionPrompt{
+    top:auto;bottom:calc(78px + env(safe-area-inset-bottom,0px));
+    max-width:calc(100vw - 32px);background:rgba(251,248,242,.88)
+  }
+  body.walking #jumpBtn{
+    top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+    right:10px;width:56px;height:56px
+  }
+  body.walking[data-mode="bike"] #jumpBtn{display:none!important}
+}
+
 /* Minimal controls: [hidden] always wins over layout rules; native controls take the sea-glass accent. */
 #gate [hidden]{display:none!important}
 input[type=radio],input[type=checkbox],input[type=range]{accent-color:var(--gold)}
