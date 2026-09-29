@@ -22,7 +22,12 @@ const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y); // survey (x east, y nor
 const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
 
 // ------------------------------------------------------------------ Renderer
-const renderer = new THREE.WebGLRenderer({ canvas: $('#c'), antialias: !coarse, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({
+  canvas: $('#c'),
+  antialias: !coarse,
+  powerPreference: 'high-performance',
+  logarithmicDepthBuffer: true, // world spans local detail to long-course distances; prevents mobile z-fighting while moving
+});
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.AgXToneMapping;
 renderer.toneMappingExposure = 1.0;
