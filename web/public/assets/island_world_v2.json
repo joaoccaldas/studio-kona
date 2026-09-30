@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "origin": {"name":"Kailua Pier","lat":19.639162,"lon":-155.9968082},
+  "policy": {
+    "repo_boundary":"studio-kona only; do not import CanyonMuseum runtime or state",
+    "imagery":"public-domain/open-data sources for production; ESRI dev imagery must remain replaceable",
+    "geometry":"measured/open GIS where available; inferred geometry must be tagged"
+  },
+  "sources": [
+    {"id":"hawaii_gis","kind":"gis","license":"public domain where stated by source","url":"https://planning.hawaii.gov/gis/download-gis-data-expanded/"},
+    {"id":"usgs_3dep","kind":"dem","license":"US government public domain","url":"https://www.usgs.gov/3d-elevation-program"},
+    {"id":"osm","kind":"roads_buildings_poi","license":"ODbL","url":"https://www.openstreetmap.org/"},
+    {"id":"polyhaven","kind":"pbr_textures","license":"CC0","url":"https://polyhaven.com/"}
+  ],
+  "zones": [
+    {"id":"kailua_core","name":"Kailua-Kona / Kailua Pier","lat":19.639162,"lon":-155.9968082,"lod":"hero","radius_m":2500,"features":["pier","Ahuena Heiau","Dig Me Beach","Alii Drive","finish line","town buildings","palms","seawall"]},
+    {"id":"old_airport","name":"Old Kona Airport","lat":19.6439007,"lon":-156.0091339,"lod":"high","radius_m":1600,"features":["runway","park","coast","lava"]},
+    {"id":"airport","name":"Ellison Onizuka Kona International Airport","lat":19.743906,"lon":-156.042296,"lod":"high","radius_m":3500,"features":["runway","terminal massing","apron","lava fields"]},
+    {"id":"nelha","name":"NELHA / Energy Lab","lat":19.7174904,"lon":-156.0380702,"lod":"high","radius_m":2200,"features":["energy lab road","industrial campus","coast","run turnaround"]},
+    {"id":"waikoloa","name":"Waikoloa Resort Coast","lat":19.9252001,"lon":-155.8820401,"lod":"medium","radius_m":4200,"features":["resort massing","roads","golf greens","lava coast"]},
+    {"id":"kawaihae","name":"Kawaihae","lat":20.0397244,"lon":-155.829133,"lod":"medium","radius_m":3000,"features":["harbor","coast","village","Queen K corridor"]},
+    {"id":"hawi","name":"Hawi","lat":20.239006,"lon":-155.831451,"lod":"high","radius_m":2600,"features":["turnaround","town street","vegetation","wind fields"]},
+    {"id":"waimea","name":"Waimea / Kamuela","lat":20.021702,"lon":-155.6685878,"lod":"medium","radius_m":4500,"features":["town","pasture","roads"]},
+    {"id":"mauna_kea","name":"Mauna Kea","lat":19.8206673,"lon":-155.468071,"lod":"hero","radius_m":18000,"features":["summit","cinder cones","observatory silhouettes","alpine volcanic terrain"]},
+    {"id":"hualalai","name":"Hualalai","lat":19.6910737,"lon":-155.866647,"lod":"high","radius_m":15000,"features":["volcanic slopes","lava flows","dry forest"]},
+    {"id":"mauna_loa","name":"Mauna Loa","lat":19.4755277,"lon":-155.6057028,"lod":"hero","radius_m":26000,"features":["summit massif","rift textures","lava flows"]},
+    {"id":"kilauea","name":"Kilauea / Halemaumau","lat":19.4064949,"lon":-155.2820958,"lod":"hero","radius_m":14000,"features":["caldera","crater rim","lava plain","steam markers"]},
+    {"id":"hilo","name":"Hilo","lat":19.7073734,"lon":-155.08158,"lod":"medium","radius_m":7000,"features":["urban massing","bay","harbor","vegetation"]},
+    {"id":"keauhou","name":"Keauhou Bay","lat":19.5613059,"lon":-155.9642957,"lod":"high","radius_m":2600,"features":["bay","resort coast","run corridor","canoes"]}
+  ],
+  "biomes": [
+    {"id":"kona_lava","material":"basalt_aa","vegetation_density":0.08},
+    {"id":"dry_coast","material":"basalt_weathered","vegetation_density":0.22},
+    {"id":"wet_windward","material":"volcanic_soil","vegetation_density":0.75},
+    {"id":"alpine_volcanic","material":"cinder_rock","vegetation_density":0.01},
+    {"id":"pasture","material":"grass_rock","vegetation_density":0.45}
+  ]
+}
