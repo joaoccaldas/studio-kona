@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KONA Athlete Services</title>
+<meta name="theme-color" content="#071019">
+<style>
+:root{--bg:#071019;--panel:#0d1821;--line:#24333f;--text:#eef4f7;--muted:#9badb8;--accent:#f4c542}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+main{max-width:1040px;margin:auto;padding:28px 18px 56px}
+header{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:22px}
+h1{font-size:clamp(28px,5vw,54px);margin:0;letter-spacing:-.04em} .sub{color:var(--muted);max-width:620px;line-height:1.5}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}
+button{border:1px solid var(--line);background:transparent;color:var(--text);padding:9px 12px;border-radius:999px;cursor:pointer}
+button.active{background:var(--text);color:var(--bg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.card h2{font-size:20px;margin:0}.address,.meta{color:var(--muted);font-size:14px;line-height:1.45}
+.tags{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:5px 8px;color:#cbd8df}
+.actions{display:flex;gap:8px;margin-top:auto}.actions a{flex:1;text-align:center;text-decoration:none;padding:10px 12px;border-radius:10px;font-weight:700;font-size:13px}
+.primary{background:var(--accent);color:#111}.secondary{border:1px solid var(--line);color:var(--text)}
+.note{font-size:12px;color:var(--muted);line-height:1.45}
+footer{margin-top:28px;color:var(--muted);font-size:12px;line-height:1.5}
+@media(max-width:640px){header{display:block}.sub{margin-top:10px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<header><div><div class="kicker">KONA · athlete support</div><h1>Local services for race week</h1></div><div class="sub">Bike, run, recovery and practical support around Kailua-Kona and the race corridor. Hours can change during race week, so verify before travelling.</div></header>
+<div class="filters" id="filters"></div>
+<section class="grid" id="grid"></section>
+<footer>Directory data is intentionally separate from the 3D island geometry. Locations and services persist; volatile details such as opening hours are timestamped and should be rechecked before use.</footer>
+</main>
+<script>
+const DATA=[{"id":"bike_works_kona","name":"Bike Works Kona","category":"triathlon_shop","address":"75-5660 Kopiko St, Kailua-Kona, HI 96740","phone":"+1 808-326-2453","website":"https://www.bikeworkskona.com/","hours":{"mon":"09:00-17:00","tue":"09:00-17:00","wed":"09:00-17:00","thu":"09:00-17:00","fri":"09:00-17:00","sat":"09:00-17:00","sun":"closed"},"hours_note":"Verify current and race-week/holiday hours before travel.","services":["full-service triathlon shop","bike service","bike rentals","swim gear","bike gear","running shoes and gear"],"athlete_relevance":["swim","bike","run","repair","rental","race_week"],"race_week_note":"Primary multisport support stop in Kailua-Kona for last-minute bike, swim and run needs.","render":{"tier":"hero","recipe":"bike_shop","place_id":"bike_works_kona"},"directions_query":"Bike Works Kona, 75-5660 Kopiko St, Kailua-Kona, HI 96740","sources":[{"url":"https://www.bikeworkskona.com/","kind":"official"}],"verified_at":"2026-09-30"},{"id":"big_island_running","name":"Big Island Running Company","category":"running_shop","address":"75-5807 Aliʻi Dr Ste C8, Kailua-Kona, HI 96740","phone":"+1 808-327-9333","website":"https://www.bigislandrunningcompany.com/","hours":{"mon":"10:00-18:00","tue":"10:00-18:00","wed":"10:00-18:00","thu":"10:00-18:00","fri":"10:00-18:00","sat":"10:00-18:00","sun":"12:00-17:00"},"hours_note":"Verify current and race-week hours before travel.","services":["running shoes","running apparel","running accessories","local running knowledge","group runs"],"athlete_relevance":["run","race_week"],"race_week_note":"Running-specialty stop on Aliʻi Drive; useful for footwear, socks, accessories and local run knowledge.","render":{"tier":"hero","recipe":"running_shop","place_id":"big_island_running"},"directions_query":"Big Island Running Company, 75-5807 Aliʻi Dr Ste C8, Kailua-Kona, HI 96740","sources":[{"url":"https://www.bigislandrunningcompany.com/","kind":"official"}],"verified_at":"2026-09-30"},{"id":"pt_hawaii_kona","name":"PT Hawaii - Kailua Kona","category":"physical_therapy","address":"75-184 Hualalai Rd Suite 302, Kailua-Kona, HI 96740","phone":"+1 808-680-9123","website":"https://www.pthawaii.com/","hours":{"mon":"07:00-16:30","tue":"07:00-16:30","wed":"07:00-16:30","thu":"07:00-16:30","fri":"07:00-16:30"},"hours_note":"Appointments and current hours should be confirmed directly.","services":["physical therapy","sports rehabilitation","massage therapy","hydrotherapy","performance restoration"],"athlete_relevance":["recovery","injury","race_week"],"race_week_note":"Recovery and injury-care option for athletes needing professional assessment or rehabilitation.","render":{"tier":"high","recipe":"medical_center","place_id":"pt_hawaii_kona"},"directions_query":"PT Hawaii, 75-184 Hualalai Rd Suite 302, Kailua-Kona, HI 96740","sources":[{"url":"https://www.pthawaii.com/","kind":"official"}],"verified_at":"2026-09-30"},{"id":"sozo_performance","name":"SOZO Performance Therapy","category":"sports_medicine","address":"75-5597 Palani Rd, Kailua-Kona, HI 96740","phone":"+1 808-818-2116","website":"https://www.sozoperformance.com/","hours":{"mon":"07:00-18:00","tue":"07:00-18:00","wed":"07:00-18:00","thu":"07:00-18:00","fri":"07:00-12:00"},"hours_note":"Appointments and current hours should be confirmed directly.","services":["physical therapy","sports performance","mobility","injury recovery"],"athlete_relevance":["recovery","injury","race_week"],"race_week_note":"Performance-oriented therapy close to central Kailua-Kona.","render":{"tier":"high","recipe":"medical_center","place_id":"sozo_performance"},"directions_query":"SOZO Performance Therapy, 75-5597 Palani Rd, Kailua-Kona, HI 96740","sources":[{"url":"https://www.sozoperformance.com/","kind":"official"}],"verified_at":"2026-09-30"},{"id":"kona_rehab","name":"Kona Rehab","category":"physical_therapy","address":"75-1029 Henry St Suite 101, Kailua-Kona, HI 96740","phone":"+1 808-334-0806","website":"https://www.konarehab.com/","hours":{"mon":"07:30-17:00","tue":"07:30-18:00","wed":"07:30-17:00","thu":"07:30-18:00","fri":"07:30-17:00"},"hours_note":"Appointments and current hours should be confirmed directly.","services":["orthopedic assessment","physical therapy","occupational therapy","injury prevention","recovery planning"],"athlete_relevance":["recovery","injury"],"race_week_note":"Established local rehabilitation clinic for assessment and recovery needs.","render":{"tier":"high","recipe":"medical_center","place_id":"kona_rehab"},"directions_query":"Kona Rehab, 75-1029 Henry St Suite 101, Kailua-Kona, HI 96740","sources":[{"url":"https://www.konarehab.com/","kind":"official"}],"verified_at":"2026-09-30"},{"id":"kta_kona","name":"KTA Super Stores - Kailua-Kona","category":"grocery","address":"74-5594 Palani Rd, Kailua-Kona, HI 96740","phone":"+1 808-329-1677","website":"https://www.ktasuperstores.com/","hours":{"daily":"06:00-21:00"},"hours_note":"Verify current and holiday hours before travel.","services":["groceries","hydration","race-week food","local foods"],"athlete_relevance":["nutrition","race_week"],"race_week_note":"Practical central grocery stop for race-week food and hydration supplies.","render":{"tier":"high","recipe":"grocery","place_id":"kta_kona"},"directions_query":"KTA Super Stores Kailua-Kona, 74-5594 Palani Rd, Kailua-Kona, HI 96740","sources":[{"url":"https://www.ktasuperstores.com/","kind":"official"}],"verified_at":"2026-09-30"},{"id":"bike_works_waikoloa","name":"Bike Works Beach & Sports","category":"bike_service","address":"69-201 Waikoloa Beach Dr, Waikoloa, HI 96738","phone":"+1 808-886-5000","website":"https://bikeworkshawaii.com/","hours":{"daily":"09:00-17:00"},"hours_note":"Verify current hours and bike-service availability before traveling from Kona.","services":["bike rentals","bike service","cycling gear","sports equipment"],"athlete_relevance":["bike","repair","rental"],"race_week_note":"Useful northbound cycling support around Waikoloa on the Queen K corridor.","render":{"tier":"high","recipe":"bike_shop","place_id":"bike_works_waikoloa"},"directions_query":"Bike Works Beach & Sports, 69-201 Waikoloa Beach Dr, Waikoloa, HI 96738","sources":[{"url":"https://bikeworkshawaii.com/locations/","kind":"official"}],"verified_at":"2026-09-30"}];
+const cats=[['all','All'],['triathlon_shop','Triathlon'],['running_shop','Run'],['bike_service','Bike'],['physical_therapy','Recovery'],['sports_medicine','Sports medicine'],['grocery','Nutrition']];
+let active='all';
+const F=document.querySelector('#filters'),G=document.querySelector('#grid');
+for(const [id,label] of cats){const b=document.createElement('button');b.textContent=label;b.dataset.id=id;b.onclick=()=>{active=id;render();};F.appendChild(b);}
+function render(){
+ [...F.children].forEach(b=>b.classList.toggle('active',b.dataset.id===active));
+ const rows=DATA.filter(x=>active==='all'||x.category===active);
+ G.innerHTML=rows.map(x=>{
+   const map='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(x.directions_query);
+   return '<article class="card"><div class="kicker">'+x.category.replaceAll('_',' ')+'</div><h2>'+x.name+'</h2><div class="address">'+x.address+'</div><div class="tags">'+x.athlete_relevance.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div><div class="meta">'+x.services.join(' · ')+'</div><div class="note">'+x.race_week_note+'<br>'+x.hours_note+'</div><div class="actions"><a class="primary" href="'+map+'" target="_blank" rel="noopener">Directions</a><a class="secondary" href="'+x.website+'" target="_blank" rel="noopener">Website</a></div></article>'
+ }).join('');
+}
+render();
+</script>
+</body>
+</html>
