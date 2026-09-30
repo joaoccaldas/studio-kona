@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: island-v2-browser-evidence
+  cancel-in-progress: true
+
 jobs:
   capture:
     runs-on: ubuntu-latest
@@ -43,11 +47,11 @@ jobs:
 
           let loaded = false;
           let lastErr = '';
-          for (let i = 0; i < 12; i++) {
+          for (let i = 0; i < 2; i++) {
             try {
-              const res = await page.goto(url + '?evidence=' + Date.now(), { waitUntil: 'domcontentloaded', timeout: 45000 });
+              const res = await page.goto(url + '?evidence=' + Date.now(), { waitUntil: 'domcontentloaded', timeout: 20000 });
               if (res?.ok()) {
-                await page.waitForFunction(() => window.__kona && window.__kona.scene && window.__kona.camera, null, { timeout: 60000 });
+                await page.waitForFunction(() => window.__kona && window.__kona.scene && window.__kona.camera, null, { timeout: 30000 });
                 loaded = true;
                 break;
               }
@@ -55,9 +59,15 @@ jobs:
             } catch (e) {
               lastErr = String(e);
             }
-            await page.waitForTimeout(5000);
+            await page.waitForTimeout(2500);
           }
-          if (!loaded) throw new Error('Preview never became ready: ' + lastErr);
+          if (!loaded) {
+            console.error('BROWSER_CONSOLE_ERRORS', JSON.stringify(consoleErrors));
+            console.error('BROWSER_PAGE_ERRORS', JSON.stringify(pageErrors));
+            console.error('FINAL_URL', page.url());
+            console.error('BODY_TEXT', (await page.locator('body').innerText().catch(()=>'' )).slice(0,4000));
+            throw new Error('Preview never became ready: ' + lastErr);
+          }
 
           await page.waitForTimeout(6000);
           const state = await page.evaluate(() => ({
