@@ -1,0 +1,51 @@
+{
+  "version": 2,
+  "updated": "2026-09-30",
+  "rendering": {
+    "persistence_key": "kona.placeworld.v2",
+    "load_policy": "proximity",
+    "unload_keeps_state": true,
+    "geometry_source_priority": ["osm_footprint","official_gis","photo_reference","procedural_inference"],
+    "live_metadata_is_separate": true
+  },
+  "places": [
+    {"id":"kailua_pier","name":"Kailua Pier","category":"meeting_point","address":"Kaahumanu Pl, Kailua-Kona, HI 96740","lat":19.639162,"lon":-155.9968082,"priority":"hero","recipe":"waterfront_landmark","source":"business_verified"},
+    {"id":"old_kona_airport","name":"Old Kona Airport State Recreation Area","category":"park","address":"75-5560 Kuakini Hwy, Kailua-Kona, HI 96740","lat":19.6439007,"lon":-156.0091339,"priority":"hero","recipe":"park_runway","source":"business_verified"},
+    {"id":"kona_inn_village","name":"Kona Inn Shopping Village","category":"shopping","address":"75-5744 Ali‘i Dr, Kailua-Kona, HI 96740","lat":19.6382065,"lon":-155.9935801,"priority":"hero","recipe":"historic_shops","source":"business_verified"},
+    {"id":"kona_commons","name":"Kona Commons Shopping Center","category":"shopping","address":"74-5450 Makala Blvd, Kailua-Kona, HI 96740","lat":19.650098,"lon":-156.0044364,"priority":"high","recipe":"retail_center","source":"business_verified"},
+    {"id":"bike_works_kona","name":"Bike Works Kona","category":"bike_service","address":"75-5660 Kopiko St, Kailua-Kona, HI 96740","priority":"hero","recipe":"bike_shop","source":"business_verified"},
+    {"id":"boss_frogs_kona","name":"Boss Frog's Snorkel, Bike & Beach Rentals","category":"bike_rental","address":"75-5725 Ali‘i Dr, Kailua-Kona, HI 96740","priority":"high","recipe":"small_shop","source":"business_verified"},
+    {"id":"kta_kona","name":"KTA Super Stores - Kailua-Kona","category":"grocery","address":"74-5594 Palani Rd, Kailua-Kona, HI 96740","priority":"high","recipe":"grocery","source":"business_verified"},
+    {"id":"safeway_kona","name":"Safeway - Kona","category":"grocery","address":"75-971 Henry St, Kailua-Kona, HI 96740","priority":"medium","recipe":"grocery","source":"business_verified"},
+    {"id":"huggo","name":"Huggo's","category":"restaurant","address":"75-5828 Kahakai Rd, Kailua-Kona, HI 96740","priority":"hero","recipe":"waterfront_restaurant","source":"business_verified"},
+    {"id":"on_the_rocks","name":"On the Rocks","category":"restaurant","address":"75-5824 Kahakai Rd, Kailua-Kona, HI 96740","priority":"hero","recipe":"waterfront_restaurant","source":"business_verified"},
+    {"id":"kau_coffee_kona","name":"Kaʻū Coffee Roasters Cafe","category":"cafe","address":"75-5663 Palani Rd, Kailua-Kona, HI 96740","priority":"medium","recipe":"cafe","source":"business_verified"},
+    {"id":"white_nene","name":"White Nene Coffee Roasters - Downtown Kona","category":"cafe","address":"75-5742 Kuakini Hwy #101, Kailua-Kona, HI 96740","priority":"medium","recipe":"cafe","source":"business_verified"},
+    {"id":"kona_hospital","name":"Kona Community Hospital","category":"hospital","address":"79-1019 Haukapila St, Kealakekua, HI 96750","priority":"hero","recipe":"hospital_campus","source":"state_and_business_verified"},
+    {"id":"queens_kona","name":"The Queen's Health Care Center","category":"medical","address":"75-5653 Kuakini Hwy #100, Kailua-Kona, HI 96740","priority":"high","recipe":"medical_center","source":"business_verified"},
+    {"id":"kona_auto","name":"Kona European Auto Repair, LLC","category":"vehicle_service","address":"74-555 Honokohau St Ste A7, Kailua-Kona, HI 96740","priority":"medium","recipe":"service_shop","source":"business_verified"},
+    {"id":"kailua_park","name":"Kailua Park","category":"meeting_point","address":"75-5500 Kuakini Highway, Kailua-Kona, HI 96740","priority":"high","recipe":"park_campus","source":"county_and_business_verified"},
+    {"id":"makaeo_pavilion","name":"Makaeo County Pavilion","category":"meeting_point","address":"75-5500 Kuakini Hwy, Kailua-Kona, HI 96740","priority":"high","recipe":"pavilion","source":"business_verified"},
+
+    {"id":"bamboo_hawi","name":"Bamboo Restaurant & Gallery","category":"restaurant","address":"55-3415 Akoni Pule Hwy, Hawi, HI 96719","priority":"hero","recipe":"historic_storefront","source":"business_verified"},
+    {"id":"as_hawi_turns","name":"As Hawi Turns","category":"shop","address":"55-3412 Akoni Pule Hwy, Hawi, HI 96719","priority":"high","recipe":"historic_storefront","source":"business_verified"},
+    {"id":"kohala_hospital","name":"Kohala Hospital","category":"hospital","address":"54-383 Hospital Rd, Kapaau, HI 96755","priority":"high","recipe":"hospital_campus","source":"state_and_business_verified"},
+
+    {"id":"merrimans_waimea","name":"Merriman's Big Island","category":"restaurant","address":"65-1227 Opelo Rd B, Waimea, HI 96743","priority":"hero","recipe":"restaurant","source":"business_verified"},
+    {"id":"fish_hog","name":"The Fish And The Hog","category":"restaurant","address":"64-957 Hawaiʻi Belt Rd, Waimea, HI 96743","priority":"high","recipe":"restaurant","source":"business_verified"},
+    {"id":"bike_works_mauka","name":"Bike Works Mauka","category":"bike_service","address":"64-1066 Mamalahoa Hwy, Waimea, HI 96743","priority":"high","recipe":"bike_shop","source":"business_verified"},
+    {"id":"queens_north_hawaii","name":"Queen's North Hawai'i Community Hospital","category":"hospital","address":"67-1125 Mamalahoa Hwy, Waimea, HI 96743","priority":"hero","recipe":"hospital_campus","source":"state_and_business_verified"},
+    {"id":"parker_ranch_center","name":"Parker Ranch Center","category":"shopping","address":"67-1185 Hawaiʻi Belt Rd, Waimea, HI 96743","priority":"high","recipe":"retail_center","source":"business_verified"},
+    {"id":"foodland_waimea","name":"Foodland - Waimea","category":"grocery","address":"Parker Ranch Center #109, Waimea, HI 96743","priority":"medium","recipe":"grocery","source":"business_verified"},
+
+    {"id":"bike_works_waikoloa","name":"Bike Works Beach & Sports","category":"bike_service","address":"69-201 Waikōloa Beach Dr, Waikoloa Village, HI 96738","priority":"high","recipe":"bike_shop","source":"business_verified"},
+
+    {"id":"hilo_benioff","name":"Hilo Benioff Medical Center","category":"hospital","address":"1190 Waianuenue Ave, Hilo, HI 96720","priority":"hero","recipe":"hospital_campus","source":"state_and_business_verified"},
+    {"id":"hilo_bike_hub","name":"Hilo Bike Hub","category":"bike_service","address":"318 E Kawili St B, Hilo, HI 96720","priority":"high","recipe":"bike_shop","source":"business_verified"},
+    {"id":"moon_turtle","name":"Moon and Turtle","category":"restaurant","address":"51 Kalakaua St, Hilo, HI 96720","priority":"high","recipe":"restaurant","source":"business_verified"},
+    {"id":"lehua_hilo","name":"Lehua Restaurant","category":"restaurant","address":"600 Imiloa Pl, Hilo, HI 96720","priority":"high","recipe":"restaurant","source":"business_verified"},
+    {"id":"kta_hilo","name":"KTA Super Stores - Downtown Hilo","category":"grocery","address":"321 Keawe St, Hilo, HI 96720","priority":"medium","recipe":"grocery","source":"business_verified"},
+    {"id":"prince_kuhio","name":"Prince Kuhio Plaza","category":"shopping","address":"111 Puainako St, Hilo, HI 96720","priority":"medium","recipe":"retail_center","source":"business_verified"},
+    {"id":"midas_hilo","name":"Midas Hilo","category":"vehicle_service","address":"480 Kilauea Ave, Hilo, HI 96720","priority":"medium","recipe":"service_shop","source":"business_verified"}
+  ]
+}
