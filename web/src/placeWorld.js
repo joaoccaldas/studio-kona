@@ -1,6 +1,7 @@
 // Persistent real-place layer for KONA Studio.
 // Geometry is lightweight/procedural; identity and state survive unload/reload.
 import * as THREE from 'three';
+import { createNaturalMaterials } from './naturalMaterials.js';
 
 const KEY='kona.placeworld.v2';
 
@@ -18,11 +19,12 @@ export class PlaceWorld {
     this.shared=this.makeShared();
   }
   makeShared(){
-    const mat=(c,r=.85,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+    const n=createNaturalMaterials();
+    const glass=new THREE.MeshPhysicalMaterial({color:0x6f8d96,roughness:.18,metalness:0,transmission:.18,transparent:true,opacity:.82});
     return {
-      wall:mat(0xb5b0a5,.88), roof:mat(0x47413c,.82), glass:mat(0x40636b,.25,.08),
-      service:mat(0x53616b,.78,.12), medical:mat(0xd5ddd8,.76), food:mat(0x8d633e,.84),
-      shop:mat(0x8a8476,.86), park:mat(0x496437,.95), meeting:mat(0xe3bc5a,.72,.05),
+      wall:n.stucco, roof:n.darkRoof, glass,
+      service:n.metal, medical:n.concrete, food:n.wood,
+      shop:n.stucco, park:n.pasture, meeting:n.concrete,
       box:new THREE.BoxGeometry(1,1,1), cyl:new THREE.CylinderGeometry(1,1,1,12),
       cone:new THREE.ConeGeometry(1,1,8)
     };
@@ -58,8 +60,11 @@ export class PlaceWorld {
     main.name=p.id+'_shell'; main.scale.set(sx,sy,sz); main.position.y=z+sy;
     main.userData.evidence='procedural shell until OSM/official/photo-specific geometry replaces it';
     g.add(main);
-    const roof=new THREE.Mesh(this.shared.box,this.shared.roof);
-    roof.name=p.id+'_roof'; roof.scale.set(sx*1.05,.45,sz*1.05); roof.position.y=z+sy*2+.5; g.add(roof);
+    const roofGeo=new THREE.CylinderGeometry(Math.max(sx,sz)*.78,Math.max(sx,sz)*.88,1.4,4);
+    const roof=new THREE.Mesh(roofGeo,this.shared.roof);
+    roof.rotation.y=Math.PI/4;
+    roof.scale.set(1,.7,.72);
+    roof.name=p.id+'_roof'; roof.position.y=z+sy*2+.7; g.add(roof);
 
     if(p.recipe==='waterfront_restaurant'){
       const deck=new THREE.Mesh(this.shared.box,this.shared.food);
@@ -67,6 +72,12 @@ export class PlaceWorld {
       for(let i=-2;i<=2;i++){
         const t=new THREE.Mesh(this.shared.cyl,this.shared.shop); t.scale.set(.9,.45,.9); t.position.set(i*4,z+1,-sz*1.2); g.add(t);
       }
+    }
+    if(p.recipe==='running_shop'){
+      const awning=new THREE.Mesh(this.shared.box,this.shared.darkRoof||this.shared.roof);
+      awning.scale.set(sx*.9,.22,2.2); awning.position.set(0,z+sy*1.45,-sz-1.1); g.add(awning);
+      const glass=new THREE.Mesh(this.shared.box,this.shared.glass);
+      glass.scale.set(sx*.76,sy*.42,.16); glass.position.set(0,z+sy*.95,-sz-.25); g.add(glass);
     }
     if(p.recipe==='bike_shop'){
       for(let i=-2;i<=2;i++){
@@ -95,8 +106,6 @@ export class PlaceWorld {
       }
     }
 
-    const anchor=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,hero?13:9,10),this.shared.meeting);
-    anchor.name=p.id+'_beacon'; anchor.position.y=z+(hero?6.5:4.5); g.add(anchor);
   }
   setVisited(id){
     const s=this.state[id]||(this.state[id]={});
