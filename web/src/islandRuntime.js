@@ -50,7 +50,9 @@ sky.scale.setScalar(450000);
 scene.add(sky);
 const sun = new THREE.DirectionalLight(0xfff4e0, 2.45);
 scene.add(sun);
-scene.add(new THREE.AmbientLight(0xd8ecff, 0.82));
+scene.add(new THREE.AmbientLight(0xd8ecff, 0.58));
+const hemi = new THREE.HemisphereLight(0xbfe0f4, 0x4a3629, 1.15);
+scene.add(hemi);
 scene.fog = new THREE.FogExp2(0xa7cbe8, 0.00011);
 sky.material.uniforms.turbidity.value = 2.2;
 sky.material.uniforms.rayleigh.value = 1.4;
@@ -238,6 +240,27 @@ function goTo(id='island'){
   camera.position.copy(v.pos); controls.target.copy(v.look); controls.update();
 }
 
+function updateRegionalAtmosphere(){
+  if(!isl) return;
+  const x=camera.position.x, y=-camera.position.z, alt=Math.max(0,camera.position.y);
+  // East/windward half trends wetter and softer; west/leeward drier with longer visibility.
+  const east=THREE.MathUtils.smoothstep(x,26000,65000);
+  const north=THREE.MathUtils.smoothstep(y,26000,62000);
+  const alpine=THREE.MathUtils.smoothstep(alt,1500,3800);
+  const humid=Math.max(east,north*.35)*(1-alpine);
+  const dry=1-humid;
+  const baseFog=THREE.MathUtils.lerp(.000075,.00017,humid);
+  scene.fog.density=baseFog/(1+alt/650);
+  const fogDry=new THREE.Color(0xb8d1dd);
+  const fogWet=new THREE.Color(0x9bbec4);
+  const fogHigh=new THREE.Color(0xc8d5dc);
+  scene.fog.color.copy(fogDry).lerp(fogWet,humid).lerp(fogHigh,alpine*.8);
+  hemi.color.copy(new THREE.Color(0xc8e4f2).lerp(new THREE.Color(0xb3d7d1),humid));
+  hemi.groundColor.copy(new THREE.Color(0x4a382b).lerp(new THREE.Color(0x324b35),humid));
+  sun.intensity=THREE.MathUtils.lerp(2.55,2.05,humid)*(1-alpine*.12);
+  renderer.toneMappingExposure=THREE.MathUtils.lerp(1.08,.94,humid);
+}
+
 let last=performance.now(),fpsT=0,frames=0;
 renderer.setAnimationLoop(()=>{
   const now=performance.now(),dt=Math.min((now-last)/1000,.05);last=now;
@@ -247,7 +270,7 @@ renderer.setAnimationLoop(()=>{
   placeWorld?.update(dt,camera);
   islandCoverage?.update(dt,camera);
   if(ocean){ocean.material.uniforms.uTime.value+=dt;ocean.position.set(Math.round(camera.position.x/80)*80,0,Math.round(camera.position.z/80)*80);}
-  scene.fog.density=.00011/(1+Math.max(0,camera.position.y)/150);
+  updateRegionalAtmosphere();
   renderer.render(scene,camera);
   frames++;fpsT+=dt;
   if(fpsT>2){
