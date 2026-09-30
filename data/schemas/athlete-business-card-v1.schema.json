@@ -1,0 +1,25 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://studio-kona.local/schemas/athlete-business-card-v1.schema.json",
+  "title":"KONA Athlete Business Card",
+  "type":"object",
+  "required":["id","name","category","address","athlete_relevance","sources","verified_at"],
+  "properties":{
+    "id":{"type":"string"},
+    "name":{"type":"string"},
+    "category":{"enum":["triathlon_shop","running_shop","bike_service","physical_therapy","sports_medicine","grocery","recovery","swim_service","nutrition","medical"]},
+    "address":{"type":"string"},
+    "lat":{"type":["number","null"]},"lon":{"type":["number","null"]},
+    "phone":{"type":["string","null"]},
+    "website":{"type":["string","null"],"format":"uri"},
+    "hours":{"type":["object","null"]},
+    "hours_note":{"type":"string"},
+    "services":{"type":"array","items":{"type":"string"}},
+    "athlete_relevance":{"type":"array","items":{"enum":["swim","bike","run","repair","rental","nutrition","recovery","injury","race_week","emergency"]}},
+    "race_week_note":{"type":"string"},
+    "render":{"type":"object","required":["tier","recipe"],"properties":{"tier":{"enum":["hero","high","medium"]},"recipe":{"type":"string"},"place_id":{"type":["string","null"]}}},
+    "directions_query":{"type":"string"},
+    "sources":{"type":"array","items":{"type":"object","required":["url","kind"],"properties":{"url":{"type":"string","format":"uri"},"kind":{"type":"string"}}}},
+    "verified_at":{"type":"string","format":"date"}
+  }
+}

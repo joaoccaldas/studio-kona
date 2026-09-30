@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "updated": "2026-09-30",
+  "rules": [
+    "Every shipped texture/image/model must have source_id and license metadata.",
+    "Development-only imagery may not silently become production imagery.",
+    "Generated assets must be labeled generated_reference or generated_asset, never documentary evidence."
+  ],
+  "sources": [
+    {
+      "id": "usgs_hvo_west_hawaii_lava",
+      "type": "reference_image_and_geology",
+      "title": "Stories of Lava Flows and Volcanic Landscapes from Kau to North Kona",
+      "url": "https://www.usgs.gov/news/state-news-release/stories-lava-flows-and-volcanic-landscapes-kau-north-kona-featured-public",
+      "license": "Public domain where marked by USGS",
+      "use": ["Queen K lava morphology", "West Hawaii lava-flow transitions"]
+    },
+    {
+      "id": "nelha_host_assets",
+      "type": "official_site_reference",
+      "title": "HOST Park Assets",
+      "url": "https://nelha.hawaii.gov/park-assets/",
+      "license": "Reference only unless media-specific reuse rights are confirmed",
+      "use": ["NELHA functional layout", "industrial feature inventory", "pipeline-system context"]
+    },
+    {
+      "id": "nelha_clean_energy",
+      "type": "official_site_reference",
+      "title": "HOST Park is a Clean Energy Test Bed",
+      "url": "https://nelha.hawaii.gov/home/otec/",
+      "license": "Reference only unless media-specific reuse rights are confirmed",
+      "use": ["NELHA scene storytelling", "energy infrastructure categories"]
+    },
+    {
+      "id": "commons_kohala",
+      "type": "open_media_collection",
+      "title": "Kohala district, Hawaii",
+      "url": "https://commons.wikimedia.org/wiki/Category:Kohala_district,_Hawaii",
+      "license": "Per-file Wikimedia Commons license",
+      "use": ["Hawi/Kohala vegetation", "roads", "coast", "town references"]
+    },
+    {
+      "id": "commons_hawi_wind_farm",
+      "type": "open_media_reference",
+      "title": "Hawi wind farm",
+      "url": "https://commons.wikimedia.org/wiki/File:Hawi_wind_farm_302986813_13df18323b_o.jpg",
+      "license": "Use only after recording the file-specific Commons license/attribution",
+      "use": ["North Kohala wind context", "Hawi distant landmark reference"]
+    },
+    {
+      "id": "osm",
+      "type": "geodata",
+      "url": "https://www.openstreetmap.org/",
+      "license": "ODbL",
+      "use": ["roads", "buildings", "paths", "POIs"]
+    },
+    {
+      "id": "usgs_3dep",
+      "type": "elevation",
+      "url": "https://www.usgs.gov/3d-elevation-program",
+      "license": "US government data / public domain unless dataset states otherwise",
+      "use": ["terrain", "volcano replacement", "slope masks"]
+    },
+    {
+      "id": "polyhaven",
+      "type": "pbr_materials",
+      "url": "https://polyhaven.com/",
+      "license": "CC0",
+      "use": ["basalt", "rock", "soil", "gravel", "generic ground PBR"]
+    }
+  ]
+}

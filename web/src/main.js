@@ -6,6 +6,10 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { computeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { TileStreamer } from './tiles.js';
+import { WorldZoneStreamer } from './worldZones.js';
+import { PlaceWorld } from './placeWorld.js';
+import { IslandCoverage } from './islandCoverage.js';
+import { CoverageDebug } from './coverageDebug.js';
 import { createLocomotion } from './locomotion.js';
 import { RACE_WEEK_QUESTS, loadGameSave, saveGameProgress } from './gameQuests.js';
 import { createEchoMarkers } from './echoMarkers.js';
@@ -17,7 +21,7 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
-const A = 'assets/';
+const A = window.__KONA_ASSET_BASE || 'assets/';
 const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y); // survey (x east, y north, z up) -> Three.js
 const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
 
@@ -202,12 +206,19 @@ let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
 let pierBikesMesh = null;
 let streamer = null;
+let worldZones = null;
+let placeWorld = null;
+let islandCoverage = null;
+let coverageDebug = null;
 let man = null;
 
 // ------------------------------------------------------------------ Load Assets
 async function load() {
   console.log('[Kona] Starting load()...');
   man = await (await fetch(A + 'kona_manifest.json')).json();
+  // Whole-island terrain previously existed as a dead loader. Start it in parallel
+  // with the hero GLB so the island is actually present without serializing startup.
+  const islandPromise = island().catch(e => { console.warn('Whole-island DEM load error:', e); });
   console.log('[Kona] Loaded manifest, loading kona_p1.glb...');
   const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(
     A + 'kona_p1.glb',
@@ -271,6 +282,8 @@ async function load() {
       o.renderOrder = -1;
     }
   });
+  // Ring 3 terrain must settle before routes/POIs/Ring 2 use heightAt().
+  await islandPromise;
   console.log('[Kona] Loading routes and pois...');
   routes();
   pois();
@@ -289,6 +302,31 @@ async function load() {
     onGround: (g, add) => g.traverse(o => { if (o.userData.ground) add ? addGround(o) : grounds.delete(o); })
   });
   await streamer.init().catch(e => { console.warn('TileStreamer init error:', e); streamer = null; });
+
+  console.log('[Kona] Initializing Ring 2 WorldZoneStreamer...');
+  worldZones = new WorldZoneStreamer({ scene, W, heightAt, toLocal, coarse, base: A });
+  await worldZones.init().catch(e => { console.warn('WorldZoneStreamer init error:', e); worldZones = null; });
+
+  console.log('[Kona] Initializing persistent PlaceWorld...');
+  placeWorld = new PlaceWorld({ scene, W, heightAt, toLocal, coarse, base: A });
+  await placeWorld.init().catch(e => { console.warn('PlaceWorld init error:', e); placeWorld = null; });
+
+  console.log('[Kona] Initializing full-island adaptive coverage...');
+  islandCoverage = new IslandCoverage({ scene, W, heightAt, coarse });
+  if (isl) {
+    const step = coarse ? 16000 : 12000;
+    islandCoverage.buildGrid({
+      x0: isl.x0 + step * .5,
+      y0: isl.y0 + step * .5,
+      x1: isl.x0 + isl.size - step * .5,
+      y1: isl.y0 + isl.size - step * .5,
+      step
+    });
+  }
+
+  coverageDebug = new CoverageDebug({ scene, W, heightAt, toLocal, base: A });
+  await coverageDebug.init().catch(e => { console.warn('CoverageDebug init error:', e); coverageDebug = null; });
+  if (new URLSearchParams(location.search).get('coverage') === '1') coverageDebug?.setVisible(true);
 
   console.log('[Kona] Building ocean, coffee boat, systems...');
   coffeeBoat();
@@ -936,8 +974,11 @@ renderer.setAnimationLoop(() => {
     controls.update();
   }
 
-  // Tile streamer update
+  // Detail streamers: local 500 m Ring 1 + island/corridor Ring 2
   streamer?.update(dt, camera);
+  worldZones?.update(dt, camera);
+  placeWorld?.update(dt, camera);
+  islandCoverage?.update(dt, camera);
 
   // Hawaiian Heritage Scavenger Hunt beacons update
   hawaiianHunt?.update(dt, camera);
@@ -1013,6 +1054,10 @@ window.__kona = {
   echoMarkers,
   pierMuseumStudio,
   hawaiianHunt,
+  worldZones,
+  placeWorld,
+  islandCoverage,
+  coverageDebug,
   saveData,
   get currentDay() { return currentDay; },
   get currentStep() { return currentStep; },
@@ -1025,7 +1070,9 @@ window.__kona = {
   openHeritageHunt: (id = null) => hawaiianHunt?.open(id),
   go,
   setHour,
-  toast
+  toast,
+  setCoverageDebug: (v=true) => coverageDebug?.setVisible(v),
+  toggleCoverageDebug: () => coverageDebug?.toggle()
 };
 
 load().catch(e => {
