@@ -49,8 +49,10 @@ export class IslandCoverage {
     g.computeVertexNormals();
     const centerH=Math.max(0,this.heightAt(cx,cy));
     const biome=this.classify(cx,cy,centerH);
-    const mesh=new THREE.Mesh(g,this.materials[biome]);
-    mesh.position.set(cx,0,-cy);
+    const mat=this.materials[biome].clone();
+    mat.polygonOffset=true; mat.polygonOffsetFactor=-1; mat.polygonOffsetUnits=-1;
+    const mesh=new THREE.Mesh(g,mat);
+    mesh.position.set(cx,.22,-cy);
     mesh.name='coverage_'+Math.round(cx)+'_'+Math.round(cy);
     mesh.userData.biome=biome;
     this.root.add(mesh);
