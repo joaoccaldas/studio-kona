@@ -1,0 +1,95 @@
+{
+  "version":1,
+  "verified_at":"2026-09-30",
+  "cards":[
+    {
+      "id":"bike_works_kona","name":"Bike Works Kona","category":"triathlon_shop",
+      "address":"75-5660 Kopiko St, Kailua-Kona, HI 96740","phone":"+1 808-326-2453","website":"https://www.bikeworkskona.com/",
+      "hours":{"mon":"09:00-17:00","tue":"09:00-17:00","wed":"09:00-17:00","thu":"09:00-17:00","fri":"09:00-17:00","sat":"09:00-17:00","sun":"closed"},
+      "hours_note":"Verify current and race-week/holiday hours before travel.",
+      "services":["full-service triathlon shop","bike service","bike rentals","swim gear","bike gear","running shoes and gear"],
+      "athlete_relevance":["swim","bike","run","repair","rental","race_week"],
+      "race_week_note":"Primary multisport support stop in Kailua-Kona for last-minute bike, swim and run needs.",
+      "render":{"tier":"hero","recipe":"bike_shop","place_id":"bike_works_kona"},
+      "directions_query":"Bike Works Kona, 75-5660 Kopiko St, Kailua-Kona, HI 96740",
+      "sources":[{"url":"https://www.bikeworkskona.com/","kind":"official"}],
+      "verified_at":"2026-09-30"
+    },
+    {
+      "id":"big_island_running","name":"Big Island Running Company","category":"running_shop",
+      "address":"75-5807 Aliʻi Dr Ste C8, Kailua-Kona, HI 96740","phone":"+1 808-327-9333","website":"https://www.bigislandrunningcompany.com/",
+      "hours":{"mon":"10:00-18:00","tue":"10:00-18:00","wed":"10:00-18:00","thu":"10:00-18:00","fri":"10:00-18:00","sat":"10:00-18:00","sun":"12:00-17:00"},
+      "hours_note":"Verify current and race-week hours before travel.",
+      "services":["running shoes","running apparel","running accessories","local running knowledge","group runs"],
+      "athlete_relevance":["run","race_week"],
+      "race_week_note":"Running-specialty stop on Aliʻi Drive; useful for footwear, socks, accessories and local run knowledge.",
+      "render":{"tier":"hero","recipe":"running_shop","place_id":"big_island_running"},
+      "directions_query":"Big Island Running Company, 75-5807 Aliʻi Dr Ste C8, Kailua-Kona, HI 96740",
+      "sources":[{"url":"https://www.bigislandrunningcompany.com/","kind":"official"}],
+      "verified_at":"2026-09-30"
+    },
+    {
+      "id":"pt_hawaii_kona","name":"PT Hawaii - Kailua Kona","category":"physical_therapy",
+      "address":"75-184 Hualalai Rd Suite 302, Kailua-Kona, HI 96740","phone":"+1 808-680-9123","website":"https://www.pthawaii.com/",
+      "hours":{"mon":"07:00-16:30","tue":"07:00-16:30","wed":"07:00-16:30","thu":"07:00-16:30","fri":"07:00-16:30"},
+      "hours_note":"Appointments and current hours should be confirmed directly.",
+      "services":["physical therapy","sports rehabilitation","massage therapy","hydrotherapy","performance restoration"],
+      "athlete_relevance":["recovery","injury","race_week"],
+      "race_week_note":"Recovery and injury-care option for athletes needing professional assessment or rehabilitation.",
+      "render":{"tier":"high","recipe":"medical_center","place_id":"pt_hawaii_kona"},
+      "directions_query":"PT Hawaii, 75-184 Hualalai Rd Suite 302, Kailua-Kona, HI 96740",
+      "sources":[{"url":"https://www.pthawaii.com/","kind":"official"}],
+      "verified_at":"2026-09-30"
+    },
+    {
+      "id":"sozo_performance","name":"SOZO Performance Therapy","category":"sports_medicine",
+      "address":"75-5597 Palani Rd, Kailua-Kona, HI 96740","phone":"+1 808-818-2116","website":"https://www.sozoperformance.com/",
+      "hours":{"mon":"07:00-18:00","tue":"07:00-18:00","wed":"07:00-18:00","thu":"07:00-18:00","fri":"07:00-12:00"},
+      "hours_note":"Appointments and current hours should be confirmed directly.",
+      "services":["physical therapy","sports performance","mobility","injury recovery"],
+      "athlete_relevance":["recovery","injury","race_week"],
+      "race_week_note":"Performance-oriented therapy close to central Kailua-Kona.",
+      "render":{"tier":"high","recipe":"medical_center","place_id":"sozo_performance"},
+      "directions_query":"SOZO Performance Therapy, 75-5597 Palani Rd, Kailua-Kona, HI 96740",
+      "sources":[{"url":"https://www.sozoperformance.com/","kind":"official"}],
+      "verified_at":"2026-09-30"
+    },
+    {
+      "id":"kona_rehab","name":"Kona Rehab","category":"physical_therapy",
+      "address":"75-1029 Henry St Suite 101, Kailua-Kona, HI 96740","phone":"+1 808-334-0806","website":"https://www.konarehab.com/",
+      "hours":{"mon":"07:30-17:00","tue":"07:30-18:00","wed":"07:30-17:00","thu":"07:30-18:00","fri":"07:30-17:00"},
+      "hours_note":"Appointments and current hours should be confirmed directly.",
+      "services":["orthopedic assessment","physical therapy","occupational therapy","injury prevention","recovery planning"],
+      "athlete_relevance":["recovery","injury"],
+      "race_week_note":"Established local rehabilitation clinic for assessment and recovery needs.",
+      "render":{"tier":"high","recipe":"medical_center","place_id":"kona_rehab"},
+      "directions_query":"Kona Rehab, 75-1029 Henry St Suite 101, Kailua-Kona, HI 96740",
+      "sources":[{"url":"https://www.konarehab.com/","kind":"official"}],
+      "verified_at":"2026-09-30"
+    },
+    {
+      "id":"kta_kona","name":"KTA Super Stores - Kailua-Kona","category":"grocery",
+      "address":"74-5594 Palani Rd, Kailua-Kona, HI 96740","phone":"+1 808-329-1677","website":"https://www.ktasuperstores.com/",
+      "hours":{"daily":"06:00-21:00"},"hours_note":"Verify current and holiday hours before travel.",
+      "services":["groceries","hydration","race-week food","local foods"],
+      "athlete_relevance":["nutrition","race_week"],
+      "race_week_note":"Practical central grocery stop for race-week food and hydration supplies.",
+      "render":{"tier":"high","recipe":"grocery","place_id":"kta_kona"},
+      "directions_query":"KTA Super Stores Kailua-Kona, 74-5594 Palani Rd, Kailua-Kona, HI 96740",
+      "sources":[{"url":"https://www.ktasuperstores.com/","kind":"official"}],
+      "verified_at":"2026-09-30"
+    },
+    {
+      "id":"bike_works_waikoloa","name":"Bike Works Beach & Sports","category":"bike_service",
+      "address":"69-201 Waikoloa Beach Dr, Waikoloa, HI 96738","phone":"+1 808-886-5000","website":"https://bikeworkshawaii.com/",
+      "hours":{"daily":"09:00-17:00"},"hours_note":"Verify current hours and bike-service availability before traveling from Kona.",
+      "services":["bike rentals","bike service","cycling gear","sports equipment"],
+      "athlete_relevance":["bike","repair","rental"],
+      "race_week_note":"Useful northbound cycling support around Waikoloa on the Queen K corridor.",
+      "render":{"tier":"high","recipe":"bike_shop","place_id":"bike_works_waikoloa"},
+      "directions_query":"Bike Works Beach & Sports, 69-201 Waikoloa Beach Dr, Waikoloa, HI 96738",
+      "sources":[{"url":"https://bikeworkshawaii.com/locations/","kind":"official"}],
+      "verified_at":"2026-09-30"
+    }
+  ]
+}
