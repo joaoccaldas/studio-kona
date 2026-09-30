@@ -34,6 +34,17 @@ controls.maxPolarAngle = Math.PI / 2 - 0.005;
 controls.minDistance = 2;
 controls.maxDistance = 110000;
 controls.screenSpacePanning = true;
+controls.enableRotate = true;
+controls.enablePan = true;
+controls.enableZoom = true;
+controls.zoomSpeed = 0.85;
+controls.rotateSpeed = 0.55;
+controls.panSpeed = 0.7;
+controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+controls.mouseButtons.MIDDLE = THREE.MOUSE.DOLLY;
+controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+controls.touches.ONE = THREE.TOUCH.ROTATE;
+controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
 
 let dpr = Math.min(devicePixelRatio, coarse ? 1.15 : 1.65);
 function resize() {
@@ -230,7 +241,11 @@ async function loadCore() {
 }
 
 const views={
-  island:()=>({pos:W(24000,18000,24000),look:W(-2000,4000,1200)}),
+  island:()=>({
+    // Default: high oblique overview showing the entire island, with north roughly upward.
+    pos:W(9000,14000,72000),
+    look:W(0,5000,1100)
+  }),
   pier:()=>({pos:W(18,-45,14),look:W(0,10,2.2)}),
   hawi:()=>{const [x,y]=toLocal(20.239006,-155.831451);return{pos:W(x-850,y-900,520),look:W(x,y,Math.max(0,heightAt(x,y)))}} ,
   energylab:()=>{const [x,y]=toLocal(19.7174904,-156.0380702);return{pos:W(x-480,y-520,250),look:W(x,y,Math.max(0,heightAt(x,y)))}}
@@ -282,7 +297,12 @@ renderer.setAnimationLoop(()=>{
 
 window.__kona={
   mode:'world-only',
-  scene,camera,THREE,worldZones,placeWorld,islandCoverage,coverageDebug,
+  ready:false,
+  scene,camera,THREE,
+  get worldZones(){ return worldZones; },
+  get placeWorld(){ return placeWorld; },
+  get islandCoverage(){ return islandCoverage; },
+  get coverageDebug(){ return coverageDebug; },
   go:goTo,goTo,setHour,
   setCoverageDebug:(v=true)=>coverageDebug?.setVisible(v),
   toggleCoverageDebug:()=>coverageDebug?.toggle()
@@ -290,8 +310,11 @@ window.__kona={
 
 loadCore().then(()=>{
   goTo(new URLSearchParams(location.search).get('view')||'island');
-  document.querySelector('#loading')?.remove();
+  controls.enabled=true;
+  controls.update();
+  window.__kona.ready=true;
   document.documentElement.dataset.worldReady='true';
+  document.querySelector('#loading')?.remove();
 }).catch(e=>{
   console.error(e);
   const l=document.querySelector('#loading');
