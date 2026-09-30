@@ -1,10 +1,10 @@
 {
-  "capturedAt": "2026-09-30T18:24:39.946Z",
+  "capturedAt": "2026-09-30T18:34:32.597Z",
   "url": "https://joaoccaldas.github.io/studio-kona/preview-v2/",
   "stateBase": {
     "sceneObjects": 7,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790792605219",
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790793153275",
     "ready": true
   },
   "state": {
@@ -14,7 +14,7 @@
     "islandCoverage": true,
     "detailsReady": true,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790792605219"
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790793153275"
   },
   "diagnostic": {
     "zones": [
@@ -160,6 +160,9 @@
       }
     ],
     "placeCount": 4,
+    "placeSourceCount": 38,
+    "placeGeocodedCount": 4,
+    "placeUnresolvedCount": 34,
     "coverageTileCount": 169,
     "coverageDebug": {
       "hero": 7,
@@ -167,14 +170,7 @@
       "medium": 8
     }
   },
-  "consoleErrors": [
-    "Failed to load resource: the server responded with a status of 404 ()"
-  ],
+  "consoleErrors": [],
   "pageErrors": [],
-  "requestFailures": [
-    {
-      "url": "https://joaoccaldas.github.io/studio-kona/web/public/assets/place_geocodes_v2.json",
-      "status": 404
-    }
-  ]
+  "requestFailures": []
 }
