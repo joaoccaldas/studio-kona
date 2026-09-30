@@ -69,14 +69,12 @@ jobs:
             throw new Error('Preview never became ready: ' + lastErr);
           }
 
-          await page.waitForTimeout(6000);
-          const state = await page.evaluate(() => ({
+          const baseReadyAt = Date.now();
+          const stateBase = await page.evaluate(() => ({
             sceneObjects: window.__kona.scene.children.length,
-            worldZones: !!window.__kona.worldZones,
-            placeWorld: !!window.__kona.placeWorld,
-            islandCoverage: !!window.__kona.islandCoverage,
             renderer: window.__kona.THREE.REVISION,
-            href: location.href
+            href: location.href,
+            ready: window.__kona.ready
           }));
 
           async function shot(name, place, settle=3500) {
@@ -88,7 +86,24 @@ jobs:
             await page.screenshot({ path: 'renders/runtime-v2/' + name + '.png' });
           }
 
-          await shot('01_island_overview', 'island', 5000);
+          await shot('01_island_overview', 'island', 1500);
+
+          await page.waitForFunction(
+            () => window.__kona && (window.__kona.detailsReady === true || window.__kona.detailsReady === 'degraded'),
+            null,
+            { timeout: 30000 }
+          );
+
+          const state = await page.evaluate(() => ({
+            sceneObjects: window.__kona.scene.children.length,
+            worldZones: !!window.__kona.worldZones,
+            placeWorld: !!window.__kona.placeWorld,
+            islandCoverage: !!window.__kona.islandCoverage,
+            detailsReady: window.__kona.detailsReady,
+            renderer: window.__kona.THREE.REVISION,
+            href: location.href
+          }));
+
           await page.evaluate(() => window.__kona.setCoverageDebug?.(true));
           await page.waitForTimeout(1500);
           await page.screenshot({ path: 'renders/runtime-v2/00_island_coverage.png' });
@@ -110,11 +125,11 @@ jobs:
           });
           fs.writeFileSync('renders/runtime-v2/report.json', JSON.stringify({
             capturedAt: new Date().toISOString(),
-            url, state, diagnostic, consoleErrors, pageErrors
+            url, stateBase, state, diagnostic, consoleErrors, pageErrors
           }, null, 2));
 
           if (!state.worldZones || !state.placeWorld || !state.islandCoverage) {
-            throw new Error('Island V2 systems did not initialize: ' + JSON.stringify(state));
+            throw new Error('Island V2 detail systems did not initialize: ' + JSON.stringify(state));
           }
           if (pageErrors.length) throw new Error('Page errors: ' + JSON.stringify(pageErrors));
           await browser.close();
