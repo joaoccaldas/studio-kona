@@ -7,6 +7,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { computeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { TileStreamer } from './tiles.js';
 import { WorldZoneStreamer } from './worldZones.js';
+import { PlaceWorld } from './placeWorld.js';
 import { createLocomotion } from './locomotion.js';
 import { RACE_WEEK_QUESTS, loadGameSave, saveGameProgress } from './gameQuests.js';
 import { createEchoMarkers } from './echoMarkers.js';
@@ -204,6 +205,7 @@ let currentStep = currentDay.steps[0];
 let pierBikesMesh = null;
 let streamer = null;
 let worldZones = null;
+let placeWorld = null;
 let man = null;
 
 // ------------------------------------------------------------------ Load Assets
@@ -300,6 +302,10 @@ async function load() {
   console.log('[Kona] Initializing Ring 2 WorldZoneStreamer...');
   worldZones = new WorldZoneStreamer({ scene, W, heightAt, toLocal, coarse, base: A });
   await worldZones.init().catch(e => { console.warn('WorldZoneStreamer init error:', e); worldZones = null; });
+
+  console.log('[Kona] Initializing persistent PlaceWorld...');
+  placeWorld = new PlaceWorld({ scene, W, heightAt, toLocal, coarse, base: A });
+  await placeWorld.init().catch(e => { console.warn('PlaceWorld init error:', e); placeWorld = null; });
 
   console.log('[Kona] Building ocean, coffee boat, systems...');
   coffeeBoat();
@@ -950,6 +956,7 @@ renderer.setAnimationLoop(() => {
   // Detail streamers: local 500 m Ring 1 + island/corridor Ring 2
   streamer?.update(dt, camera);
   worldZones?.update(dt, camera);
+  placeWorld?.update(dt, camera);
 
   // Hawaiian Heritage Scavenger Hunt beacons update
   hawaiianHunt?.update(dt, camera);
@@ -1026,6 +1033,7 @@ window.__kona = {
   pierMuseumStudio,
   hawaiianHunt,
   worldZones,
+  placeWorld,
   saveData,
   get currentDay() { return currentDay; },
   get currentStep() { return currentStep; },
