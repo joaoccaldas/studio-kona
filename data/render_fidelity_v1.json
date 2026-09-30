@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "goal": "Complete visual coverage of Hawaiʻi Island with adaptive rendering fidelity.",
+  "tiers": {
+    "T0_hero": {
+      "when": ["race-critical", "dense pedestrian exploration", "iconic landmark", "high interaction"],
+      "techniques": ["measured geometry", "photo-calibrated materials", "interiors where useful", "interactive props", "baked lighting"],
+      "examples": ["Kailua Pier", "Aliʻi Drive finish", "Hāwī turnaround", "Energy Lab", "selected hospitals", "selected bike shops", "selected waterfront venues"]
+    },
+    "T1_high": {
+      "when": ["important navigation", "recognizable town center", "major service", "large landmark"],
+      "techniques": ["OSM/GIS footprints", "procedural roofs", "facade atlas", "instanced vegetation", "limited hero props"],
+      "examples": ["Waimea center", "Hilo waterfront", "Kona airport", "Kawaihae harbor", "Keauhou"]
+    },
+    "T2_context": {
+      "when": ["visible from roads", "approach scenery", "secondary settlements"],
+      "techniques": ["extruded footprint massing", "texture atlases", "vegetation instances", "road furniture instances", "distance impostors"],
+      "examples": ["residential areas", "industrial strips", "secondary shopping areas"]
+    },
+    "T3_landscape": {
+      "when": ["large natural areas", "mountain slopes", "lava fields", "agriculture", "forest"],
+      "techniques": ["DEM displacement", "biome material blending", "macro normal maps", "procedural scatter", "slope/elevation masks", "fog/cloud layers"],
+      "examples": ["Mauna Loa flanks", "Hualālai slopes", "Kohala countryside", "Kaʻū lava plains", "windward forest"]
+    },
+    "T4_far": {
+      "when": ["distant background only"],
+      "techniques": ["low-poly terrain LOD", "baked albedo", "normal map", "horizon impostors", "atmospheric haze"],
+      "examples": ["far ridges", "remote coastline", "distant towns"]
+    }
+  },
+  "regions": [
+    {"id":"kona_coast","name":"Kona Coast","default":"T2_context","hero":["Kailua-Kona","Keauhou","Kona Airport","NELHA"],"biomes":["lava","dry_scrub","resort","urban"]},
+    {"id":"kohala","name":"North Kohala","default":"T2_context","hero":["Hāwī","Kapaʻau"],"biomes":["green_pasture","windy_scrub","historic_town","coast"]},
+    {"id":"south_kohala","name":"South Kohala","default":"T2_context","hero":["Waikoloa","Kawaihae"],"biomes":["lava","resort","dry_grass","coast"]},
+    {"id":"hamakua","name":"Hāmākua","default":"T3_landscape","hero":["Waimea approaches"],"biomes":["wet_forest","pasture","gulch","coast"]},
+    {"id":"hilo","name":"Hilo / Windward East","default":"T2_context","hero":["Hilo"],"biomes":["wet_urban","rainforest","bay","industrial"]},
+    {"id":"puna","name":"Puna","default":"T3_landscape","hero":[],"biomes":["young_lava","rainforest","coast"]},
+    {"id":"kau","name":"Kaʻū","default":"T3_landscape","hero":["Kīlauea approaches"],"biomes":["lava","dry_grass","black_sand","forest"]},
+    {"id":"volcanoes","name":"Volcano Massifs","default":"T3_landscape","hero":["Mauna Kea","Mauna Loa","Kīlauea","Hualālai"],"biomes":["alpine_cinder","lava","cloud","forest_transition"]}
+  ],
+  "coverage_rule": "Every camera-visible square kilometer must resolve to at least T4_far, every road-adjacent area to at least T3_landscape/T2_context, and every named important place to at least T1_high."
+}
