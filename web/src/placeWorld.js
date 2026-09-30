@@ -119,10 +119,11 @@ export class PlaceWorld {
   update(dt,camera){
     this.t+=dt; if(this.t<.5)return; this.t=0;
     const cx=camera.position.x, cy=-camera.position.z;
+    const overview=camera.position.y>18000;
     let nearest=null, nd=Infinity;
     for(const item of this.places){
       const d=Math.hypot(item.x-cx,item.y-cy);
-      item.group.visible=d<item.radius;
+      item.group.visible=!overview&&d<item.radius;
       if(d<nd){nd=d;nearest=item;}
       if(d<55&&!this.state[item.p.id]?.visited) this.setVisited(item.p.id);
     }
