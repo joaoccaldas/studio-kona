@@ -73,7 +73,6 @@ jobs:
             throw new Error('Preview never became ready: ' + lastErr);
           }
 
-          const baseReadyAt = Date.now();
           const stateBase = await page.evaluate(() => ({
             sceneObjects: window.__kona.scene.children.length,
             renderer: window.__kona.THREE.REVISION,
@@ -123,6 +122,9 @@ jobs:
             return {
               zones: z?.zones?.map(x => ({ id:x.cfg?.id, lod:x.cfg?.lod, visible:x.group?.visible })) ?? [],
               placeCount: p?.places?.length ?? 0,
+              placeSourceCount: p?.sourceCount ?? 0,
+              placeGeocodedCount: p?.geocodedCount ?? 0,
+              placeUnresolvedCount: p?.unresolvedCount ?? 0,
               coverageTileCount: c?.tiles?.length ?? 0,
               coverageDebug: window.__kona.coverageDebug?.summary?.() ?? null
             };
@@ -136,6 +138,7 @@ jobs:
             throw new Error('Island V2 detail systems did not initialize: ' + JSON.stringify(state));
           }
           if (pageErrors.length) throw new Error('Page errors: ' + JSON.stringify(pageErrors));
+          if (requestFailures.length) throw new Error('HTTP/request failures: ' + JSON.stringify(requestFailures));
           await browser.close();
           EOF
           node ./capture-island-v2.mjs
