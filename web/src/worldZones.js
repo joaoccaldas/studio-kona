@@ -135,6 +135,7 @@ export class WorldZoneStreamer {
       g.add(buildings);
     }
 
+    this.addRegionalLandmark(g, z, cx, cy);
     if (z.id === 'puuhonua') this.addPuuhonua(g, z, cx, cy);
     if (z.id === 'puukohola') this.addPuukohola(g, z, cx, cy);
     if (z.id === 'kaloko_honokohau') this.addKaloko(g, z, cx, cy);
@@ -158,6 +159,83 @@ export class WorldZoneStreamer {
       runway.scale.set(34, .18, length);
       runway.position.y = Math.max(1, this.heightAt(cx, cy)) + .18;
       g.add(runway);
+    }
+  }
+
+  addRegionalLandmark(g,z,cx,cy){
+    if(z.id==='punaluu'||z.id==='hapuna') this.addBeach(g,z,cx,cy,z.id==='punaluu');
+    if(z.id==='south_point') this.addSouthPoint(g,z,cx,cy);
+    if(z.id==='akaka') this.addWetGorge(g,z,cx,cy);
+    if(z.id==='kealakekua') this.addKealakekua(g,z,cx,cy);
+    if(z.id==='hilo_bay') this.addHiloBay(g,z,cx,cy);
+  }
+
+  addBeach(g,z,cx,cy,black=false){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const mat=black?this.shared.lava:this.shared.drySoil;
+    const shore=new THREE.Mesh(new THREE.CircleGeometry(900,64),mat);
+    shore.rotation.x=-Math.PI/2; shore.scale.set(1.7,1,.42);
+    shore.position.set(0,base+.25,0); shore.name=z.id+'_shore_proxy';
+    shore.userData.evidence='P place identity / I simplified shoreline'; g.add(shore);
+    const headland=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),this.shared.lava);
+    headland.scale.set(700,90,380); headland.position.set(850,base+45,120); g.add(headland);
+    const count=this.coarse?12:28;
+    for(let i=0;i<count;i++){
+      const a=i/count*Math.PI*2, rr=430+(i%5)*38;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.25,.38,7,7),this.shared.wood);
+      trunk.position.set(Math.cos(a)*rr,base+3.5,Math.sin(a)*rr*.4);
+      trunk.rotation.z=(i%3-1)*.05; g.add(trunk);
+      const crown=new THREE.Mesh(new THREE.ConeGeometry(3.8,5.5,7),this.shared.pasture);
+      crown.position.copy(trunk.position); crown.position.y+=5.7; g.add(crown);
+    }
+  }
+
+  addSouthPoint(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const cliff=this.shared.cliff;
+    for(let i=0;i<7;i++){
+      const p=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),cliff);
+      p.scale.set(420+80*(i%2),55+18*(i%3),260+60*((i+1)%3));
+      p.position.set(-900+i*300,base+30+8*(i%2),(i%2?120:-90));
+      p.userData.evidence='P coastal cliff context / I silhouette'; g.add(p);
+    }
+    const grass=new THREE.Mesh(new THREE.PlaneGeometry(2600,1400,6,4),this.shared.dryGrass);
+    grass.rotation.x=-Math.PI/2; grass.position.y=base+5; g.add(grass);
+  }
+
+  addWetGorge(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    for(const side of [-1,1]){
+      const wall=new THREE.Mesh(new THREE.CylinderGeometry(520,700,620,14,4),this.shared.cliff);
+      wall.scale.z=.55; wall.position.set(side*620,base+290,0); wall.rotation.z=side*.12;
+      wall.userData.evidence='P wet gorge / I simplified form'; g.add(wall);
+    }
+    const waterMat=new THREE.MeshPhysicalMaterial({color:0x8fc5dc,roughness:.15,metalness:0,transparent:true,opacity:.82});
+    const fall=new THREE.Mesh(new THREE.PlaneGeometry(34,430,1,8),waterMat);
+    fall.position.set(0,base+310,-60); g.add(fall);
+    const pool=new THREE.Mesh(new THREE.CircleGeometry(170,40),waterMat);
+    pool.rotation.x=-Math.PI/2; pool.position.set(0,base+4,-60); g.add(pool);
+  }
+
+  addKealakekua(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    for(let i=0;i<5;i++){
+      const ridge=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),this.shared.cliff);
+      ridge.scale.set(480,170+i*18,330); ridge.position.set(-900+i*390,base+120+i*18,220+i*45);
+      ridge.userData.evidence='P bay cliffs / I silhouette'; g.add(ridge);
+    }
+    const slope=new THREE.Mesh(new THREE.PlaneGeometry(2600,1900,10,8),this.shared.pasture);
+    slope.rotation.x=-Math.PI/2+.12; slope.position.set(0,base+120,900); g.add(slope);
+  }
+
+  addHiloBay(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const bay=new THREE.Mesh(new THREE.CircleGeometry(1500,64),new THREE.MeshPhysicalMaterial({color:0x2d6b77,roughness:.28,transparent:true,opacity:.74}));
+    bay.rotation.x=-Math.PI/2; bay.scale.set(1.35,1,.75); bay.position.set(0,Math.max(.2,base+.15),0); g.add(bay);
+    const pierMat=this.shared.concrete;
+    for(let i=0;i<3;i++){
+      const pier=new THREE.Mesh(new THREE.BoxGeometry(280,4,28),pierMat);
+      pier.position.set(-250+i*260,base+2,-720+i*80); pier.rotation.y=.15; g.add(pier);
     }
   }
 
