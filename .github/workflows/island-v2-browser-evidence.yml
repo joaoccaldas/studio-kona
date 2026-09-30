@@ -64,6 +64,7 @@ jobs:
           if (!loaded) {
             console.error('BROWSER_CONSOLE_ERRORS', JSON.stringify(consoleErrors));
             console.error('BROWSER_PAGE_ERRORS', JSON.stringify(pageErrors));
+            console.error('REQUEST_FAILURES', JSON.stringify(requestFailures));
             console.error('FINAL_URL', page.url());
             console.error('BODY_TEXT', (await page.locator('body').innerText().catch(()=>'' )).slice(0,4000));
             throw new Error('Preview never became ready: ' + lastErr);
@@ -125,7 +126,7 @@ jobs:
           });
           fs.writeFileSync('renders/runtime-v2/report.json', JSON.stringify({
             capturedAt: new Date().toISOString(),
-            url, stateBase, state, diagnostic, consoleErrors, pageErrors
+            url, stateBase, state, diagnostic, consoleErrors, pageErrors, requestFailures
           }, null, 2));
 
           if (!state.worldZones || !state.placeWorld || !state.islandCoverage) {
