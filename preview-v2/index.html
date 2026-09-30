@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>K O N A · Hawaiian Heritage & IRONMAN World Championship 3D</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌺</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#f9c74f;
+  --gold-glow:rgba(249,199,79,0.3);
+  --coral:#ff6b35;
+  --teal:#2ec4b6;
+  --ocean:#00b4d8;
+  --glass-bg:rgba(8,20,32,0.72);
+  --glass-border:rgba(255,255,255,0.12);
+  --ink:#f1f5f9;
+  --mute:rgba(241,245,249,0.65);
+}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#050d15;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink)}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+
+/* Top Left Branding - Clean & Minimal */
+.top-bar{position:fixed;top:16px;left:20px;z-index:20;pointer-events:none}
+.top-title{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;letter-spacing:.25em;color:var(--gold);line-height:1}
+.top-sub{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--mute);margin-top:4px}
+
+/* Top Right Controls - Refined Frosted Glass */
+.tr-bar{position:fixed;top:16px;right:20px;z-index:20;display:flex;align-items:center;gap:8px}
+.btn-top{background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--ink);padding:7px 14px;border-radius:999px;font:inherit;font-weight:600;font-size:12px;display:flex;align-items:center;gap:7px;cursor:pointer;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:all .2s;box-shadow:0 4px 16px rgba(0,0,0,0.25)}
+.btn-top:hover{background:rgba(255,255,255,0.1);border-color:var(--gold);transform:translateY(-1px)}
+.btn-heritage-top{border-color:rgba(255,107,53,0.35);color:#fff}
+.btn-heritage-top:hover{border-color:var(--coral);background:rgba(255,107,53,0.15)}
+.badge-count{background:var(--gold);color:#07121c;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px}
+.time-box{background:var(--glass-bg);border:1px solid var(--glass-border);padding:5px 12px;border-radius:999px;backdrop-filter:blur(16px);display:flex;align-items:center;gap:8px}
+.time-label{font-size:11px;color:var(--mute);font-family:monospace;white-space:nowrap}
+.time-box input{accent-color:var(--gold);width:70px;cursor:pointer}
+
+/* Compass HUD - Compact Center Pill */
+#compassHud{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--glass-bg);border:1px solid var(--glass-border);padding:6px 14px;border-radius:999px;backdrop-filter:blur(16px);display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;z-index:20;box-shadow:0 4px 16px rgba(0,0,0,0.3);pointer-events:none}
+#compassArrow{display:inline-block;color:var(--gold);font-size:14px;transition:transform 0.1s linear}
+#compassDist{color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums}
+
+/* Compact Left Quest Card - Breathable & Minimalist */
+#questCard{position:fixed;top:66px;left:20px;max-width:300px;background:var(--glass-bg);border:1px solid var(--glass-border);border-left:3px solid var(--gold);border-radius:14px;padding:12px 14px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:20;box-shadow:0 8px 28px rgba(0,0,0,0.35);transition:all .3s ease}
+.quest-day-tag{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);display:flex;justify-content:space-between;align-items:center}
+.quest-step-count{color:var(--mute);font-weight:600}
+.quest-day-title{font-size:14px;font-weight:800;margin:4px 0 2px;color:#fff;line-height:1.2}
+.quest-desc{font-size:11px;color:var(--mute);line-height:1.35;margin-bottom:8px}
+
+/* Daily Actions Checklist */
+.quest-checklist{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.quest-check-item{display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.3;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid transparent;transition:.2s}
+.quest-check-item.done{color:rgba(255,255,255,0.4);text-decoration:line-through}
+.quest-check-item.active{color:#fff;background:rgba(249,199,79,0.08);border-color:rgba(249,199,79,0.25);font-weight:600}
+.quest-check-item.pending{color:var(--mute)}
+.check-icon{font-size:11px;font-weight:800;flex-shrink:0;width:14px;text-align:center}
+.quest-check-item.done .check-icon{color:#2ecc71}
+.quest-check-item.active .check-icon{color:var(--gold)}
+.quest-check-item.pending .check-icon{color:rgba(255,255,255,0.2)}
+
+/* Quick Teleport Action */
+.quest-card-actions{display:flex;gap:6px;margin-top:6px}
+.btn-teleport-step{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:#fff;padding:6px 10px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.2s}
+.btn-teleport-step:hover{background:rgba(249,199,79,0.18);border-color:var(--gold);color:var(--gold)}
+.quest-progress-bar{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:8px;overflow:hidden}
+.quest-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--coral));width:0;transition:width .4s ease}
+
+/* Nav Viewpoints (Bottom Bar) */
+#navWrap{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;align-items:center;z-index:20;max-width:calc(100vw - 28px)}
+#nav{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;background:var(--glass-bg);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--glass-border);padding:5px 8px;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+#nav button{font:inherit;color:var(--ink);background:transparent;border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap}
+#nav button:hover{border-color:var(--gold);background:rgba(249,199,79,.1)}
+#nav button.active{background:var(--gold);color:#081420;border-color:var(--gold)}
+
+/* Walking crosshair & hint */
+#crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:5px;height:5px;background:rgba(255,255,255,0.7);border-radius:50%;pointer-events:none;display:none;z-index:15}
+body.walking #crosshair{display:block}
+#walkHint{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);background:rgba(5,13,22,0.8);border:1px solid rgba(249,199,79,0.25);padding:5px 14px;border-radius:20px;font-size:11px;color:#fff;display:none;pointer-events:none;z-index:20;white-space:nowrap;backdrop-filter:blur(10px)}
+
+/* Touch controls for Mobile */
+#touchJoyBase{position:fixed;width:80px;height:80px;border-radius:50%;border:2px solid rgba(249,199,79,0.4);background:rgba(0,0,0,0.3);backdrop-filter:blur(6px);pointer-events:none;display:none;z-index:30}
+#touchJoyKnob{position:absolute;top:20px;left:20px;width:40px;height:40px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+#jumpBtn{position:fixed;bottom:85px;right:20px;width:58px;height:58px;border-radius:50%;background:rgba(249,199,79,0.18);border:2px solid var(--gold);color:#fff;font-size:11px;font-weight:800;backdrop-filter:blur(10px);cursor:pointer;display:none;z-index:30}
+body.walking #jumpBtn{display:block}
+
+/* Mode badge */
+#mode{position:fixed;bottom:68px;left:20px;color:var(--gold);font-size:11px;font-weight:700;display:none;z-index:20;background:var(--glass-bg);padding:5px 12px;border-radius:20px;border:1px solid var(--glass-border);backdrop-filter:blur(10px)}
+body.walking #mode{display:block}
+
+/* Caption and Toast */
+#cap{position:fixed;left:20px;bottom:68px;max-width:min(400px,calc(100vw - 40px));text-shadow:0 2px 14px rgba(0,0,0,.8);z-index:10;pointer-events:none}
+#cap b{display:block;font-size:18px;color:#fff}#cap span{font-size:12px;color:var(--mute)}
+#toast{position:fixed;top:28%;left:50%;transform:translate(-50%,-50%);background:rgba(8,18,30,0.92);border:1px solid var(--gold);color:#fff;padding:14px 22px;border-radius:16px;opacity:0;transition:.35s cubic-bezier(0.16,1,0.3,1);pointer-events:none;max-width:85vw;text-align:center;font-size:15px;font-weight:700;z-index:100;box-shadow:0 16px 48px rgba(0,0,0,0.75)}
+#toast.on{opacity:1;transform:translate(-50%,-50%) scale(1.02)}
+
+/* ================================================================== CANYON MUSEUM STUDIO (HERITAGE MASTER LAYOUT) */
+.canyon-studio-overlay{position:fixed;inset:0;background:radial-gradient(ellipse at 78% 17%,rgba(56,70,79,0.38),#10151b 75%);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);z-index:500;opacity:0;pointer-events:none;transition:opacity .4s cubic-bezier(0.16,1,0.3,1);overflow:hidden}
+.canyon-studio-overlay.active{opacity:1;pointer-events:auto}
+.canyon-canvas-stage{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+
+/* Top-left Brand & Title */
+.canyon-top{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 32px;pointer-events:none;z-index:10}
+.canyon-top>*{pointer-events:auto}
+.canyon-back{font-size:11px;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;color:#94a2ad;display:inline-flex;gap:8px;align-items:center;padding:10px 16px;border:1px solid rgba(202,220,225,0.14);border-radius:999px;background:rgba(16,21,27,0.74);backdrop-filter:blur(14px);cursor:pointer;transition:all .2s ease}
+.canyon-back:hover{background:rgba(189,233,217,0.15);border-color:#bde9d9;color:#fff;transform:translateX(-2px)}
+.canyon-title .eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#bde9d9;margin-top:14px;display:flex;align-items:center;gap:10px}
+.canyon-title .eyebrow::before{content:"";width:16px;height:2px;background:#bde9d9}
+.canyon-title h1{margin:8px 0 0;font-family:'Space Grotesk','Inter',sans-serif;font-size:clamp(24px,3.2vw,42px);font-weight:700;letter-spacing:-.03em;line-height:1.05;color:#e8edf0}
+.canyon-title h1 span{color:#94a2ad;font-weight:500}
+.canyon-title p{margin:8px 0 0;max-width:480px;font-size:13px;line-height:1.6;color:#94a2ad}
+
+/* Right-side Floating Frosted Glass Panel */
+.canyon-panel{position:absolute;right:22px;top:22px;bottom:22px;width:360px;display:flex;flex-direction:column;border:1px solid rgba(202,220,225,0.14);border-radius:24px;background:rgba(16,21,27,0.76);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 24px 80px rgba(0,0,0,0.65);z-index:10;overflow:hidden}
+.canyon-tabs{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid rgba(202,220,225,0.1);background:rgba(0,0,0,0.2)}
+.canyon-tabs button{flex:1;padding:9px 8px;border:0;border-radius:10px;background:transparent;color:#94a2ad;font-size:11px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:all .2s;text-align:center}
+.canyon-tabs button[aria-selected="true"]{background:rgba(255,255,255,0.1);color:#e8edf0;box-shadow:0 2px 8px rgba(0,0,0,0.25)}
+.canyon-pane{flex:1;overflow-y:auto;padding:20px 22px;font-size:13px;line-height:1.6;display:flex;flex-direction:column;gap:16px}
+.canyon-pane[hidden]{display:none!important}
+
+/* Athlete / Champion Card */
+.canyon-athlete-card{display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:center;border:1px solid rgba(202,220,225,0.12);border-radius:16px;background:rgba(255,255,255,0.03);padding:12px 14px}
+.canyon-athlete-avatar{width:60px;height:60px;border-radius:12px;background:rgba(189,233,217,0.1);border:1px solid rgba(189,233,217,0.25);display:grid;place-items:center;font-size:26px}
+.canyon-athlete-info b{display:block;font-size:14px;color:#fff;font-weight:700}
+.canyon-athlete-info small{color:#bde9d9;font-size:12px;line-height:1.4;display:block;margin-top:2px}
+.canyon-athlete-credit{font-size:10px;color:#667580;margin-top:3px}
+
+/* 3-Column Stats Grid */
+.canyon-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.canyon-stat-box{border:1px solid rgba(202,220,225,0.1);border-radius:14px;background:rgba(255,255,255,0.02);padding:10px 11px;text-align:center}
+.canyon-stat-box b{display:block;font-size:16px;font-weight:700;color:#fff;letter-spacing:-.02em}
+.canyon-stat-box small{color:#667580;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;display:block}
+
+/* Key-Value Pairs (.kv) */
+.canyon-kv{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0;font-size:12px}
+.canyon-kv dt{color:#667580;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding-top:1px}
+.canyon-kv dd{margin:0;color:#e8edf0;text-align:right;font-weight:500}
+.canyon-pane h2{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#94a2ad;margin:6px 0 2px}
+
+/* Color & Customizer Controls */
+.canyon-swatches{display:flex;gap:8px;flex-wrap:wrap}
+.canyon-swatch{width:32px;height:32px;border-radius:50%;border:2px solid rgba(202,220,225,0.2);cursor:pointer;transition:.2s;background:var(--c)}
+.canyon-swatch:hover{transform:scale(1.15)}
+.canyon-swatch.active{border-color:#bde9d9;box-shadow:0 0 14px #bde9d9}
+.canyon-toggles{display:flex;gap:8px;flex-wrap:wrap}
+.canyon-toggle-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(202,220,225,0.14);color:#e8edf0;padding:7px 12px;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;transition:.2s}
+.canyon-toggle-btn.active{background:rgba(189,233,217,0.18);border-color:#bde9d9;color:#bde9d9}
+
+/* Floating Bottom Control Dock (.dock) */
+.canyon-dock{position:absolute;left:32px;bottom:26px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;z-index:10;max-width:calc(100vw - 440px)}
+.canyon-chip{padding:9px 15px;border:1px solid rgba(202,220,225,0.14);border-radius:999px;background:rgba(16,21,27,0.76);backdrop-filter:blur(14px);font-size:12px;font-weight:600;color:#94a2ad;cursor:pointer;transition:all .2s}
+.canyon-chip:hover{color:#fff;border-color:rgba(189,233,217,0.4)}
+.canyon-chip.active,.canyon-chip[aria-pressed="true"]{background:#bde9d9;color:#0c1116;border-color:#bde9d9;font-weight:700}
+.canyon-dock-sep{width:1px;height:22px;background:rgba(202,220,225,0.16);margin:0 4px}
+.canyon-timeline-strip{display:flex;gap:6px;overflow-x:auto;align-items:center;max-width:540px;padding:2px 0;scrollbar-width:none}
+.canyon-timeline-strip::-webkit-scrollbar{display:none}
+.canyon-year-chip{padding:7px 13px;border:1px solid rgba(202,220,225,0.12);border-radius:999px;background:rgba(16,21,27,0.72);backdrop-filter:blur(14px);color:#94a2ad;cursor:pointer;transition:all .2s;white-space:nowrap;font-size:11.5px;font-weight:600}
+.canyon-year-chip:hover{color:#fff;border-color:rgba(189,233,217,0.35)}
+.canyon-year-chip.active{background:#bde9d9;color:#0c1116;border-color:#bde9d9;font-weight:700}
+
+/* Teleport Button in Studio */
+.sc-tp-btn{background:linear-gradient(135deg,#ff6b35,#ff3b5c);border:none;color:#fff;font-weight:700;font-size:12px;padding:10px 18px;border-radius:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.sc-tp-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,107,53,0.35)}
+
+/* Loading overlay */
+#loading{position:fixed;inset:0;background:#050d15;display:grid;place-items:center;z-index:999;transition:opacity .5s}
+#loading.done{opacity:0;pointer-events:none}
+#loading div{text-align:center}
+#loading h1{font-family:'Space Grotesk',sans-serif;font-size:36px;letter-spacing:.25em;color:var(--gold);margin-bottom:16px}
+#loading .trk{width:220px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin:0 auto 10px}
+#loading #bar{height:100%;width:0;background:var(--gold);transition:width .2s}
+#loading p{font-size:11px;letter-spacing:.2em;color:var(--mute);text-transform:uppercase}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- Top Left Branding -->
+<div class="top-bar">
+  <div class="top-title">K O N A</div>
+  <div class="top-sub">Hawaiʻi Island · Living Culture & Race Week</div>
+</div>
+
+<!-- Top Right Controls -->
+<div class="tr-bar">
+  <button type="button" class="btn-top btn-heritage-top" id="topHeritageBtn">
+    <span>🌺 Hawaiian Heritage</span>
+    <span class="badge-count" id="topHeritageBadge">0 / 12</span>
+  </button>
+  <button type="button" class="btn-top" id="topMuseumBtn">
+    <span>🚲 Pier Museum</span>
+    <span class="badge-count" id="topBadgeCount">10</span>
+  </button>
+  <button type="button" class="btn-top" id="btnModeToggle">
+    <span id="modeIcon">🚶</span>
+    <span id="modeLabel">Walk</span>
+  </button>
+  <div class="time-box">
+    <span class="time-label" id="clock">07:15 HST</span>
+    <input id="hour" type="range" min="5.8" max="19" step=".05" value="7.25" aria-label="Time of day">
+  </div>
+</div>
+
+<!-- Navigational Compass HUD -->
+<div id="compassHud">
+  <span id="compassArrow">▲</span>
+  <span id="compassLabel">Approach Kailua Pier</span>
+  <span id="compassDist">-- m</span>
+</div>
+
+<!-- Compact Left Quest Card -->
+<div id="questCard">
+  <div class="quest-day-tag">
+    <span id="questDayNum">DAY 1 · ARRIVAL</span>
+    <span class="quest-step-count" id="questStepCount">STEP 1 / 3</span>
+  </div>
+  <div class="quest-day-title" id="questDayTitle">Arrival & Kamakahonu Acclimatization</div>
+  <div class="quest-desc" id="questDayDesc">Arrive in Kailua-Kona, acclimatize in the sacred bay.</div>
+
+  <!-- Checklist of Actions -->
+  <div class="quest-checklist" id="questChecklist"></div>
+
+  <div class="quest-card-actions">
+    <button type="button" class="btn-teleport-step" id="btnTeleportStep">
+      <span>⚡</span>
+      <span>Go to Active Action</span>
+    </button>
+  </div>
+
+  <div class="quest-progress-bar"><div class="quest-progress-fill" id="questProgressFill"></div></div>
+</div>
+
+<div id="walkHint">Drag or Click to Look · WASD Move · Shift Sprint · Space Jump</div>
+<div id="crosshair"></div>
+<div id="touchJoyBase"><div id="touchJoyKnob"></div></div>
+<button type="button" id="jumpBtn">▲ JUMP</button>
+<div id="mode"></div>
+<div id="toast"></div>
+<div id="cap"></div>
+
+<!-- Viewpoints Navigation Bar -->
+<div id="navWrap">
+  <div id="nav"></div>
+</div>
+
+<!-- Loading overlay -->
+<div id="loading">
+  <div>
+    <h1>K O N A</h1>
+    <div class="trk"><div id="bar"></div></div>
+    <p>Awakening the Living Island...</p>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.160.0",
+    "three/": "https://esm.sh/three@0.160.0/",
+    "three-mesh-bvh": "https://esm.sh/three-mesh-bvh@0.7.8?external=three"
+  }
+}
+</script>
+<script>
+window.__KONA_ASSET_BASE='https://cdn.jsdelivr.net/gh/joaoccaldas/studio-kona@feat/island-world-v2-20260930/web/public/assets/';
+</script>
+<script type="module">
+import 'https://cdn.jsdelivr.net/gh/joaoccaldas/studio-kona@feat/island-world-v2-20260930/web/src/main.js';
+</script>
+</body>
+</html>
