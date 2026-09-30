@@ -16,6 +16,7 @@ export class PlaceWorld {
     this.root=new THREE.Group(); this.root.name='KONA_PLACEWORLD_V2'; scene.add(this.root);
     this.state=loadState();
     this.places=[]; this.t=0; this.current=null;
+    this.sourceCount=0; this.geocodedCount=0; this.unresolvedCount=0;
     this.shared=this.makeShared();
   }
   makeShared(){
@@ -30,18 +31,24 @@ export class PlaceWorld {
     };
   }
   async init(){
-    let cfg;
-    try { cfg=await fetch(this.base+'place_geocodes_v2.json').then(r=>{if(!r.ok) throw Error('no cache'); return r.json();}); }
-    catch { cfg=await fetch(this.base+'places_v2.json').then(r=>r.json()); }
+    // places_v2.json is the canonical place catalog shipped with the preview.
+    // Do not probe a non-existent geocode cache first: that produced a noisy 404
+    // on every healthy page load and made browser evidence look worse than reality.
+    const res=await fetch(this.base+'places_v2.json');
+    if(!res.ok) throw new Error('places_v2.json HTTP '+res.status);
+    const cfg=await res.json();
     const items=cfg.places||[];
+    this.sourceCount=items.length;
     for(const p of items){
       if(typeof p.lat!=='number'||typeof p.lon!=='number') continue;
+      this.geocodedCount++;
       const [x,y]=this.toLocal(p.lat,p.lon);
       const group=new THREE.Group(); group.name='place_'+p.id; group.visible=false;
       group.position.copy(this.W(x,y,0)); group.userData.place=p; this.root.add(group);
       this.buildSection(group,p,x,y);
       this.places.push({p,group,x,y,radius:p.priority==='hero'?2400:p.priority==='high'?1500:900});
     }
+    this.unresolvedCount=Math.max(0,this.sourceCount-this.geocodedCount);
   }
   matFor(p){
     if(p.category==='hospital'||p.category==='medical') return this.shared.medical;
@@ -105,7 +112,6 @@ export class PlaceWorld {
         tree.scale.set(2,5,2); tree.position.set(Math.cos(a)*35,z+5,Math.sin(a)*35); g.add(tree);
       }
     }
-
   }
   setVisited(id){
     const s=this.state[id]||(this.state[id]={});
