@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { computeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { TileStreamer } from './tiles.js';
+import { WorldZoneStreamer } from './worldZones.js';
 import { createLocomotion } from './locomotion.js';
 import { RACE_WEEK_QUESTS, loadGameSave, saveGameProgress } from './gameQuests.js';
 import { createEchoMarkers } from './echoMarkers.js';
@@ -202,12 +203,16 @@ let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
 let pierBikesMesh = null;
 let streamer = null;
+let worldZones = null;
 let man = null;
 
 // ------------------------------------------------------------------ Load Assets
 async function load() {
   console.log('[Kona] Starting load()...');
   man = await (await fetch(A + 'kona_manifest.json')).json();
+  // Whole-island terrain previously existed as a dead loader. Start it in parallel
+  // with the hero GLB so the island is actually present without serializing startup.
+  const islandPromise = island().catch(e => { console.warn('Whole-island DEM load error:', e); });
   console.log('[Kona] Loaded manifest, loading kona_p1.glb...');
   const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(
     A + 'kona_p1.glb',
@@ -271,6 +276,8 @@ async function load() {
       o.renderOrder = -1;
     }
   });
+  // Ring 3 terrain must settle before routes/POIs/Ring 2 use heightAt().
+  await islandPromise;
   console.log('[Kona] Loading routes and pois...');
   routes();
   pois();
@@ -289,6 +296,10 @@ async function load() {
     onGround: (g, add) => g.traverse(o => { if (o.userData.ground) add ? addGround(o) : grounds.delete(o); })
   });
   await streamer.init().catch(e => { console.warn('TileStreamer init error:', e); streamer = null; });
+
+  console.log('[Kona] Initializing Ring 2 WorldZoneStreamer...');
+  worldZones = new WorldZoneStreamer({ scene, W, heightAt, toLocal, coarse, base: A });
+  await worldZones.init().catch(e => { console.warn('WorldZoneStreamer init error:', e); worldZones = null; });
 
   console.log('[Kona] Building ocean, coffee boat, systems...');
   coffeeBoat();
@@ -936,8 +947,9 @@ renderer.setAnimationLoop(() => {
     controls.update();
   }
 
-  // Tile streamer update
+  // Detail streamers: local 500 m Ring 1 + island/corridor Ring 2
   streamer?.update(dt, camera);
+  worldZones?.update(dt, camera);
 
   // Hawaiian Heritage Scavenger Hunt beacons update
   hawaiianHunt?.update(dt, camera);
@@ -1013,6 +1025,7 @@ window.__kona = {
   echoMarkers,
   pierMuseumStudio,
   hawaiianHunt,
+  worldZones,
   saveData,
   get currentDay() { return currentDay; },
   get currentStep() { return currentStep; },
