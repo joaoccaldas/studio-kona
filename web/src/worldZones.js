@@ -132,6 +132,11 @@ export class WorldZoneStreamer {
       g.add(buildings);
     }
 
+    if (z.id === 'puuhonua') this.addPuuhonua(g, z, cx, cy);
+    if (z.id === 'puukohola') this.addPuukohola(g, z, cx, cy);
+    if (z.id === 'kaloko_honokohau') this.addKaloko(g, z, cx, cy);
+    if (z.id === 'pololu' || z.id === 'waipio') this.addValley(g, z, cx, cy);
+
     if (/mauna_kea|mauna_loa|hualalai|kilauea/.test(z.id)) {
       const r = Math.min(z.radius_m * .48, z.id === 'mauna_loa' ? 14000 : 8500);
       const h = z.id === 'mauna_kea' ? 4205 : z.id === 'mauna_loa' ? 4169 : z.id === 'hualalai' ? 2521 : 950;
@@ -151,6 +156,68 @@ export class WorldZoneStreamer {
       runway.position.y = Math.max(1, this.heightAt(cx, cy)) + .18;
       g.add(runway);
     }
+  }
+
+  addPuuhonua(g, z, cx, cy) {
+    const base = Math.max(0, this.heightAt(cx, cy));
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x39322c, roughness: .96 });
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x5b3d24, roughness: .9 });
+    // Great Wall proxy: long basalt mass with a short return. Evidence tag keeps this replaceable.
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(155, 5.5, 7), wallMat);
+    wall.position.set(0, base + 2.75, 15); wall.rotation.y = -.18;
+    wall.name = 'puuhonua_great_wall_proxy'; wall.userData.evidence = 'P silhouette / I dimensions';
+    g.add(wall);
+    const ret = new THREE.Mesh(new THREE.BoxGeometry(58, 4.5, 6), wallMat);
+    ret.position.set(-68, base + 2.25, -9); ret.rotation.y = 1.25; g.add(ret);
+    // Compact hale cluster, deliberately low-poly.
+    for (let i = 0; i < 5; i++) {
+      const house = new THREE.Mesh(new THREE.BoxGeometry(10 + i % 2 * 4, 4.5, 7), woodMat);
+      house.position.set(-35 + i * 18, base + 2.25, -28 - (i % 2) * 10); g.add(house);
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(8, 3.8, 4), this.shared.cinderMat);
+      roof.rotation.y = Math.PI / 4; roof.position.copy(house.position); roof.position.y += 4.2; roof.scale.z=.65; g.add(roof);
+    }
+  }
+
+  addPuukohola(g, z, cx, cy) {
+    const base = Math.max(0, this.heightAt(cx, cy));
+    const stone = new THREE.MeshStandardMaterial({ color: 0x403831, roughness: .97 });
+    const levels = [
+      [0,0,115,70,6], [0,2,92,54,5], [4,5,68,38,4]
+    ];
+    levels.forEach(([x,zp,w,d,h],i)=>{
+      const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),stone);
+      m.position.set(x,base+h/2+i*4,zp); m.name='puukohola_terrace_'+i;
+      m.userData.evidence='P stepped-heiau form / I dimensions'; g.add(m);
+    });
+  }
+
+  addKaloko(g, z, cx, cy) {
+    const base = Math.max(0, this.heightAt(cx, cy));
+    const water = new THREE.MeshStandardMaterial({ color: 0x2b6870, roughness:.38, transparent:true, opacity:.72 });
+    const stone = new THREE.MeshStandardMaterial({ color: 0x393633, roughness:.96 });
+    const pond = new THREE.Mesh(new THREE.CircleGeometry(210, 48), water);
+    pond.rotation.x=-Math.PI/2; pond.scale.set(1.55,1,.78); pond.position.set(0,base+.35,0);
+    pond.name='kaloko_fishpond_proxy'; pond.userData.evidence='P feature / I simplified shoreline'; g.add(pond);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(215,4.5,8,64),stone);
+    ring.rotation.x=Math.PI/2; ring.scale.set(1.55,.78,1); ring.position.y=base+1.1; g.add(ring);
+  }
+
+  addValley(g, z, cx, cy) {
+    const base = Math.max(0, this.heightAt(cx, cy));
+    const wet = new THREE.MeshStandardMaterial({ color: 0x315331, roughness:.96 });
+    const cliff = new THREE.MeshStandardMaterial({ color: 0x3f3831, roughness:.98 });
+    const isWaipio=z.id==='waipio';
+    const span=isWaipio?5200:3600, depth=isWaipio?4800:3000, h=isWaipio?950:720;
+    for (const side of [-1,1]) {
+      const ridge=new THREE.Mesh(new THREE.BoxGeometry(span*.34,h,depth),cliff);
+      ridge.position.set(side*span*.32,base+h*.48,0);
+      ridge.rotation.z=side*.16; ridge.name=z.id+'_cliff_proxy_'+side;
+      ridge.userData.evidence='terrain proxy; replace with high-resolution DEM'; g.add(ridge);
+      const cap=new THREE.Mesh(new THREE.BoxGeometry(span*.36,35,depth*.96),wet);
+      cap.position.set(side*span*.32,base+h+10,0); cap.rotation.z=side*.16; g.add(cap);
+    }
+    const floor=new THREE.Mesh(new THREE.PlaneGeometry(span*.55,depth*.92,1,1),wet);
+    floor.rotation.x=-Math.PI/2; floor.position.y=base+4; floor.name=z.id+'_valley_floor_proxy'; g.add(floor);
   }
 
   buildQueenK(bikeLonLat) {
