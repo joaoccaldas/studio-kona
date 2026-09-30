@@ -356,9 +356,13 @@ export class WorldZoneStreamer {
     if (this.t < .45) return;
     this.t = 0;
     const cx = camera.position.x, cy = -camera.position.z;
+    const altitude = Math.max(0, camera.position.y);
+    const overview = altitude > 45000;
     for (const z of this.zones) {
       const d = Math.hypot(z.x - cx, z.y - cy);
-      z.group.visible = d < z.activation;
+      // At whole-island altitude, hero/proxy geometry should not punch through the overview.
+      // The Ring-3 terrain owns the view; Ring-2 activates only once the camera descends.
+      z.group.visible = !overview && d < z.activation;
     }
     if (this.corridor) {
       let near = false;
@@ -367,8 +371,8 @@ export class WorldZoneStreamer {
         const p = this.corridor.samples[i];
         if (Math.hypot(p.x - cx, p.y - cy) < this.corridor.activation) { near = true; break; }
       }
-      this.corridor.road.visible = near;
-      this.corridor.rocks.visible = near;
+      this.corridor.road.visible = !overview && near;
+      this.corridor.rocks.visible = !overview && near;
     }
   }
 
