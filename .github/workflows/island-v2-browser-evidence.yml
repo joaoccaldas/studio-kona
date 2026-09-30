@@ -29,7 +29,7 @@ jobs:
           PREVIEW_URL: https://joaoccaldas.github.io/studio-kona/preview-v2/
         run: |
           mkdir -p renders/runtime-v2
-          cat > /tmp/capture.mjs <<'EOF'
+          cat > ./capture-island-v2.mjs <<'EOF'
           import { chromium } from 'playwright';
           import fs from 'node:fs';
 
@@ -104,7 +104,7 @@ jobs:
           if (pageErrors.length) throw new Error('Page errors: ' + JSON.stringify(pageErrors));
           await browser.close();
           EOF
-          node /tmp/capture.mjs
+          node ./capture-island-v2.mjs
       - name: Commit browser evidence
         run: |
           git config user.name "github-actions[bot]"
