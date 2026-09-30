@@ -1,0 +1,180 @@
+{
+  "capturedAt": "2026-09-30T18:24:39.946Z",
+  "url": "https://joaoccaldas.github.io/studio-kona/preview-v2/",
+  "stateBase": {
+    "sceneObjects": 7,
+    "renderer": "160",
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790792605219",
+    "ready": true
+  },
+  "state": {
+    "sceneObjects": 11,
+    "worldZones": true,
+    "placeWorld": true,
+    "islandCoverage": true,
+    "detailsReady": true,
+    "renderer": "160",
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790792605219"
+  },
+  "diagnostic": {
+    "zones": [
+      {
+        "id": "old_airport",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "airport",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "nelha",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "waikoloa",
+        "lod": "medium",
+        "visible": false
+      },
+      {
+        "id": "kawaihae",
+        "lod": "medium",
+        "visible": false
+      },
+      {
+        "id": "hawi",
+        "lod": "high",
+        "visible": true
+      },
+      {
+        "id": "waimea",
+        "lod": "medium",
+        "visible": false
+      },
+      {
+        "id": "mauna_kea",
+        "lod": "hero",
+        "visible": false
+      },
+      {
+        "id": "hualalai",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "mauna_loa",
+        "lod": "hero",
+        "visible": false
+      },
+      {
+        "id": "kilauea",
+        "lod": "hero",
+        "visible": false
+      },
+      {
+        "id": "hilo",
+        "lod": "medium",
+        "visible": false
+      },
+      {
+        "id": "keauhou",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "puuhonua",
+        "lod": "hero",
+        "visible": false
+      },
+      {
+        "id": "kaloko_honokohau",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "puukohola",
+        "lod": "hero",
+        "visible": false
+      },
+      {
+        "id": "pololu",
+        "lod": "high",
+        "visible": true
+      },
+      {
+        "id": "waipio",
+        "lod": "hero",
+        "visible": false
+      },
+      {
+        "id": "south_point",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "punaluu",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "kau",
+        "lod": "medium",
+        "visible": false
+      },
+      {
+        "id": "puna",
+        "lod": "medium",
+        "visible": false
+      },
+      {
+        "id": "hamakua",
+        "lod": "medium",
+        "visible": false
+      },
+      {
+        "id": "akaka",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "hapuna",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "saddle",
+        "lod": "medium",
+        "visible": false
+      },
+      {
+        "id": "kealakekua",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "hilo_bay",
+        "lod": "high",
+        "visible": false
+      }
+    ],
+    "placeCount": 4,
+    "coverageTileCount": 169,
+    "coverageDebug": {
+      "hero": 7,
+      "high": 14,
+      "medium": 8
+    }
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "pageErrors": [],
+  "requestFailures": [
+    {
+      "url": "https://joaoccaldas.github.io/studio-kona/web/public/assets/place_geocodes_v2.json",
+      "status": 404
+    }
+  ]
+}
