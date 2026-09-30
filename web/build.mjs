@@ -1,12 +1,12 @@
 import { build } from 'esbuild'; import fs from 'fs'; import path from 'path';
 const here = path.dirname(new URL(import.meta.url).pathname);
-const r = await build({ entryPoints: [path.join(here, 'src/main.js')], bundle: true, format: 'iife', minify: true, write: false, target: 'es2020' });
+const r = await build({ entryPoints: [path.join(here, 'src/islandRuntime.js')], bundle: true, format: 'iife', minify: true, write: false, target: 'es2020' });
 const app = r.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
-fs.copyFileSync(path.join(here, '../data/raceweek.json'), path.join(here, 'public/assets/raceweek.json'));
 fs.copyFileSync(path.join(here, '../data/island_world_v2.json'), path.join(here, 'public/assets/island_world_v2.json'));
 fs.copyFileSync(path.join(here, '../data/routes.json'), path.join(here, 'public/assets/routes.json'));
 fs.copyFileSync(path.join(here, '../data/places_v2.json'), path.join(here, 'public/assets/places_v2.json'));
 fs.copyFileSync(path.join(here, '../data/render_fidelity_v1.json'), path.join(here, 'public/assets/render_fidelity_v1.json'));
+fs.copyFileSync(path.join(here, '../data/athlete_businesses_v1.json'), path.join(here, 'public/assets/athlete_businesses_v1.json'));
 const placeGeo = path.join(here, '../data/place_geocodes_v2.json');
 if (fs.existsSync(placeGeo)) fs.copyFileSync(placeGeo, path.join(here, 'public/assets/place_geocodes_v2.json'));
 fs.writeFileSync(path.join(here, 'public/index.html'), fs.readFileSync(path.join(here, 'index.template.html'), 'utf8').replace('__APP__', () => app));
