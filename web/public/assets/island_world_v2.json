@@ -52,6 +52,18 @@
       "kind": "official_coordinates_reference",
       "license": "US federal public information",
       "url": "https://www.nps.gov/puhe/planyourvisit/conditions.htm"
+    },
+    {
+      "id": "hawaii_state_parks",
+      "kind": "official_place_reference",
+      "license": "public information",
+      "url": "https://dlnr.hawaii.gov/dsp/parks/hawaii/"
+    },
+    {
+      "id": "gohawaii_island",
+      "kind": "official_tourism_place_reference",
+      "license": "reference only unless asset-specific reuse permits",
+      "url": "https://www.gohawaii.com/islands/hawaii-big-island"
     }
   ],
   "zones": [
@@ -326,6 +338,148 @@
         "waterfalls",
         "wet forest",
         "coast"
+      ]
+    },
+    {
+      "id": "south_point",
+      "name": "Ka Lae / South Point",
+      "lat": 18.9108,
+      "lon": -155.6825,
+      "lod": "high",
+      "radius_m": 7000,
+      "features": [
+        "sea cliffs",
+        "wind-shaped grass",
+        "coastal lava",
+        "southern horizon"
+      ]
+    },
+    {
+      "id": "punaluu",
+      "name": "Punaluʻu Black Sand Coast",
+      "lat": 19.1355,
+      "lon": -155.5047,
+      "lod": "high",
+      "radius_m": 4200,
+      "features": [
+        "black sand",
+        "coconut coast",
+        "lava shelf",
+        "wet-dry transition"
+      ]
+    },
+    {
+      "id": "kau",
+      "name": "Kaʻū Volcanic Plain",
+      "lat": 19.19,
+      "lon": -155.48,
+      "lod": "medium",
+      "radius_m": 18000,
+      "features": [
+        "lava plain",
+        "dry grass",
+        "Mauna Loa flank",
+        "coastal transition"
+      ]
+    },
+    {
+      "id": "puna",
+      "name": "Lower Puna",
+      "lat": 19.47,
+      "lon": -154.91,
+      "lod": "medium",
+      "radius_m": 18000,
+      "features": [
+        "young lava",
+        "rainforest",
+        "coastal road",
+        "2018 lava landscape context"
+      ]
+    },
+    {
+      "id": "hamakua",
+      "name": "Hāmākua Coast",
+      "lat": 20.02,
+      "lon": -155.32,
+      "lod": "medium",
+      "radius_m": 22000,
+      "features": [
+        "wet cliffs",
+        "gulches",
+        "pasture",
+        "rainforest",
+        "coastal road"
+      ]
+    },
+    {
+      "id": "akaka",
+      "name": "ʻAkaka Falls / Honomū",
+      "lat": 19.8536,
+      "lon": -155.1561,
+      "lod": "high",
+      "radius_m": 5000,
+      "features": [
+        "waterfall gorge",
+        "lush forest",
+        "Honomū approach",
+        "stream valley"
+      ]
+    },
+    {
+      "id": "hapuna",
+      "name": "Hāpuna Coast",
+      "lat": 19.9934,
+      "lon": -155.8239,
+      "lod": "high",
+      "radius_m": 5200,
+      "features": [
+        "white sand",
+        "dry coast",
+        "resort context",
+        "lava headlands"
+      ]
+    },
+    {
+      "id": "saddle",
+      "name": "Saddle / Pōhakuloa Context",
+      "lat": 19.69,
+      "lon": -155.49,
+      "lod": "medium",
+      "radius_m": 22000,
+      "features": [
+        "high dry saddle",
+        "cinder",
+        "lava",
+        "Mauna Kea / Mauna Loa transition"
+      ]
+    },
+    {
+      "id": "kealakekua",
+      "name": "Kealakekua Bay",
+      "lat": 19.478,
+      "lon": -155.926,
+      "lod": "high",
+      "radius_m": 6500,
+      "features": [
+        "bay",
+        "sea cliffs",
+        "historic coast",
+        "coffee-country slope"
+      ]
+    },
+    {
+      "id": "hilo_bay",
+      "name": "Hilo Bayfront",
+      "lat": 19.729,
+      "lon": -155.072,
+      "lod": "high",
+      "radius_m": 5200,
+      "features": [
+        "bayfront",
+        "harbor",
+        "wet tropical city",
+        "parks",
+        "Banyan Drive context"
       ]
     }
   ],
