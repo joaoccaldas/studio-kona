@@ -223,21 +223,39 @@ async function loadCore() {
   }
 
   await islandPromise;
-  streamer=new TileStreamer({scene,W,base:A+'tiles/',radius:coarse?900:1500,palm:protos.palm,onGround:()=>{}});
+  makeOcean();
+  return protos;
+}
+
+async function initDetailLayers(protos){
+  // Yield to the browser first so the overview becomes interactive before detail construction.
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+
+  streamer=new TileStreamer({scene,W,base:A+'tiles/',radius:coarse?850:1500,palm:protos.palm,onGround:()=>{}});
   await streamer.init().catch(e=>{console.warn('TileStreamer',e);streamer=null;});
+
+  await new Promise(resolve=>setTimeout(resolve,0));
   worldZones=new WorldZoneStreamer({scene,W,heightAt,toLocal,coarse,base:A});
   await worldZones.init().catch(e=>{console.warn('WorldZoneStreamer',e);worldZones=null;});
+
+  await new Promise(resolve=>setTimeout(resolve,0));
   placeWorld=new PlaceWorld({scene,W,heightAt,toLocal,coarse,base:A});
   await placeWorld.init().catch(e=>{console.warn('PlaceWorld',e);placeWorld=null;});
+
+  await new Promise(resolve=>setTimeout(resolve,0));
   islandCoverage=new IslandCoverage({scene,W,heightAt,coarse});
   if(isl){
-    const step=coarse?16000:12000;
-    islandCoverage.buildGrid({x0:isl.x0+step*.5,y0:isl.y0+step*.5,x1:isl.x0+isl.size-step*.5,y1:isl.y0+isl.size-step*.5,step});
+    const step=coarse?18000:12000;
+    islandCoverage.buildGrid({
+      x0:isl.x0+step*.5,y0:isl.y0+step*.5,
+      x1:isl.x0+isl.size-step*.5,y1:isl.y0+isl.size-step*.5,step
+    });
   }
+
   coverageDebug=new CoverageDebug({scene,W,heightAt,toLocal,base:A});
   await coverageDebug.init().catch(()=>{coverageDebug=null;});
   if(new URLSearchParams(location.search).get('coverage')==='1') coverageDebug?.setVisible(true);
-  makeOcean();
+  window.__kona.detailsReady=true;
 }
 
 const views={
@@ -299,6 +317,7 @@ renderer.setAnimationLoop(()=>{
 window.__kona={
   mode:'world-only',
   ready:false,
+  detailsReady:false,
   scene,camera,THREE,
   get worldZones(){ return worldZones; },
   get placeWorld(){ return placeWorld; },
@@ -309,13 +328,17 @@ window.__kona={
   toggleCoverageDebug:()=>coverageDebug?.toggle()
 };
 
-loadCore().then(()=>{
+loadCore().then((protos)=>{
   goTo(new URLSearchParams(location.search).get('view')||'island');
   controls.enabled=true;
   controls.update();
   window.__kona.ready=true;
   document.documentElement.dataset.worldReady='true';
   document.querySelector('#loading')?.remove();
+  initDetailLayers(protos).catch(e=>{
+    console.warn('KONA detail layers degraded',e);
+    window.__kona.detailsReady='degraded';
+  });
 }).catch(e=>{
   console.error(e);
   const l=document.querySelector('#loading');
