@@ -75,10 +75,12 @@ export class IslandCoverage {
   update(dt,camera){
     this.t+=dt;if(this.t<1)return;this.t=0;
     const cx=camera.position.x,cy=-camera.position.z;
+    const overview=camera.position.y>45000;
     for(const t of this.tiles){
       const d=Math.hypot(t.cx-cx,t.cy-cy);
-      const visible=d<(this.coarse?24000:36000);
-      t.mesh.visible=visible; t.inst.visible=visible&&d<18000;
+      const visible=!overview && d<(this.coarse?24000:36000);
+      t.mesh.visible=visible;
+      t.inst.visible=visible&&d<18000;
     }
   }
 }
