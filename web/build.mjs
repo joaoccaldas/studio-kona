@@ -5,5 +5,8 @@ const app = r.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
 fs.copyFileSync(path.join(here, '../data/raceweek.json'), path.join(here, 'public/assets/raceweek.json'));
 fs.copyFileSync(path.join(here, '../data/island_world_v2.json'), path.join(here, 'public/assets/island_world_v2.json'));
 fs.copyFileSync(path.join(here, '../data/routes.json'), path.join(here, 'public/assets/routes.json'));
+fs.copyFileSync(path.join(here, '../data/places_v2.json'), path.join(here, 'public/assets/places_v2.json'));
+const placeGeo = path.join(here, '../data/place_geocodes_v2.json');
+if (fs.existsSync(placeGeo)) fs.copyFileSync(placeGeo, path.join(here, 'public/assets/place_geocodes_v2.json'));
 fs.writeFileSync(path.join(here, 'public/index.html'), fs.readFileSync(path.join(here, 'index.template.html'), 'utf8').replace('__APP__', () => app));
 console.log('built', (app.length / 1e3).toFixed(0), 'kB');
