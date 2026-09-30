@@ -9,6 +9,7 @@ import { TileStreamer } from './tiles.js';
 import { WorldZoneStreamer } from './worldZones.js';
 import { PlaceWorld } from './placeWorld.js';
 import { IslandCoverage } from './islandCoverage.js';
+import { CoverageDebug } from './coverageDebug.js';
 import { createLocomotion } from './locomotion.js';
 import { RACE_WEEK_QUESTS, loadGameSave, saveGameProgress } from './gameQuests.js';
 import { createEchoMarkers } from './echoMarkers.js';
@@ -208,6 +209,7 @@ let streamer = null;
 let worldZones = null;
 let placeWorld = null;
 let islandCoverage = null;
+let coverageDebug = null;
 let man = null;
 
 // ------------------------------------------------------------------ Load Assets
@@ -321,6 +323,10 @@ async function load() {
       step
     });
   }
+
+  coverageDebug = new CoverageDebug({ scene, W, heightAt, toLocal, base: A });
+  await coverageDebug.init().catch(e => { console.warn('CoverageDebug init error:', e); coverageDebug = null; });
+  if (new URLSearchParams(location.search).get('coverage') === '1') coverageDebug?.setVisible(true);
 
   console.log('[Kona] Building ocean, coffee boat, systems...');
   coffeeBoat();
@@ -1051,6 +1057,7 @@ window.__kona = {
   worldZones,
   placeWorld,
   islandCoverage,
+  coverageDebug,
   saveData,
   get currentDay() { return currentDay; },
   get currentStep() { return currentStep; },
@@ -1063,7 +1070,9 @@ window.__kona = {
   openHeritageHunt: (id = null) => hawaiianHunt?.open(id),
   go,
   setHour,
-  toast
+  toast,
+  setCoverageDebug: (v=true) => coverageDebug?.setVisible(v),
+  toggleCoverageDebug: () => coverageDebug?.toggle()
 };
 
 load().catch(e => {
