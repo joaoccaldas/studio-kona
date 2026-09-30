@@ -79,6 +79,10 @@ jobs:
           }
 
           await shot('01_island_overview', 'island', 5000);
+          await page.evaluate(() => window.__kona.setCoverageDebug?.(true));
+          await page.waitForTimeout(1500);
+          await page.screenshot({ path: 'renders/runtime-v2/00_island_coverage.png' });
+          await page.evaluate(() => window.__kona.setCoverageDebug?.(false));
           await shot('02_kailua_pier', 'pier');
           await shot('03_energy_lab', 'energylab');
           await shot('04_hawi', 'hawi');
@@ -90,7 +94,8 @@ jobs:
             return {
               zones: z?.zones?.map(x => ({ id:x.cfg?.id, lod:x.cfg?.lod, visible:x.group?.visible })) ?? [],
               placeCount: p?.places?.length ?? 0,
-              coverageTileCount: c?.tiles?.length ?? 0
+              coverageTileCount: c?.tiles?.length ?? 0,
+              coverageDebug: window.__kona.coverageDebug?.summary?.() ?? null
             };
           });
           fs.writeFileSync('renders/runtime-v2/report.json', JSON.stringify({
