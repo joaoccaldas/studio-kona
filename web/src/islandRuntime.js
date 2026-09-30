@@ -242,8 +242,9 @@ async function loadCore() {
 
 const views={
   island:()=>({
-    // Default: high oblique overview showing the entire island, with north roughly upward.
-    pos:W(9000,14000,72000),
+    // Whole-island overhead default. ~165 km altitude fits the 159 km island at 55° FOV.
+    // Slight south/east offset preserves terrain relief without cropping the coasts.
+    pos:W(9000,-3000,168000),
     look:W(0,5000,1100)
   }),
   pier:()=>({pos:W(18,-45,14),look:W(0,10,2.2)}),
