@@ -8,6 +8,7 @@ import { computeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { TileStreamer } from './tiles.js';
 import { WorldZoneStreamer } from './worldZones.js';
 import { PlaceWorld } from './placeWorld.js';
+import { IslandCoverage } from './islandCoverage.js';
 import { createLocomotion } from './locomotion.js';
 import { RACE_WEEK_QUESTS, loadGameSave, saveGameProgress } from './gameQuests.js';
 import { createEchoMarkers } from './echoMarkers.js';
@@ -206,6 +207,7 @@ let pierBikesMesh = null;
 let streamer = null;
 let worldZones = null;
 let placeWorld = null;
+let islandCoverage = null;
 let man = null;
 
 // ------------------------------------------------------------------ Load Assets
@@ -306,6 +308,19 @@ async function load() {
   console.log('[Kona] Initializing persistent PlaceWorld...');
   placeWorld = new PlaceWorld({ scene, W, heightAt, toLocal, coarse, base: A });
   await placeWorld.init().catch(e => { console.warn('PlaceWorld init error:', e); placeWorld = null; });
+
+  console.log('[Kona] Initializing full-island adaptive coverage...');
+  islandCoverage = new IslandCoverage({ scene, W, heightAt, coarse });
+  if (isl) {
+    const step = coarse ? 16000 : 12000;
+    islandCoverage.buildGrid({
+      x0: isl.x0 + step * .5,
+      y0: isl.y0 + step * .5,
+      x1: isl.x0 + isl.size - step * .5,
+      y1: isl.y0 + isl.size - step * .5,
+      step
+    });
+  }
 
   console.log('[Kona] Building ocean, coffee boat, systems...');
   coffeeBoat();
@@ -957,6 +972,7 @@ renderer.setAnimationLoop(() => {
   streamer?.update(dt, camera);
   worldZones?.update(dt, camera);
   placeWorld?.update(dt, camera);
+  islandCoverage?.update(dt, camera);
 
   // Hawaiian Heritage Scavenger Hunt beacons update
   hawaiianHunt?.update(dt, camera);
@@ -1034,6 +1050,7 @@ window.__kona = {
   hawaiianHunt,
   worldZones,
   placeWorld,
+  islandCoverage,
   saveData,
   get currentDay() { return currentDay; },
   get currentStep() { return currentStep; },
