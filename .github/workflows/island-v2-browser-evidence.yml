@@ -51,7 +51,7 @@ jobs:
             try {
               const res = await page.goto(url + '?evidence=' + Date.now(), { waitUntil: 'domcontentloaded', timeout: 20000 });
               if (res?.ok()) {
-                await page.waitForFunction(() => window.__kona && window.__kona.scene && window.__kona.camera, null, { timeout: 30000 });
+                await page.waitForFunction(() => window.__kona && window.__kona.ready === true && window.__kona.scene && window.__kona.camera, null, { timeout: 30000 });
                 loaded = true;
                 break;
               }
