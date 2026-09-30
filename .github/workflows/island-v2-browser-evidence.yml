@@ -42,8 +42,11 @@ jobs:
           const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
           const consoleErrors = [];
           const pageErrors = [];
+          const requestFailures = [];
           page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
           page.on('pageerror', e => pageErrors.push(String(e)));
+          page.on('requestfailed', r => requestFailures.push({url:r.url(),error:r.failure()?.errorText||'failed'}));
+          page.on('response', r => { if (r.status() >= 400) requestFailures.push({url:r.url(),status:r.status()}); });
 
           let loaded = false;
           let lastErr = '';
