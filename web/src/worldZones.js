@@ -1,6 +1,7 @@
 // Ring 2 world streamer: lightweight long-range island detail.
 // Complements (does not replace) the Ring 1 500 m TileStreamer.
 import * as THREE from 'three';
+import { createNaturalMaterials, varyInstanceColors } from './naturalMaterials.js';
 
 function hashString(s) {
   let h = 2166136261 >>> 0;
@@ -29,18 +30,17 @@ export class WorldZoneStreamer {
   }
 
   makeShared() {
-    const lavaMat = new THREE.MeshStandardMaterial({ color: 0x171514, roughness: .96 });
-    const cinderMat = new THREE.MeshStandardMaterial({ color: 0x3b2418, roughness: .94 });
-    const scrubMat = new THREE.MeshStandardMaterial({ color: 0x415b2b, roughness: .9 });
-    const pastureMat = new THREE.MeshStandardMaterial({ color: 0x667a48, roughness: .92 });
-    const urbanMat = new THREE.MeshStandardMaterial({ color: 0xaaa69b, roughness: .84 });
-    const roofMat = new THREE.MeshStandardMaterial({ color: 0x47423d, roughness: .82 });
-    const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x252627, roughness: .9 });
+    const n = createNaturalMaterials();
     const roadGeo = new THREE.BoxGeometry(1, 1, 1);
-    const rockGeo = new THREE.IcosahedronGeometry(1, 1);
-    const shrubGeo = new THREE.ConeGeometry(1, 1.6, 6);
+    const rockGeo = new THREE.DodecahedronGeometry(1, 1);
+    const shrubGeo = new THREE.ConeGeometry(1, 1.6, 7);
     const bldgGeo = new THREE.BoxGeometry(1, 1, 1);
-    return { lavaMat, cinderMat, scrubMat, pastureMat, urbanMat, roofMat, asphaltMat, roadGeo, rockGeo, shrubGeo, bldgGeo };
+    return {
+      ...n,
+      lavaMat:n.lava, cinderMat:n.cinder, scrubMat:n.dryGrass, pastureMat:n.pasture,
+      urbanMat:n.stucco, roofMat:n.darkRoof, asphaltMat:n.asphalt,
+      roadGeo, rockGeo, shrubGeo, bldgGeo
+    };
   }
 
   async init() {
@@ -99,6 +99,7 @@ export class WorldZoneStreamer {
       m.compose(p, q, sc); rock.setMatrixAt(i, m);
     }
     rock.instanceMatrix.needsUpdate = true;
+    varyInstanceColors(rock, rockN, /hilo|waimea|hawi/.test(z.id)?0x4b443c:0x2e2824, .14, hashString(z.id));
     g.add(rock);
 
     for (let i = 0; i < shrubN; i++) {
@@ -112,6 +113,7 @@ export class WorldZoneStreamer {
       m.compose(pos, q, sc); shrubs.setMatrixAt(i, m);
     }
     shrubs.instanceMatrix.needsUpdate = true;
+    varyInstanceColors(shrubs, shrubN, /hilo/.test(z.id)?0x335d39:(/hawi|waimea/.test(z.id)?0x637c48:0x6f6c3f), .13, hashString(z.id+'veg'));
     g.add(shrubs);
 
     if (bldgN) {
@@ -129,6 +131,7 @@ export class WorldZoneStreamer {
         m.compose(pos, q, sc); buildings.setMatrixAt(i, m);
       }
       buildings.instanceMatrix.needsUpdate = true;
+      varyInstanceColors(buildings,bldgN,/hilo/.test(z.id)?0x9e9a90:(/hawi|waimea/.test(z.id)?0xb4a98f:0xb9b0a0),.08,hashString(z.id+'buildings'));
       g.add(buildings);
     }
 
@@ -160,8 +163,8 @@ export class WorldZoneStreamer {
 
   addPuuhonua(g, z, cx, cy) {
     const base = Math.max(0, this.heightAt(cx, cy));
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x39322c, roughness: .96 });
-    const woodMat = new THREE.MeshStandardMaterial({ color: 0x5b3d24, roughness: .9 });
+    const wallMat = this.shared.lava;
+    const woodMat = this.shared.wood;
     // Great Wall proxy: long basalt mass with a short return. Evidence tag keeps this replaceable.
     const wall = new THREE.Mesh(new THREE.BoxGeometry(155, 5.5, 7), wallMat);
     wall.position.set(0, base + 2.75, 15); wall.rotation.y = -.18;
@@ -180,7 +183,7 @@ export class WorldZoneStreamer {
 
   addPuukohola(g, z, cx, cy) {
     const base = Math.max(0, this.heightAt(cx, cy));
-    const stone = new THREE.MeshStandardMaterial({ color: 0x403831, roughness: .97 });
+    const stone = this.shared.lava;
     const levels = [
       [0,0,115,70,6], [0,2,92,54,5], [4,5,68,38,4]
     ];
@@ -194,7 +197,7 @@ export class WorldZoneStreamer {
   addKaloko(g, z, cx, cy) {
     const base = Math.max(0, this.heightAt(cx, cy));
     const water = new THREE.MeshStandardMaterial({ color: 0x2b6870, roughness:.38, transparent:true, opacity:.72 });
-    const stone = new THREE.MeshStandardMaterial({ color: 0x393633, roughness:.96 });
+    const stone = this.shared.lava;
     const pond = new THREE.Mesh(new THREE.CircleGeometry(210, 48), water);
     pond.rotation.x=-Math.PI/2; pond.scale.set(1.55,1,.78); pond.position.set(0,base+.35,0);
     pond.name='kaloko_fishpond_proxy'; pond.userData.evidence='P feature / I simplified shoreline'; g.add(pond);
@@ -204,17 +207,18 @@ export class WorldZoneStreamer {
 
   addValley(g, z, cx, cy) {
     const base = Math.max(0, this.heightAt(cx, cy));
-    const wet = new THREE.MeshStandardMaterial({ color: 0x315331, roughness:.96 });
-    const cliff = new THREE.MeshStandardMaterial({ color: 0x3f3831, roughness:.98 });
+    const wet = this.shared.wetForest;
+    const cliff = this.shared.cliff;
     const isWaipio=z.id==='waipio';
     const span=isWaipio?5200:3600, depth=isWaipio?4800:3000, h=isWaipio?950:720;
     for (const side of [-1,1]) {
-      const ridge=new THREE.Mesh(new THREE.BoxGeometry(span*.34,h,depth),cliff);
+      const ridgeGeo=new THREE.CylinderGeometry(span*.22,span*.34,h,18,4);
+      const ridge=new THREE.Mesh(ridgeGeo,cliff);
       ridge.position.set(side*span*.32,base+h*.48,0);
       ridge.rotation.z=side*.16; ridge.name=z.id+'_cliff_proxy_'+side;
       ridge.userData.evidence='terrain proxy; replace with high-resolution DEM'; g.add(ridge);
-      const cap=new THREE.Mesh(new THREE.BoxGeometry(span*.36,35,depth*.96),wet);
-      cap.position.set(side*span*.32,base+h+10,0); cap.rotation.z=side*.16; g.add(cap);
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(span*.23,span*.27,42,18),wet);
+      cap.position.set(side*span*.32,base+h+10,0); cap.rotation.z=side*.16; cap.scale.z=.7; g.add(cap);
     }
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(span*.55,depth*.92,1,1),wet);
     floor.rotation.x=-Math.PI/2; floor.position.y=base+4; floor.name=z.id+'_valley_floor_proxy'; g.add(floor);
