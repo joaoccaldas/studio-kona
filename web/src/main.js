@@ -20,7 +20,7 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
-const A = 'assets/';
+const A = window.__KONA_ASSET_BASE || 'assets/';
 const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y); // survey (x east, y north, z up) -> Three.js
 const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
 
