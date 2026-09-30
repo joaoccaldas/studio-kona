@@ -175,11 +175,11 @@ async function loadIsland() {
     if (x>tx0+30&&x<tx1-30&&y>ty0+30&&y<ty1-30) h=Math.min(h,-80);
     const q=W(x,y,h); p.setXYZ(i,q.x,q.y,q.z);
   }
-  const idx=g.index.array;
-  for(let i=0;i<idx.length;i+=3){const t=idx[i+1];idx[i+1]=idx[i+2];idx[i+2]=t;}
+  // PlaneGeometry rotated -90° already faces upward. Do not reverse winding:
+  // reversing it makes the whole island back-face culled from the aerial default view.
   g.computeVertexNormals();
   const color=tex.load(A+'island_color.jpg'); color.colorSpace=THREE.SRGBColorSpace; color.anisotropy=4;
-  const mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({map:color,roughness:.92,metalness:.03}));
+  const mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({map:color,roughness:.92,metalness:.03,side:THREE.DoubleSide}));
   mesh.name='KONA_ISLAND_RING3';
   scene.add(mesh);
 }
