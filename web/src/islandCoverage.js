@@ -59,8 +59,8 @@ export class IslandCoverage {
 
     const density=this.coarse?22:48;
     const geo=biome==='wet'?this.shared.crown:this.shared.shrub;
-    const mat=biome==='wet'?this.materials.wet:(biome==='grass'?this.materials.grass:this.materials.dry);
-    const inst=new THREE.InstancedMesh(geo,mat,density);
+    const scatterMat=biome==='wet'?this.materials.wet:(biome==='grass'?this.materials.grass:this.materials.dry);
+    const inst=new THREE.InstancedMesh(geo,scatterMat,density);
     const m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(), pos=new THREE.Vector3();
     for(let i=0;i<density;i++){
       const rx=(hash2(i,cx)-.5)*size*.92, ry=(hash2(i,cy)-.5)*size*.92;
