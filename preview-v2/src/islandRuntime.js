@@ -26,7 +26,7 @@ renderer.toneMapping = THREE.AgXToneMapping;
 renderer.toneMappingExposure = 1.05;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.4, 420000);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.4, 850000);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.055;
@@ -57,7 +57,7 @@ addEventListener('resize', resize);
 resize();
 
 const sky = new Sky();
-sky.scale.setScalar(450000);
+sky.scale.setScalar(900000);
 scene.add(sky);
 const sun = new THREE.DirectionalLight(0xfff4e0, 2.45);
 scene.add(sun);
@@ -175,11 +175,11 @@ async function loadIsland() {
     if (x>tx0+30&&x<tx1-30&&y>ty0+30&&y<ty1-30) h=Math.min(h,-80);
     const q=W(x,y,h); p.setXYZ(i,q.x,q.y,q.z);
   }
-  const idx=g.index.array;
-  for(let i=0;i<idx.length;i+=3){const t=idx[i+1];idx[i+1]=idx[i+2];idx[i+2]=t;}
+  // PlaneGeometry rotated -90° already faces upward. Do not reverse winding:
+  // reversing it makes the whole island back-face culled from the aerial default view.
   g.computeVertexNormals();
   const color=tex.load(A+'island_color.jpg'); color.colorSpace=THREE.SRGBColorSpace; color.anisotropy=4;
-  const mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({map:color,roughness:.92,metalness:.03}));
+  const mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({map:color,roughness:.92,metalness:.03,side:THREE.DoubleSide}));
   mesh.name='KONA_ISLAND_RING3';
   scene.add(mesh);
 }
@@ -258,13 +258,22 @@ async function initDetailLayers(protos){
   window.__kona.detailsReady=true;
 }
 
+function wholeIslandView(){
+  const cx=isl ? isl.x0+isl.size*.5 : 58000;
+  const cy=isl ? isl.y0+isl.size*.5 : -6500;
+  const size=isl?.size || 160000;
+  const vfov=THREE.MathUtils.degToRad(camera.fov);
+  const fitY=size/(2*Math.tan(vfov*.5));
+  const fitX=size/(2*Math.tan(vfov*.5)*Math.max(camera.aspect,.25));
+  const distance=Math.max(fitX,fitY)*1.12;
+  // Near-overhead, with a slight southward offset to preserve topographic depth.
+  return {
+    pos:W(cx,cy-size*.035,distance),
+    look:W(cx,cy,650)
+  };
+}
 const views={
-  island:()=>({
-    // Whole-island overhead default. ~165 km altitude fits the 159 km island at 55° FOV.
-    // Slight south/east offset preserves terrain relief without cropping the coasts.
-    pos:W(9000,-3000,168000),
-    look:W(0,5000,1100)
-  }),
+  island:()=>wholeIslandView(),
   pier:()=>({pos:W(18,-45,14),look:W(0,10,2.2)}),
   hawi:()=>{const [x,y]=toLocal(20.239006,-155.831451);return{pos:W(x-850,y-900,520),look:W(x,y,Math.max(0,heightAt(x,y)))}} ,
   energylab:()=>{const [x,y]=toLocal(19.7174904,-156.0380702);return{pos:W(x-480,y-520,250),look:W(x,y,Math.max(0,heightAt(x,y)))}}
