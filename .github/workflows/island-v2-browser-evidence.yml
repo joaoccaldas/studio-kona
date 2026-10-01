@@ -150,6 +150,12 @@ jobs:
           await shot('02_kailua_pier', 'pier');
           await shot('03_energy_lab', 'energylab');
           await shot('04_hawi', 'hawi');
+          await shot('05_waikoloa', 'waikoloa');
+          await shot('06_kawaihae', 'kawaihae');
+          await shot('07_waimea', 'waimea');
+          await shot('08_hilo', 'hilo');
+          await shot('09_kahaluu', 'kahaluu');
+          await shot('10_south_kona', 'southkona');
 
           const diagnostic = await page.evaluate(() => {
             const z = window.__kona.worldZones;

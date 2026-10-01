@@ -289,11 +289,21 @@ function wholeIslandView(){
     look:W(cx,cy,650)
   };
 }
+function regionalView(lat,lon,{dx=-900,dy=-900,alt=650}={}){
+  const [x,y]=toLocal(lat,lon);
+  return {pos:W(x+dx,y+dy,alt),look:W(x,y,Math.max(0,heightAt(x,y)))};
+}
 const views={
   island:()=>wholeIslandView(),
   pier:()=>({pos:W(18,-45,14),look:W(0,10,2.2)}),
-  hawi:()=>{const [x,y]=toLocal(20.239006,-155.831451);return{pos:W(x-850,y-900,520),look:W(x,y,Math.max(0,heightAt(x,y)))}} ,
-  energylab:()=>{const [x,y]=toLocal(19.7174904,-156.0380702);return{pos:W(x-480,y-520,250),look:W(x,y,Math.max(0,heightAt(x,y)))}}
+  hawi:()=>regionalView(20.239006,-155.831451,{dx:-850,dy:-900,alt:520}),
+  energylab:()=>regionalView(19.7174904,-156.0380702,{dx:-480,dy:-520,alt:250}),
+  waikoloa:()=>regionalView(19.9252001,-155.8820401,{dx:-1250,dy:-1150,alt:760}),
+  kawaihae:()=>regionalView(20.0397244,-155.829133,{dx:-950,dy:-850,alt:620}),
+  waimea:()=>regionalView(20.021702,-155.6685878,{dx:-1200,dy:-1000,alt:700}),
+  hilo:()=>regionalView(19.7073734,-155.08158,{dx:-1400,dy:-1150,alt:820}),
+  kahaluu:()=>regionalView(19.5792921,-155.966673,{dx:-700,dy:-620,alt:420}),
+  southkona:()=>regionalView(19.5,-155.9,{dx:-1600,dy:-1400,alt:920})
 };
 function goTo(id='island'){
   const v=(views[id]||views.island)();
