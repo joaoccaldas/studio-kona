@@ -110,7 +110,13 @@
       "address": "75-971 Henry St, Kailua-Kona, HI 96740",
       "priority": "medium",
       "recipe": "grocery",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.6460226421,
+      "lon": -155.988323498,
+      "geo_source_url": "https://www.merchantcircle.com/hi-kailua-kona/professional-services/shipping",
+      "geo_source_note": "exact 75-971 Henry St building coordinate from USPS listing in same complex; Safeway official page confirms store at this address",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "huggo",
@@ -209,7 +215,13 @@
       "address": "74-555 Honokohau St Ste A7, Kailua-Kona, HI 96740",
       "priority": "medium",
       "recipe": "service_shop",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.6749987,
+      "lon": -156.0128614,
+      "geo_source_url": "https://www.merchantcircle.com/hi-kailua-kona/autos",
+      "geo_source_note": "same 74-555 Honokohau St industrial building coordinate from another verified tenant; official Kona European page confirms Suite A7 at this address",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kailua_park",
@@ -218,7 +230,13 @@
       "address": "75-5500 Kuakini Highway, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "park_campus",
-      "source": "county_and_business_verified"
+      "source": "county_and_business_verified",
+      "lat": 19.64082296,
+      "lon": -156.0026747,
+      "geo_source_url": "https://www.hawaii.edu/broadband/wp-content/uploads/sites/40/2024/05/Eligible_Funding_CAI-v3-20240506-Hawaii-Island.pdf",
+      "geo_source_note": "University of Hawaii broadband CAI dataset coordinate for Kailua Park, 75-5500 Kuakini Hwy",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "makaeo_pavilion",
@@ -227,7 +245,13 @@
       "address": "75-5500 Kuakini Hwy, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "pavilion",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.64082296,
+      "lon": -156.0026747,
+      "geo_source_url": "https://www.hawaii.edu/broadband/wp-content/uploads/sites/40/2024/05/Eligible_Funding_CAI-v3-20240506-Hawaii-Island.pdf",
+      "geo_source_note": "Makaeo County Pavilion shares the 75-5500 Kuakini Hwy Kailua Park complex; complex coordinate used until pavilion-specific point is verified",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "bamboo_hawi",
@@ -296,7 +320,13 @@
       "address": "64-957 Hawaiʻi Belt Rd, Waimea, HI 96743",
       "priority": "high",
       "recipe": "restaurant",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.026933,
+      "lon": -155.65404,
+      "geo_source_url": "https://phppd.providence.org/Intel/Facility/View/560707994893928?GoBackFromSearch=False&GoToSearch=False&HealthPlanBaseID=0&HealthPlanID=261100&MemberSearch=False&OrderedHPProvIDString=560707994919101%2C560707994975714%2C560707996204042%2C560708022317977%2C560707994917467%2C560707994879802%2C560707994972074%2C560707994893928%2C560707994940167%2C560708023579952&Page=268&ProvSwedishPHS=False&ProviderSERPIndex=7&SearchGroup=Intel&ShowAll=False&Sort=NameAZ&Type=Facility",
+      "geo_source_note": "exact 64-957 Mamalahoa Hwy building coordinate from provider directory; Fish & The Hog official site confirms same address",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "bike_works_mauka",
@@ -464,7 +494,13 @@
       "address": "480 Kilauea Ave, Hilo, HI 96720",
       "priority": "medium",
       "recipe": "service_shop",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.7189411,
+      "lon": -155.0821502,
+      "geo_source_url": "https://www.autotechiq.com/auto-repair-shop/427554/lex-brodies-fastlube-hilo",
+      "geo_source_note": "embedded nearby-shop data includes exact Midas Hilo address and coordinates for 480 Kilauea Ave",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "big_island_running",
