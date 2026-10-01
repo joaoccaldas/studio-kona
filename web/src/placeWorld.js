@@ -39,8 +39,10 @@ export class PlaceWorld {
       const [x,y]=this.toLocal(p.lat,p.lon);
       const group=new THREE.Group(); group.name='place_'+p.id; group.visible=false;
       group.position.copy(this.W(x,y,0)); group.userData.place=p; this.root.add(group);
-      this.buildSection(group,p,x,y);
-      this.places.push({p,group,x,y,radius:p.priority==='hero'?2400:p.priority==='high'?1500:900});
+      const semanticOnly=Math.hypot(x,y)<3500;
+      group.userData.semanticOnly=semanticOnly;
+      if(!semanticOnly) this.buildSection(group,p,x,y);
+      this.places.push({p,group,x,y,radius:p.priority==='hero'?2400:p.priority==='high'?1500:900,semanticOnly});
     }
   }
   matFor(p){
@@ -123,7 +125,7 @@ export class PlaceWorld {
     let nearest=null, nd=Infinity;
     for(const item of this.places){
       const d=Math.hypot(item.x-cx,item.y-cy);
-      item.group.visible=!overview&&d<item.radius;
+      item.group.visible=!overview&&!item.semanticOnly&&d<item.radius;
       if(d<nd){nd=d;nearest=item;}
       if(d<55&&!this.state[item.p.id]?.visited) this.setVisited(item.p.id);
     }
