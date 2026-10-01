@@ -224,7 +224,9 @@ jobs:
             const p = window.__kona.placeWorld;
             const c = window.__kona.islandCoverage;
             return {
-              zones: z?.zones?.map(x => ({ id:x.cfg?.id, lod:x.cfg?.lod, visible:x.group?.visible })) ?? [],
+              zones: z?.zones?.map(x => ({ id:x.cfg?.id, lod:x.cfg?.lod, visible:x.group?.visible, built:!!x.built })) ?? [],
+              builtZoneCount: z?.zones?.filter(x=>x.built).length ?? 0,
+              builtPlaceCount: p?.places?.filter(x=>x.built).length ?? 0,
               placeCount: p?.places?.length ?? 0,
               placeSourceCount: p?.sourceCount ?? 0,
               placeGeocodedCount: p?.geocodedCount ?? 0,
