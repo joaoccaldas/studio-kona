@@ -139,6 +139,9 @@ export class WorldZoneStreamer {
     if (z.id === 'kahaluu') this.addKahaluu(g, z, cx, cy);
     if (z.id === 'south_kona_slope') this.addSouthKonaSlope(g, z, cx, cy);
     if (z.id === 'hawi') this.addHawiTown(g, z, cx, cy);
+    if (z.id === 'nelha') this.addNELHA(g, z, cx, cy);
+    if (z.id === 'airport') this.addKonaAirport(g, z, cx, cy);
+    if (z.id === 'old_airport') this.addOldAirport(g, z, cx, cy);
     if (z.id === 'hilo') this.addHiloCity(g, z, cx, cy);
     if (z.id === 'waikoloa') this.addWaikoloa(g, z, cx, cy);
     if (z.id === 'waimea') this.addWaimea(g, z, cx, cy);
@@ -658,6 +661,143 @@ export class WorldZoneStreamer {
     for(let i=0;i<3;i++){
       const pier=new THREE.Mesh(new THREE.BoxGeometry(180,2.2,18),concrete);
       pier.position.set(-180+i*190,base+1.2,-260-i*24); pier.rotation.y=.12; g.add(pier);
+    }
+  }
+
+  addNELHA(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const asphalt=this.shared.asphalt;
+    const concrete=this.shared.concrete;
+    const metal=this.shared.metal;
+    const lava=this.shared.lava;
+    const dry=this.shared.dryGrass;
+
+    // Energy Lab road entering the campus through open lava fields.
+    const access=new THREE.Mesh(new THREE.BoxGeometry(1500,.22,10),asphalt);
+    access.position.set(0,base+.18,120); access.rotation.y=.025;
+    access.name='nelha_energy_lab_road';
+    access.userData.evidence='P corridor identity / I dimensions';
+    g.add(access);
+
+    // Low research / industrial campus, arranged in separated pads rather than one block.
+    const campus=[
+      [-420,-140,68,34,9],[-260,-80,54,30,8],[-80,-135,72,36,10],
+      [120,-70,58,30,8],[300,-135,82,38,10],[430,-40,48,28,7],
+      [-320,90,46,26,7],[-110,70,60,32,8],[120,100,52,30,8],[340,85,70,34,9]
+    ];
+    campus.forEach((b,i)=>{
+      const [x,zp,w,d,h]=b;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),i%3===0?metal:concrete);
+      body.position.set(x,base+h*.5,zp);
+      body.userData.evidence='procedural HOST campus massing pending measured footprints';
+      g.add(body);
+
+      const roof=new THREE.Mesh(new THREE.BoxGeometry(w*1.03,.45,d*1.03),i%3===0?metal:this.shared.darkRoof);
+      roof.position.set(x,base+h+.24,zp); g.add(roof);
+
+      if(i%2===0){
+        const tank=new THREE.Mesh(new THREE.CylinderGeometry(6,6,9,18),metal);
+        tank.position.set(x+w*.42,base+4.5,zp-d*.36); g.add(tank);
+      }
+    });
+
+    // Seawater pipeline cues running toward the coast.
+    for(const x of [-42,0,42]){
+      const pipe=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.15,1050,14),metal);
+      pipe.rotation.x=Math.PI/2;
+      pipe.position.set(x,base+1.4,-720);
+      pipe.name='nelha_seawater_pipeline_proxy';
+      pipe.userData.evidence='P pipeline-system presence / I simplified alignment';
+      g.add(pipe);
+    }
+
+    // Solar / utility field using instancing for mobile efficiency.
+    const panelMat=new THREE.MeshStandardMaterial({color:0x263b48,roughness:.42,metalness:.18});
+    const panelGeo=new THREE.BoxGeometry(4,.18,2.2);
+    const rows=this.coarse?28:56;
+    const panels=new THREE.InstancedMesh(panelGeo,panelMat,rows);
+    const m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(1,1,1);
+    for(let i=0;i<rows;i++){
+      const col=i%14, row=Math.floor(i/14);
+      const p=this.W(-430+col*64, 420+row*48, base+.9);
+      q.setFromEuler(new THREE.Euler(-.25,0,.05));
+      m.compose(p,q,s); panels.setMatrixAt(i,m);
+    }
+    panels.instanceMatrix.needsUpdate=true; g.add(panels);
+
+    // Keep surrounding lava dominant.
+    for(let i=0;i<(this.coarse?24:52);i++){
+      const a=i*2.17, rr=420+(i%8)*110;
+      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),lava);
+      rock.scale.set(8+(i%5)*5,3+(i%3)*1.6,7+(i%4)*4);
+      rock.position.set(Math.cos(a)*rr,base+3,Math.sin(a)*rr*.6);
+      g.add(rock);
+    }
+  }
+
+  addKonaAirport(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const asphalt=this.shared.asphalt;
+    const concrete=this.shared.concrete;
+    const metal=this.shared.metal;
+    const lava=this.shared.lava;
+
+    // Terminal clusters kept low and spread out, matching the airport's open-air character.
+    const terms=[[-240,-70,90,34,8],[-90,-90,84,30,7],[70,-72,96,34,8],[230,-95,82,30,7]];
+    terms.forEach((b,i)=>{
+      const [x,zp,w,d,h]=b;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),concrete);
+      body.position.set(x,base+h*.5,zp); g.add(body);
+      const canopy=new THREE.Mesh(new THREE.BoxGeometry(w*1.1,.32,d*1.18),metal);
+      canopy.position.set(x,base+h+.2,zp); g.add(canopy);
+    });
+
+    const apron=new THREE.Mesh(new THREE.BoxGeometry(900,.24,310),asphalt);
+    apron.position.set(0,base+.16,120); g.add(apron);
+
+    // Taxiway/runway shoulder cues around the existing runway proxy.
+    for(const zoff of [-48,48]){
+      const line=new THREE.Mesh(new THREE.BoxGeometry(2500,.08,.18),new THREE.MeshStandardMaterial({color:0xe2dfd4,roughness:.75}));
+      line.position.set(0,base+.43,zoff); g.add(line);
+    }
+
+    for(let i=0;i<(this.coarse?18:40);i++){
+      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),lava);
+      rock.scale.set(10+(i%4)*5,3+(i%3)*1.5,8+(i%5)*4);
+      rock.position.set(-900+(i%10)*190,base+3,-420+Math.floor(i/10)*300);
+      g.add(rock);
+    }
+  }
+
+  addOldAirport(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const asphalt=this.shared.asphalt;
+    const green=this.shared.pasture;
+    const lava=this.shared.lava;
+
+    // Old runway remains recognizable, but softened by park use and coastal vegetation.
+    const runway=new THREE.Mesh(new THREE.BoxGeometry(34,.18,1120),asphalt);
+    runway.position.set(0,base+.2,0); runway.name='old_airport_runway';
+    g.add(runway);
+
+    const park=new THREE.Mesh(new THREE.PlaneGeometry(520,760,1,1),green);
+    park.rotation.x=-Math.PI/2; park.position.set(260,base+.25,40); g.add(park);
+
+    const count=this.coarse?18:36;
+    for(let i=0;i<count;i++){
+      const a=i*2.399, rr=180+(i%7)*55;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,6.5,7),this.shared.wood);
+      trunk.position.set(260+Math.cos(a)*rr,base+3.25,Math.sin(a)*rr*.7); g.add(trunk);
+      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.5,1),green);
+      crown.scale.set(2.2,1.6,2.0); crown.position.copy(trunk.position); crown.position.y+=5;
+      g.add(crown);
+    }
+
+    for(let i=0;i<14;i++){
+      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),lava);
+      rock.scale.set(9+(i%4)*4,3+(i%2)*1.4,7+(i%5)*3);
+      rock.position.set(-180+(i%7)*58,base+3,-480+Math.floor(i/7)*940);
+      g.add(rock);
     }
   }
 
