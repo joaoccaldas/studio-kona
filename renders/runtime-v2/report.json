@@ -1,20 +1,20 @@
 {
-  "capturedAt": "2026-10-01T03:53:22.097Z",
+  "capturedAt": "2026-10-01T04:19:45.772Z",
   "url": "https://joaoccaldas.github.io/studio-kona/preview-v2/",
   "stateBase": {
     "sceneObjects": 7,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790826673666",
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790828215423",
     "ready": true
   },
   "state": {
-    "sceneObjects": 11,
+    "sceneObjects": 12,
     "worldZones": true,
     "placeWorld": true,
     "islandCoverage": true,
     "detailsReady": true,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790826673666"
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790828215423"
   },
   "diagnostic": {
     "zones": [
@@ -46,7 +46,7 @@
       {
         "id": "hawi",
         "lod": "high",
-        "visible": true
+        "visible": false
       },
       {
         "id": "waimea",
@@ -61,12 +61,12 @@
       {
         "id": "hualalai",
         "lod": "high",
-        "visible": false
+        "visible": true
       },
       {
         "id": "mauna_loa",
         "lod": "hero",
-        "visible": false
+        "visible": true
       },
       {
         "id": "kilauea",
@@ -81,12 +81,12 @@
       {
         "id": "keauhou",
         "lod": "high",
-        "visible": false
+        "visible": true
       },
       {
         "id": "puuhonua",
         "lod": "hero",
-        "visible": false
+        "visible": true
       },
       {
         "id": "kaloko_honokohau",
@@ -101,7 +101,7 @@
       {
         "id": "pololu",
         "lod": "high",
-        "visible": true
+        "visible": false
       },
       {
         "id": "waipio",
@@ -151,7 +151,7 @@
       {
         "id": "kealakekua",
         "lod": "high",
-        "visible": false
+        "visible": true
       },
       {
         "id": "hilo_bay",
@@ -166,7 +166,7 @@
       {
         "id": "south_kona_slope",
         "lod": "medium",
-        "visible": false
+        "visible": true
       }
     ],
     "placeCount": 37,
@@ -175,6 +175,9 @@
     "placeUnresolvedCount": 1,
     "placeCoverageRatio": 0.9736842105263158,
     "athleteServiceCount": 7,
+    "visualProfileCount": 3,
+    "raceCorridorCount": 90,
+    "regionalGrammarProfileCount": 18,
     "coverageTileCount": 169,
     "coverageDebug": {
       "hero": 7,
