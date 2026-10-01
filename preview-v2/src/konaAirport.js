@@ -1,3 +1,4 @@
+import { FidsBoardRenderer } from './live/liveFids.js';
 import * as THREE from 'three';
 
 // Realistic 3D model of Ellison Onizuka Kona International Airport at Keāhole (KOA).
@@ -41,6 +42,23 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
   const bikeBoxEvoc = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.7 });
   const bikeBoxCardboard = new THREE.MeshStandardMaterial({ color: 0xb48a56, roughness: 0.9 });
   const palmGreen = shared.pasture || new THREE.MeshStandardMaterial({ color: 0x2d532b, roughness: 0.85 });
+
+  // Antialiasing and Z-fighting depth offsets for markings and apron
+  runwayWhite.polygonOffset = true;
+  runwayWhite.polygonOffsetFactor = -1.0;
+  runwayWhite.polygonOffsetUnits = -4.0;
+
+  taxiYellow.polygonOffset = true;
+  taxiYellow.polygonOffsetFactor = -1.0;
+  taxiYellow.polygonOffsetUnits = -4.0;
+
+  redHazard.polygonOffset = true;
+  redHazard.polygonOffsetFactor = -1.0;
+  redHazard.polygonOffsetUnits = -4.0;
+
+  apronConcrete.polygonOffset = true;
+  apronConcrete.polygonOffsetFactor = -0.5;
+  apronConcrete.polygonOffsetUnits = -2.0;
 
   // Geometry helpers
   function box(mat, name, x, y, z, sx, sy, sz, rx=0, ry=0, rz=0) {

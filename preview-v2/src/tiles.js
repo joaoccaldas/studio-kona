@@ -26,8 +26,15 @@ export class TileStreamer {
       if (d < R) want.push([d, t]);
     }
     want.sort((a, b) => a[0] - b[0]);
-    const keep = new Set(want.slice(0, maxLive).map(([, t]) => t.k));
-    for (const k of this.live.keys()) if (!keep.has(k)) this.drop(k);
+    const keep = new Set(want.slice(0, maxLive + 2).map(([, t]) => t.k));
+    // Hysteresis buffer: only drop if tile is clearly outside the active range
+    for (const k of this.live.keys()) {
+      if (!keep.has(k)) {
+        const tileMeta = this.index.tiles.find(t => t.k === k);
+        const dist = tileMeta ? Math.hypot(tileMeta.x0 + this.size/2 - cx, tileMeta.y0 + this.size/2 - cy) : Infinity;
+        if (dist > R * 1.35) this.drop(k);
+      }
+    }
     for (const [, t] of want.slice(0, maxLive)) if (!this.live.has(t.k) && this.busy < 2) this.load(t);
   }
   drop(k) {
@@ -72,8 +79,11 @@ export class TileStreamer {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx);
     g.computeVertexNormals();
-    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
-    const m = new THREE.MeshStandardMaterial({ map: tex, roughness: .92 });
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; tex.minFilter = THREE.LinearMipmapLinearFilter;
+    const m = new THREE.MeshStandardMaterial({
+      map: tex, roughness: .92,
+      polygonOffset: true, polygonOffsetFactor: -0.25, polygonOffsetUnits: -1.0
+    });
     m.onBeforeCompile = sh => {       // below sea level the imagery shows water: turn it into sand / basalt / algae seabed
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vH;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvH = position.y;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vH;').replace('#include <map_fragment>', `#include <map_fragment>

@@ -1,3 +1,4 @@
+import { createKoaLiveSuite } from './live/index.js';
 // KONA Island Runtime — world-only renderer.
 // No quests, HUD, museum UI, scavenger hunt, game progression, toasts or text overlays.
 import * as THREE from 'three';
@@ -21,13 +22,19 @@ const A = window.__KONA_ASSET_BASE || 'assets/';
 const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y);
 const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: !coarse,
+  powerPreference: 'high-performance',
+  logarithmicDepthBuffer: true
+});
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.AgXToneMapping;
 renderer.toneMappingExposure = 1.05;
+const maxAniso = renderer.capabilities.getMaxAnisotropy?.() || 8;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.4, 850000);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 1.0, 850000);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.055;
@@ -140,6 +147,7 @@ let worldZones = null;
 let placeWorld = null;
 let islandCoverage = null;
 let coverageDebug = null;
+let liveSuite = null;
 
 const toLocal = (lat, lon) => {
   if (!man) return [0, 0];
@@ -179,14 +187,14 @@ async function loadIsland() {
   // PlaneGeometry rotated -90° already faces upward. Do not reverse winding:
   // reversing it makes the whole island back-face culled from the aerial default view.
   g.computeVertexNormals();
-  const color=tex.load(A+'island_color.jpg'); color.colorSpace=THREE.SRGBColorSpace; color.anisotropy=4;
+  const color=tex.load(A+'island_color.jpg'); color.colorSpace=THREE.SRGBColorSpace; color.anisotropy=maxAniso; color.minFilter=THREE.LinearMipmapLinearFilter;
   const mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({map:color,roughness:.92,metalness:.03,side:THREE.DoubleSide}));
   mesh.name='KONA_ISLAND_RING3';
   scene.add(mesh);
 }
 
 function orthoMaterial(file, seabed=false) {
-  const t=tex.load(A+file); t.flipY=false; t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8;
+  const t=tex.load(A+file); t.flipY=false; t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=maxAniso; t.minFilter=THREE.LinearMipmapLinearFilter;
   const m=new THREE.MeshStandardMaterial({map:t,roughness:.9});
   if(seabed) m.color.set(0x6b8892);
   return m;
@@ -276,6 +284,16 @@ async function initWorldLayers(){
   if(new URLSearchParams(location.search).get('coverage')==='1') coverageDebug?.setVisible(true);
   worldZones?.update(1.0,camera);
   placeWorld?.update(1.0,camera);
+
+  // Initialize modular live airport services (weather, FIDS, and airspace tracking)
+  try {
+    liveSuite = createKoaLiveSuite({
+      scene, THREE, W, toLocal, heightAt
+    });
+    liveSuite.start();
+  } catch (err) {
+    console.warn('Live suite init failed:', err);
+  }
   window.__kona.detailsReady=true;
   window.__kona.timings.detailsReadyMs=performance.now()-bootStartedAt;
 }
@@ -363,6 +381,7 @@ renderer.setAnimationLoop(()=>{
   worldZones?.update(dt,camera);
   placeWorld?.update(dt,camera);
   islandCoverage?.update(dt,camera);
+  liveSuite?.update(dt);
   if(ocean){ocean.material.uniforms.uTime.value+=dt;ocean.position.set(Math.round(camera.position.x/80)*80,0,Math.round(camera.position.z/80)*80);}
   updateRegionalAtmosphere();
   renderer.render(scene,camera);
@@ -388,6 +407,7 @@ window.__kona={
   get placeWorld(){ return placeWorld; },
   get islandCoverage(){ return islandCoverage; },
   get coverageDebug(){ return coverageDebug; },
+  get live(){ return liveSuite; },
   go:goTo,goTo,setHour,
   setCoverageDebug:(v=true)=>coverageDebug?.setVisible(v),
   toggleCoverageDebug:()=>coverageDebug?.toggle()
