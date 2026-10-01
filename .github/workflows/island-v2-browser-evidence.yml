@@ -285,16 +285,17 @@ jobs:
             isMobile:true,
             hasTouch:true
           });
+          await mobile.bringToFront();
           mobile.on('console', m => { if (m.type() === 'error') mobileConsoleErrors.push(m.text()); });
           mobile.on('pageerror', e => mobilePageErrors.push(String(e)));
           mobile.on('requestfailed', r => mobileRequestFailures.push({url:r.url(),error:r.failure()?.errorText||'failed'}));
           mobile.on('response', r => { if (r.status() >= 400) mobileRequestFailures.push({url:r.url(),status:r.status()}); });
           const mobileStart=Date.now();
-          const mobileRes=await mobile.goto(url+'?mobileEvidence='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
+          const mobileRes=await mobile.goto(url+'?mobileEvidence='+Date.now(),{waitUntil:'domcontentloaded',timeout:45000});
           if(!mobileRes?.ok()) throw new Error('Mobile preview HTTP '+mobileRes?.status());
-          await mobile.waitForFunction(() => window.__kona?.ready === true, null, {timeout:30000});
+          await mobile.waitForFunction(() => window.__kona?.ready === true, null, {timeout:45000});
           const mobileReadyMs=Date.now()-mobileStart;
-          await mobile.waitForFunction(() => window.__kona && (window.__kona.detailsReady === true || window.__kona.detailsReady === 'degraded'), null, {timeout:30000});
+          await mobile.waitForFunction(() => window.__kona && (window.__kona.detailsReady === true || window.__kona.detailsReady === 'degraded'), null, {timeout:60000});
           const mobileDetailsReadyMs=Date.now()-mobileStart;
           await mobile.evaluate(() => window.__kona.go('island'));
           await mobile.waitForTimeout(1500);

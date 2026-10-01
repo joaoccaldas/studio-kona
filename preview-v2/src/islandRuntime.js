@@ -249,7 +249,10 @@ async function loadKonaCore() {
 
 async function initWorldLayers(){
   // Yield first so the base island can paint and accept input before geographic detail setup.
-  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  await new Promise(resolve=>{
+    const tid=setTimeout(resolve,50);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{clearTimeout(tid);resolve();}));
+  });
 
   worldZones=new WorldZoneStreamer({scene,W,heightAt,toLocal,coarse,base:A});
   await worldZones.init().catch(e=>{console.warn('WorldZoneStreamer',e);worldZones=null;});
@@ -271,6 +274,8 @@ async function initWorldLayers(){
   coverageDebug=new CoverageDebug({scene,W,heightAt,toLocal,base:A});
   await coverageDebug.init().catch(()=>{coverageDebug=null;});
   if(new URLSearchParams(location.search).get('coverage')==='1') coverageDebug?.setVisible(true);
+  worldZones?.update(1.0,camera);
+  placeWorld?.update(1.0,camera);
   window.__kona.detailsReady=true;
   window.__kona.timings.detailsReadyMs=performance.now()-bootStartedAt;
 }
@@ -318,6 +323,8 @@ const views={
 function goTo(id='island'){
   const v=(views[id]||views.island)();
   camera.position.copy(v.pos); controls.target.copy(v.look); controls.update();
+  worldZones?.update(1.0,camera);
+  placeWorld?.update(1.0,camera);
 }
 
 function updateRegionalAtmosphere(){
