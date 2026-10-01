@@ -32,7 +32,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.055;
 controls.maxPolarAngle = Math.PI / 2 - 0.005;
 controls.minDistance = 2;
-controls.maxDistance = 110000;
+controls.maxDistance = 340000;
 controls.screenSpacePanning = true;
 controls.enableRotate = true;
 controls.enablePan = true;
@@ -196,6 +196,13 @@ async function loadCore() {
   const islandPromise = loadIsland();
   const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(A+'kona_p1.glb');
   const protos={};
+  const coreWallMats=[
+    new THREE.MeshStandardMaterial({color:0xb8b0a1,roughness:.9}),
+    new THREE.MeshStandardMaterial({color:0xa99b86,roughness:.92}),
+    new THREE.MeshStandardMaterial({color:0x8e9189,roughness:.89})
+  ];
+  const coreConcrete=new THREE.MeshStandardMaterial({color:0x8c8b84,roughness:.94});
+  const coreBasalt=new THREE.MeshStandardMaterial({color:0x2e2a27,roughness:.98});
   gltf.scene.traverse(o=>{
     if(!o.isMesh) return;
     const mats=Array.isArray(o.material)?o.material:[o.material];
@@ -205,6 +212,16 @@ async function loadCore() {
       else if(m.name==='far_ortho') mats[i]=orthoMaterial('sat_bay.jpg');
     });
     o.material=Array.isArray(o.material)?mats:mats[0];
+    if(o.name.startsWith('KONA_buildings')){
+      o.material=coreWallMats.map(m=>m.clone());
+    } else if(o.name.startsWith('KONA_roofs')){
+      o.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.82,metalness:.02});
+    } else if(o.name.startsWith('KONA_pier')){
+      const arr=Array.isArray(o.material)?o.material:[o.material];
+      o.material=arr.map((m,i)=>i===0?coreConcrete.clone():m);
+    } else if(o.name.startsWith('KONA_breakwater')){
+      o.material=coreBasalt.clone();
+    }
     if(o.name.startsWith('PROTO_')){protos[o.name.slice(6)]=o;o.visible=false;}
   });
   scene.add(gltf.scene);
