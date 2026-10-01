@@ -35,12 +35,38 @@ export class WorldZoneStreamer {
     const rockGeo = new THREE.DodecahedronGeometry(1, 1);
     const shrubGeo = new THREE.ConeGeometry(1, 1.6, 7);
     const bldgGeo = new THREE.BoxGeometry(1, 1, 1);
+    const treeTrunkGeo = new THREE.CylinderGeometry(.22,.36,1,7);
+    const treeCrownGeo = new THREE.DodecahedronGeometry(1,1);
     return {
       ...n,
       lavaMat:n.lava, cinderMat:n.cinder, scrubMat:n.dryGrass, pastureMat:n.pasture,
       urbanMat:n.stucco, roofMat:n.darkRoof, asphaltMat:n.asphalt,
-      roadGeo, rockGeo, shrubGeo, bldgGeo
+      roadGeo, rockGeo, shrubGeo, bldgGeo, treeTrunkGeo, treeCrownGeo
     };
+  }
+
+  addTreeInstances(g,specs,crownMat,name='trees'){
+    if(!specs.length) return;
+    const trunks=new THREE.InstancedMesh(this.shared.treeTrunkGeo,this.shared.wood,specs.length);
+    const crowns=new THREE.InstancedMesh(this.shared.treeCrownGeo,crownMat,specs.length);
+    trunks.name=name+'_trunks'; crowns.name=name+'_crowns';
+    const m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(), p=new THREE.Vector3();
+    specs.forEach((t,i)=>{
+      p.set(t.x,t.y+t.trunkH*.5,t.z);
+      q.setFromEuler(new THREE.Euler(0,t.rot||0,t.tilt||0));
+      s.set(t.trunkR||1,t.trunkH||6,t.trunkR||1);
+      m.compose(p,q,s); trunks.setMatrixAt(i,m);
+
+      p.set(t.x+(t.dx||0),t.y+t.trunkH+(t.crownY||2.2),t.z+(t.dz||0));
+      q.setFromEuler(new THREE.Euler(0,t.rot||0,0));
+      const cs=t.crownScale||[2,1.6,2];
+      s.set(cs[0],cs[1],cs[2]);
+      m.compose(p,q,s); crowns.setMatrixAt(i,m);
+    });
+    trunks.instanceMatrix.needsUpdate=true;
+    crowns.instanceMatrix.needsUpdate=true;
+    varyInstanceColors(crowns,specs.length,crownMat===this.shared.wetForest?0x315d39:0x66814c,.1,hashString(name));
+    g.add(trunks,crowns);
   }
 
   async init() {
@@ -276,18 +302,16 @@ export class WorldZoneStreamer {
       g.add(field);
     }
 
-    // Coffee-tree rows, dense enough to read agriculturally but instanced in future pass.
+    // Coffee-tree rows: visually dense, but instanced for mobile efficiency.
     const count=this.coarse?60:130;
+    const coffeeTrees=[];
     for(let i=0;i<count;i++){
       const col=i%26, row=Math.floor(i/26);
       const x=-1250+col*100+(row%2)*20;
       const zp=-1000+row*430+(col%2)*10;
-      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12,.16,2.1,6),wood);
-      trunk.position.set(x,base+1.05+row*18,zp); g.add(trunk);
-      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(.9,1),green);
-      crown.scale.set(1.5,1.1,1.4); crown.position.set(x,base+2.8+row*18,zp);
-      g.add(crown);
+      coffeeTrees.push({x,y:base+row*18,z:zp,trunkH:2.1,trunkR:.55,crownY:.75,crownScale:[1.5,1.1,1.4],rot:(i%5)*.2});
     }
+    this.addTreeInstances(g,coffeeTrees,green,'south_kona_coffee');
   }
 
   addRegionalLandmark(g,z,cx,cy){
@@ -419,19 +443,17 @@ export class WorldZoneStreamer {
       g.add(patch);
     }
 
-    // Rainforest survives in islands between flows.
+    // Rainforest survives in islands between flows, rendered as two draw calls.
     const treeCount=this.coarse?55:120;
+    const punaTrees=[];
     for(let i=0;i<treeCount;i++){
       const x=-2100+(i%24)*185+(i%3)*17;
       const zp=-1450+Math.floor(i/24)*620+(i%7)*35;
       const flowGap=((i*37)%11)<4;
       if(flowGap) continue;
-      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.24,.42,7.5,7),this.shared.wood);
-      trunk.position.set(x,base+3.75,zp); g.add(trunk);
-      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.6,1),wet);
-      crown.scale.set(2.1,2.8,2.0); crown.position.set(x,base+9,zp);
-      g.add(crown);
+      punaTrees.push({x,y:base,z:zp,trunkH:7.5,trunkR:1.05,crownScale:[2.1,2.8,2.0],rot:i*.37});
     }
+    this.addTreeInstances(g,punaTrees,wet,'puna_forest');
 
     // Puna road cue cutting across the lava/forest mosaic.
     const road=new THREE.Mesh(new THREE.BoxGeometry(3600,.2,9.5),asphalt);
@@ -533,15 +555,14 @@ export class WorldZoneStreamer {
       }
     }
 
-    // Windbreak tree rows.
+    // Windbreak rows, instanced to keep draw calls low.
     const count=this.coarse?24:52;
+    const windbreak=[];
     for(let i=0;i<count;i++){
       const x=-650+(i%26)*52, zp=520+Math.floor(i/26)*90;
-      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.28,.42,7,7),wood);
-      trunk.position.set(x,base+3.5,zp); g.add(trunk);
-      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.5,1),pasture);
-      crown.scale.set(1.8,2.8,1.6); crown.position.set(x,base+8.5,zp); g.add(crown);
+      windbreak.push({x,y:base,z:zp,trunkH:7,trunkR:1.05,crownY:1.5,crownScale:[1.8,2.8,1.6],rot:i*.11});
     }
+    this.addTreeInstances(g,windbreak,pasture,'waimea_windbreak');
   }
 
   addHamakua(g,z,cx,cy){
@@ -576,17 +597,15 @@ export class WorldZoneStreamer {
       g.add(field);
     }
 
-    // Dense tree belts near gulch edges.
+    // Dense tree belts near gulch edges, instanced into two meshes.
     const count=this.coarse?45:95;
+    const hamakuaTrees=[];
     for(let i=0;i<count;i++){
       const x=-1900+(i%19)*210+(i%3)*21;
       const zp=-900+Math.floor(i/19)*420+(i%5)*24;
-      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.28,.48,8,7),this.shared.wood);
-      trunk.position.set(x,base+4,zp); g.add(trunk);
-      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.7,1),wet);
-      crown.scale.set(2.1,2.6,2.0); crown.position.set(x,base+9,zp);
-      g.add(crown);
+      hamakuaTrees.push({x,y:base,z:zp,trunkH:8,trunkR:1.15,crownScale:[2.1,2.6,2.0],rot:i*.23});
     }
+    this.addTreeInstances(g,hamakuaTrees,wet,'hamakua_tree_belts');
   }
 
   addWaikoloa(g,z,cx,cy){
