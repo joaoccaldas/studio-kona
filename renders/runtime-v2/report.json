@@ -1,14 +1,14 @@
 {
-  "capturedAt": "2026-10-01T11:52:24.330Z",
+  "capturedAt": "2026-10-01T15:28:45.906Z",
   "url": "https://joaoccaldas.github.io/studio-kona/preview-v2/",
   "stateBase": {
     "sceneObjects": 6,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790855080712",
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790868077033",
     "ready": true,
     "timings": {
       "bootStartedAt": 0,
-      "baseReadyMs": 1616.4000000000015,
+      "baseReadyMs": 1771.9000000000015,
       "detailsReadyMs": null,
       "coreReadyMs": null,
       "tilesReadyMs": null
@@ -24,13 +24,13 @@
     "tilesReady": true,
     "timings": {
       "bootStartedAt": 0,
-      "baseReadyMs": 1616.4000000000015,
-      "detailsReadyMs": 22866.300000000003,
-      "coreReadyMs": 11494.700000000004,
-      "tilesReadyMs": 22861.40000000001
+      "baseReadyMs": 1771.9000000000015,
+      "detailsReadyMs": 23216.500000000007,
+      "coreReadyMs": 10963.400000000001,
+      "tilesReadyMs": 23212.500000000007
     },
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790855080712"
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790868077033"
   },
   "state": {
     "sceneObjects": 13,
@@ -41,7 +41,7 @@
     "coreReady": true,
     "tilesReady": true,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790855080712"
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790868077033"
   },
   "diagnostic": {
     "zones": [
@@ -53,7 +53,7 @@
       {
         "id": "airport",
         "lod": "high",
-        "visible": false
+        "visible": true
       },
       {
         "id": "nelha",
@@ -108,7 +108,7 @@
       {
         "id": "keauhou",
         "lod": "high",
-        "visible": true
+        "visible": false
       },
       {
         "id": "puuhonua",
@@ -214,12 +214,12 @@
   },
   "viewStats": {
     "01_island_overview": {
-      "drawCalls": 3,
-      "triangles": 1065612,
+      "drawCalls": 5,
+      "triangles": 1073172,
       "lines": 0,
       "points": 0,
-      "geometries": 3,
-      "textures": 1,
+      "geometries": 5,
+      "textures": 5,
       "dpr": 1,
       "coarse": false
     },
@@ -270,7 +270,7 @@
       "points": 0,
       "geometries": 462,
       "textures": 38,
-      "dpr": 0.88,
+      "dpr": 0.76,
       "coarse": false
     },
     "07_waimea": {
@@ -314,8 +314,8 @@
       "coarse": false
     },
     "13_kona_airport": {
-      "drawCalls": 31,
-      "triangles": 1340302,
+      "drawCalls": 35,
+      "triangles": 1377414,
       "lines": 0,
       "points": 0,
       "geometries": 481,
@@ -324,8 +324,8 @@
       "coarse": false
     },
     "14_airport_stores": {
-      "drawCalls": 27,
-      "triangles": 1330926,
+      "drawCalls": 31,
+      "triangles": 1337934,
       "lines": 0,
       "points": 0,
       "geometries": 481,
@@ -334,8 +334,8 @@
       "coarse": false
     },
     "15_alii_finish_chute": {
-      "drawCalls": 19,
-      "triangles": 1296120,
+      "drawCalls": 21,
+      "triangles": 1282360,
       "lines": 0,
       "points": 0,
       "geometries": 481,
@@ -344,8 +344,8 @@
       "coarse": false
     },
     "16_kona_inn_village": {
-      "drawCalls": 24,
-      "triangles": 1376796,
+      "drawCalls": 25,
+      "triangles": 1379316,
       "lines": 0,
       "points": 0,
       "geometries": 482,
@@ -354,8 +354,8 @@
       "coarse": false
     },
     "17_huggos_waterfront": {
-      "drawCalls": 19,
-      "triangles": 1368924,
+      "drawCalls": 20,
+      "triangles": 1370972,
       "lines": 0,
       "points": 0,
       "geometries": 482,
@@ -374,8 +374,8 @@
       "coarse": false
     },
     "19_old_kona_airport": {
-      "drawCalls": 18,
-      "triangles": 1368060,
+      "drawCalls": 19,
+      "triangles": 1368924,
       "lines": 0,
       "points": 0,
       "geometries": 482,
@@ -384,22 +384,22 @@
       "coarse": false
     },
     "20_airport_windsock": {
-      "drawCalls": 44,
-      "triangles": 2706820,
+      "drawCalls": 18,
+      "triangles": 1369792,
       "lines": 0,
       "points": 0,
-      "geometries": 488,
-      "textures": 41,
+      "geometries": 482,
+      "textures": 40,
       "dpr": 0.72,
       "coarse": false
     }
   },
   "mobileEvidence": {
-    "readyMs": 27951,
-    "detailsReadyMs": 105036,
-    "waikoloaSettleMs": 24380,
-    "fpsSampleMs": 11922,
-    "totalEvidenceMs": 169410,
+    "readyMs": 12307,
+    "detailsReadyMs": 80015,
+    "waikoloaSettleMs": 24617,
+    "fpsSampleMs": 11992,
+    "totalEvidenceMs": 151526,
     "islandStats": {
       "builtZones": [],
       "builtPlaces": [],
@@ -409,7 +409,7 @@
       "triangles": 934302
     },
     "perf": {
-      "sampledFps": 0.335210512201663,
+      "sampledFps": 0.33334444481482617,
       "sampledFrames": 2,
       "drawCalls": 38,
       "triangles": 856240,
@@ -425,10 +425,10 @@
       "tilesReady": true,
       "timings": {
         "bootStartedAt": 0,
-        "baseReadyMs": 22262.5,
-        "detailsReadyMs": 102062,
-        "coreReadyMs": 57503.5,
-        "tilesReadyMs": 102055.60000000003
+        "baseReadyMs": 6778.700000000012,
+        "detailsReadyMs": 77408.70000000001,
+        "coreReadyMs": 58842,
+        "tilesReadyMs": 88982.5
       }
     },
     "consoleErrors": [],
