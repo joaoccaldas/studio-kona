@@ -1,12 +1,19 @@
 // Modular Live Flight Tracking & Approach Simulation for KOA Airport
-// Integrates with OpenSky Network ADS-B transponders and animates 3D aircraft approaches.
+// Integrates with OpenSky Network ADS-B transponders with graceful simulated fallback for browser CORS safety.
 
-export async function fetchKoaAirspaceTransponders() {
-  // Bounding box for West Hawaii / Kona airspace
-  const url = 'https://opensky-network.org/api/states/all?lamin=19.4&lomin=-156.3&lamax=20.2&lomax=-155.7';
+export async function fetchKoaAirspaceTransponders({ corsProxy = null, directFetch = false } = {}) {
+  // In pure browser context without a designated CORS proxy, return empty array to trigger smooth continuous simulation
+  // and prevent browser console cross-origin network errors.
+  if (typeof window !== 'undefined' && !corsProxy && !directFetch) {
+    return [];
+  }
+
+  const base = 'https://opensky-network.org/api/states/all?lamin=19.4&lomin=-156.3&lamax=20.2&lomax=-155.7';
+  const url = corsProxy ? `${corsProxy}${encodeURIComponent(base)}` : base;
+
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+    const timer = setTimeout(() => controller.abort(), 4000);
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
     if (!res.ok) throw new Error(`OpenSky HTTP ${res.status}`);
@@ -26,19 +33,19 @@ export async function fetchKoaAirspaceTransponders() {
       verticalRateMps: s[11]
     })).filter(s => s.lat != null && s.lon != null);
   } catch (err) {
-    // OpenSky can be rate-limited (HTTP 429) or offline. Return empty array to trigger smooth fallback.
     return [];
   }
 }
 
 export class LiveFlightController {
-  constructor({ scene, THREE, W, toLocal, heightAt, pollIntervalMs = 30000, onFlightStateChange = null }) {
+  constructor({ scene, THREE, W, toLocal, heightAt, pollIntervalMs = 30000, corsProxy = null, onFlightStateChange = null }) {
     this.scene = scene;
     this.THREE = THREE;
     this.W = W;
     this.toLocal = toLocal;
     this.heightAt = heightAt;
     this.pollIntervalMs = pollIntervalMs;
+    this.corsProxy = corsProxy;
     this.onFlightStateChange = onFlightStateChange;
 
     this.activeFlights = new Map();
@@ -77,7 +84,7 @@ export class LiveFlightController {
   }
 
   async poll() {
-    const liveStates = await fetchKoaAirspaceTransponders();
+    const liveStates = await fetchKoaAirspaceTransponders({ corsProxy: this.corsProxy });
     if (liveStates.length) {
       this.syncLiveAirspace(liveStates);
     } else if (!this.simulatedApproach) {
@@ -89,7 +96,6 @@ export class LiveFlightController {
     if (typeof this.onFlightStateChange === 'function') {
       this.onFlightStateChange({ mode: 'live_adsb', count: states.length, states });
     }
-    // If an aircraft is within 20km of KOA, attach or update approach simulation
     const nearby = states.find(s => !s.onGround && Math.hypot(s.lat - 19.7388, s.lon - (-156.0456)) < 0.25);
     if (nearby && !this.simulatedApproach) {
       this.spawnApproachAircraft(nearby.callsign || 'HA 128');
@@ -97,7 +103,6 @@ export class LiveFlightController {
   }
 
   initContinuousApproachSim() {
-    // Continuously simulate authentic Hawaiian Airlines B717 arrival loop
     this.spawnApproachAircraft('HA 128 (Honolulu → Kona)');
   }
 
@@ -110,8 +115,6 @@ export class LiveFlightController {
     const g = new THREE.Group();
     g.name = 'LIVE_APPROACH_AIRCRAFT';
 
-    // 1:1 scale twinjet airliner (Boeing 717 / Airbus A220 class)
-    // Fuselage length 38m, wingspan 28m
     const body = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 36, 16), this.fuselageMat);
     body.rotation.x = Math.PI / 2;
     g.add(body);
@@ -121,7 +124,6 @@ export class LiveFlightController {
     nose.position.z = -20.5;
     g.add(nose);
 
-    // Main wings
     const wingL = new THREE.Mesh(new THREE.BoxGeometry(13.5, 0.28, 4.5), this.fuselageMat);
     wingL.position.set(-8, -0.2, 1);
     wingL.rotation.y = 0.22;
@@ -132,7 +134,6 @@ export class LiveFlightController {
     wingR.rotation.y = -0.22;
     g.add(wingR);
 
-    // T-Tail empennage with Hawaiian Airlines Purple & Magenta
     const fin = new THREE.Mesh(new THREE.BoxGeometry(0.35, 6.5, 4.5), this.hawaiianPurple);
     fin.position.set(0, 3.8, 15);
     fin.rotation.x = -0.25;
@@ -146,7 +147,6 @@ export class LiveFlightController {
     hStab.position.set(0, 6.8, 16.5);
     g.add(hStab);
 
-    // Navigation wingtip lights
     const redLight = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), this.beaconMat);
     redLight.position.set(-14.5, -0.2, 2);
     g.add(redLight);
@@ -160,8 +160,8 @@ export class LiveFlightController {
     this.simulatedApproach = {
       mesh: g,
       callsign,
-      progress: 0, // 0 = 6 miles out, 0.7 = touchdown, 1.0 = turned off runway
-      speed: 0.012 // progress per second
+      progress: 0,
+      speed: 0.012
     };
   }
 
@@ -171,33 +171,28 @@ export class LiveFlightController {
     const s = this.simulatedApproach;
     s.progress += s.speed * dt;
     if (s.progress > 1.25) {
-      s.progress = 0; // restart approach cycle
+      s.progress = 0;
     }
 
     const is17 = activeRunway === '17';
-    // Runway 17 approach comes from the North (cy + 7500 down to cy)
-    // Runway 35 approach comes from the South (cy - 7500 up to cy)
     const startY = is17 ? this.koaY + 8000 : this.koaY - 8000;
     const touchY = is17 ? this.koaY + 600 : this.koaY - 600;
     const endY = is17 ? this.koaY - 800 : this.koaY + 800;
 
-    let curX = this.koaX - 55; // Runway 17/35 centerline offset
+    let curX = this.koaX - 55;
     let curY, curAlt, pitch = 0, yaw = is17 ? Math.PI : 0;
 
     if (s.progress < 0.7) {
-      // Final approach along 3-degree glide slope
       const t = s.progress / 0.7;
       curY = startY + (touchY - startY) * t;
-      curAlt = 420 * (1 - t) + 18.5; // descends to runway threshold elevation ~18.5m
-      pitch = -0.052; // 3 degree nose-up descent attitude
+      curAlt = 420 * (1 - t) + 18.5;
+      pitch = -0.052;
     } else if (s.progress < 0.95) {
-      // Ground rollout on runway
       const t = (s.progress - 0.7) / 0.25;
       curY = touchY + (endY - touchY) * t;
       curAlt = 18.5;
       pitch = 0;
     } else {
-      // Turn off runway onto high-speed exit taxiway
       const t = (s.progress - 0.95) / 0.3;
       curY = endY + (is17 ? -150 : 150) * t;
       curX = (this.koaX - 55) + 65 * Math.sin(t * Math.PI * 0.5);

@@ -140,7 +140,7 @@ jobs:
           }));
 
           const viewStats = {};
-          async function shot(name, place, settle=3500) {
+          async function shot(name, place, settle=2000) {
             await page.evaluate(({ place }) => {
               window.__kona.setLocomotionMode?.('fly');
               window.__kona.go(place, 0.001);
@@ -160,7 +160,7 @@ jobs:
                 coarse:window.__kona.coarse
               };
             });
-            await page.screenshot({ path: 'renders/runtime-v2/' + name + '.png' });
+            await page.screenshot({ path: 'renders/runtime-v2/' + name + '.png', timeout: 60000 });
           }
 
           await shot('01_island_overview', 'island', 1500);

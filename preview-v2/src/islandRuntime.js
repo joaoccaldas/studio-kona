@@ -374,22 +374,42 @@ function updateRegionalAtmosphere(){
 }
 
 let last=performance.now(),fpsT=0,frames=0;
+const lastCamPos=new THREE.Vector3(), lastCamRot=new THREE.Quaternion();
+let idleTime=0;
+
 renderer.setAnimationLoop(()=>{
   const now=performance.now(),dt=Math.min((now-last)/1000,.05);last=now;
   controls.update();
-  streamer?.update(dt,camera);
-  worldZones?.update(dt,camera);
-  placeWorld?.update(dt,camera);
-  islandCoverage?.update(dt,camera);
-  liveSuite?.update(dt);
-  if(ocean){ocean.material.uniforms.uTime.value+=dt;ocean.position.set(Math.round(camera.position.x/80)*80,0,Math.round(camera.position.z/80)*80);}
-  updateRegionalAtmosphere();
-  renderer.render(scene,camera);
+
+  const camMoved = lastCamPos.distanceToSquared(camera.position) > 0.002 ||
+                   lastCamRot.angleTo(camera.quaternion) > 0.002;
+  if(camMoved){
+    lastCamPos.copy(camera.position);
+    lastCamRot.copy(camera.quaternion);
+    idleTime = 0;
+  } else {
+    idleTime += dt;
+  }
+
+  // Energy & performance optimization for low-end machines:
+  // Render at full 60fps during interaction/flight movement, and throttle background updates when stationary
+  const isIdle = idleTime > 3.5;
+  if(!isIdle || frames % 2 === 0){
+    streamer?.update(dt,camera);
+    worldZones?.update(dt,camera);
+    placeWorld?.update(dt,camera);
+    islandCoverage?.update(dt,camera);
+    liveSuite?.update(dt);
+    if(ocean){ocean.material.uniforms.uTime.value+=dt;ocean.position.set(Math.round(camera.position.x/80)*80,0,Math.round(camera.position.z/80)*80);}
+    updateRegionalAtmosphere();
+    renderer.render(scene,camera);
+  }
+
   frames++;fpsT+=dt;
   if(fpsT>2){
     const fps=frames/fpsT;frames=0;fpsT=0;
     if(fps<43&&dpr>.72){dpr=Math.max(.72,dpr-.12);resize();}
-    else if(fps>58&&dpr<Math.min(devicePixelRatio,1.8)){dpr=Math.min(devicePixelRatio,1.8,dpr+.08);resize();}
+    else if(fps>58&&dpr<Math.min(devicePixelRatio, coarse ? 1.0 : 1.65)){dpr=Math.min(devicePixelRatio, coarse ? 1.0 : 1.65, dpr+.08);resize();}
   }
 });
 
