@@ -22,6 +22,29 @@ export function addHeroVisualProfile({group:g,place:p,z,shared}){
     return true;
   }
 
+  if(p.visual_profile==='queens_marketplace_bike_shop'){
+    const stucco=shared.wall||shared.shop;
+    const roof=shared.roof;
+    const glass=shared.glass;
+    // This profile represents the shop as one bay within Queens' Marketplace, not a standalone building.
+    box(g,stucco,p.id+'_marketplace_arcade',0,z+4.4,0,38,4.4,16,'official sources place Bike Works inside Queens\' Marketplace; arcade proportions are simplified');
+    box(g,roof,p.id+'_marketplace_canopy',0,z+8.9,-2,40,.45,18,'resort-shopping-center canopy proxy; not surveyed facade geometry');
+    box(g,glass,p.id+'_marketplace_glazing',0,z+4.1,-16.2,26,3.2,.16,'shopfront glazing proxy within marketplace bay');
+    box(g,roof,p.id+'_marketplace_awning',0,z+7.2,-17.7,29,.22,2.6,'shaded storefront awning proxy');
+    for(let i=-3;i<=3;i++){
+      const wheel=new THREE.Mesh(new THREE.TorusGeometry(1.0,.07,8,20),shared.service);
+      wheel.name=p.id+'_display_wheel_'+(i+3);
+      wheel.rotation.y=Math.PI/2;
+      wheel.position.set(i*3.2,z+2.1,-17.1);
+      g.add(wheel);
+    }
+    // Low adjacent retail wings make it read as a marketplace tenancy, not an isolated shop.
+    box(g,stucco,p.id+'_marketplace_left',-35,z+3.5,4,18,3.5,14,'Queens\' Marketplace adjacency context, simplified');
+    box(g,stucco,p.id+'_marketplace_right',35,z+3.5,4,18,3.5,14,'Queens\' Marketplace adjacency context, simplified');
+    g.userData.visualEvidence=p.visual_evidence;
+    return true;
+  }
+
   if(p.visual_profile==='garden_courtyard_hospital'){
     const roofBlue=new THREE.MeshStandardMaterial({color:0x8da9b5,roughness:.82,metalness:0});
     const wingMat=shared.medical;

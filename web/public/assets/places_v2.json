@@ -424,7 +424,20 @@
       "geo_source_url": "https://www.geocords.com/place/69-201-waik%C5%8Dloa-beach-dr-waikoloa-village-hi-96738-usa-136977/",
       "geo_source_note": "address-level geocode for 69-201 Waikoloa Beach Dr",
       "geo_confidence": "medium",
-      "geo_verified_at": "2026-10-01"
+      "geo_verified_at": "2026-10-01",
+      "visual_profile": "queens_marketplace_bike_shop",
+      "visual_evidence": {
+        "source_url": "https://bikeworkshawaii.com/contact/",
+        "secondary_source_url": "https://www.queensmarketplace.com/directory/bikeworks-beach-sports/",
+        "verified_at": "2026-10-01",
+        "confidence": "high",
+        "cues": [
+          "located inside Queens' Marketplace at 69-201 Waikoloa Beach Dr",
+          "sport and lifestyle retail context",
+          "swim-bike-run and beach gear identity",
+          "resort shopping-center context, not a standalone building"
+        ]
+      }
     },
     {
       "id": "hilo_benioff",
