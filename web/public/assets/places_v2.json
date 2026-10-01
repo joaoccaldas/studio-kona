@@ -322,7 +322,22 @@
       "geo_source_url": "https://fotospot.com/attractions/hawaii-big-island/merrimans-big-island",
       "geo_source_note": "business listing coordinates",
       "geo_confidence": "high",
-      "geo_verified_at": "2026-10-01"
+      "geo_verified_at": "2026-10-01",
+      "visual_profile": "waimea_upcountry_restaurant",
+      "visual_evidence": {
+        "source_url": "https://www.merrimanshawaii.com/location/big-island/",
+        "secondary_source_url": "https://www.merrimanshawaii.com/private-events-big-island/",
+        "verified_at": "2026-10-01",
+        "confidence": "high",
+        "scope": "contextual architecture, not surveyed facade",
+        "cues": [
+          "Waimea upcountry/high-country setting",
+          "cozy upcountry dining",
+          "farm-to-table and local agriculture identity",
+          "complimentary/front parking context",
+          "venue scale suitable for up to about 110 guests"
+        ]
+      }
     },
     {
       "id": "fish_hog",

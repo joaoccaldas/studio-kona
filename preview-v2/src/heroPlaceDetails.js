@@ -45,6 +45,30 @@ export function addHeroVisualProfile({group:g,place:p,z,shared}){
     return true;
   }
 
+  if(p.visual_profile==='waimea_upcountry_restaurant'){
+    const wall=shared.wall||shared.shop;
+    const roof=shared.roof;
+    const wood=shared.wood||shared.food;
+    // Official sources support the upcountry/high-country context and venue scale,
+    // not a surveyed facade. Keep the massing low and contextual.
+    box(g,wall,p.id+'_upcountry_body',0,z+3.8,0,31,3.8,17,'official source: cozy Waimea upcountry venue; building footprint simplified');
+    box(g,roof,p.id+'_upcountry_roof',0,z+8.0,0,33,.45,19,'upcountry low-roof context; exact roof form not surveyed');
+    box(g,wood,p.id+'_covered_entry',0,z+2.8,-19,18,.24,3.5,'contextual covered entry / dining transition');
+    for(let i=-3;i<=3;i++){
+      box(g,wood,p.id+'_entry_post_'+(i+3),i*5,z+2.9,-21.8,.16,2.9,.16,'contextual porch/entry rhythm');
+    }
+    const parking=new THREE.Mesh(new THREE.PlaneGeometry(78,42),shared.service);
+    parking.name=p.id+'_parking_context'; parking.rotation.x=-Math.PI/2; parking.position.set(26,z+.18,26);
+    parking.userData.evidence='official source confirms complimentary/front parking; exact layout simplified';
+    g.add(parking);
+    const garden=new THREE.Mesh(new THREE.CircleGeometry(22,32),shared.pasture);
+    garden.name=p.id+'_upcountry_green'; garden.rotation.x=-Math.PI/2; garden.scale.set(1.5,1,.75); garden.position.set(-20,z+.22,-8);
+    garden.userData.evidence='farm-to-table/upcountry landscape context; not surveyed planting plan';
+    g.add(garden);
+    g.userData.visualEvidence=p.visual_evidence;
+    return true;
+  }
+
   if(p.visual_profile==='garden_courtyard_hospital'){
     const roofBlue=new THREE.MeshStandardMaterial({color:0x8da9b5,roughness:.82,metalness:0});
     const wingMat=shared.medical;
