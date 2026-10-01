@@ -139,6 +139,8 @@ export class WorldZoneStreamer {
     if (z.id === 'hawi') this.addHawiTown(g, z, cx, cy);
     if (z.id === 'hilo') this.addHiloCity(g, z, cx, cy);
     if (z.id === 'waikoloa') this.addWaikoloa(g, z, cx, cy);
+    if (z.id === 'waimea') this.addWaimea(g, z, cx, cy);
+    if (z.id === 'hamakua') this.addHamakua(g, z, cx, cy);
     if (z.id === 'kawaihae') this.addKawaihae(g, z, cx, cy);
     if (z.id === 'puuhonua') this.addPuuhonua(g, z, cx, cy);
     if (z.id === 'puukohola') this.addPuukohola(g, z, cx, cy);
@@ -269,6 +271,117 @@ export class WorldZoneStreamer {
     rim.position.y=base+8;
     rim.userData.evidence='caldera rim cue / DEM remains authoritative';
     g.add(rim);
+  }
+
+  addWaimea(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const pasture=this.shared.pasture;
+    const wood=this.shared.wood;
+    const roof=this.shared.darkRoof;
+    const stucco=this.shared.stucco;
+    const asphalt=this.shared.asphalt;
+
+    // Main town road and quieter cross streets.
+    const road=new THREE.Mesh(new THREE.BoxGeometry(880,.22,11),asphalt);
+    road.position.set(0,base+.2,0); road.rotation.y=-.06;
+    road.name='waimea_main_road_proxy'; road.userData.evidence='P town corridor / I dimensions';
+    g.add(road);
+
+    for(let j=-1;j<=1;j++){
+      const cross=new THREE.Mesh(new THREE.BoxGeometry(8,.18,420),asphalt);
+      cross.position.set(j*210,base+.18,80); cross.rotation.y=.03;
+      g.add(cross);
+    }
+
+    // Low town fabric: broad roofs and modest heights.
+    const blocks=[];
+    for(let i=-5;i<=5;i++){
+      const x=i*66+(i%2?8:-6), zp=(i%2?58:-62);
+      const w=32+(i+7)%4*9, d=22+(i+5)%3*7, h=5.5+((i+10)%3)*1.5;
+      blocks.push([x,zp,w,d,h]);
+    }
+    blocks.forEach((b,i)=>{
+      const [x,zp,w,d,h]=b;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),i%4===0?wood:stucco);
+      body.position.set(x,base+h*.5,zp); body.rotation.y=-.06;
+      body.userData.evidence='procedural Waimea town massing pending measured footprint replacement';
+      g.add(body);
+      const rg=new THREE.CylinderGeometry(Math.max(w,d)*.55,Math.max(w,d)*.63,1.8,4);
+      const r=new THREE.Mesh(rg,roof); r.rotation.y=Math.PI/4-.06; r.scale.z=.64;
+      r.position.set(x,base+h+.85,zp); g.add(r);
+    });
+
+    // Pasture paddocks with fence lines, visually characteristic of Waimea.
+    for(let p=0;p<6;p++){
+      const px=-520+(p%3)*520, pz=260+Math.floor(p/3)*420;
+      const field=new THREE.Mesh(new THREE.PlaneGeometry(420,280,1,1),pasture);
+      field.rotation.x=-Math.PI/2; field.position.set(px,base+.25,pz);
+      g.add(field);
+      const fenceMat=this.shared.wood;
+      for(const side of [-1,1]){
+        const rail=new THREE.Mesh(new THREE.BoxGeometry(420,.18,.18),fenceMat);
+        rail.position.set(px,base+1.05,pz+side*140); g.add(rail);
+      }
+      for(let k=-2;k<=2;k++){
+        const rail=new THREE.Mesh(new THREE.BoxGeometry(.18,.18,280),fenceMat);
+        rail.position.set(px+k*105,base+1.05,pz); g.add(rail);
+      }
+    }
+
+    // Windbreak tree rows.
+    const count=this.coarse?24:52;
+    for(let i=0;i<count;i++){
+      const x=-650+(i%26)*52, zp=520+Math.floor(i/26)*90;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.28,.42,7,7),wood);
+      trunk.position.set(x,base+3.5,zp); g.add(trunk);
+      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.5,1),pasture);
+      crown.scale.set(1.8,2.8,1.6); crown.position.set(x,base+8.5,zp); g.add(crown);
+    }
+  }
+
+  addHamakua(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const wet=this.shared.wetForest;
+    const cliff=this.shared.cliff;
+    const pasture=this.shared.pasture;
+    const waterMat=new THREE.MeshPhysicalMaterial({color:0x6aa8b8,roughness:.22,transparent:true,opacity:.82});
+
+    // Repeating but irregular gulches running toward the ocean.
+    const gulches=this.coarse?5:9;
+    for(let i=0;i<gulches;i++){
+      const x=-1800+i*(3600/(gulches-1));
+      const depth=260+(i%4)*70, width=130+(i%3)*45, len=1200+(i%5)*180;
+      for(const side of [-1,1]){
+        const wall=new THREE.Mesh(new THREE.BoxGeometry(width,depth,len),cliff);
+        wall.position.set(x+side*width*.62,base+depth*.35,-150+i*45);
+        wall.rotation.z=side*.12; wall.rotation.y=.04*(i%3-1);
+        wall.userData.evidence='procedural gulch silhouette on DEM';
+        g.add(wall);
+      }
+      const stream=new THREE.Mesh(new THREE.PlaneGeometry(width*.7,len*.8),waterMat);
+      stream.rotation.x=-Math.PI/2; stream.position.set(x,base+1,-150+i*45); g.add(stream);
+    }
+
+    // Wet pasture shelves between gulches.
+    for(let i=0;i<7;i++){
+      const field=new THREE.Mesh(new THREE.PlaneGeometry(460,320,1,1),i%2?pasture:wet);
+      field.rotation.x=-Math.PI/2;
+      field.position.set(-1500+i*500,base+.35,620+(i%2)*240);
+      field.rotation.z=(i%3-1)*.02;
+      g.add(field);
+    }
+
+    // Dense tree belts near gulch edges.
+    const count=this.coarse?45:95;
+    for(let i=0;i<count;i++){
+      const x=-1900+(i%19)*210+(i%3)*21;
+      const zp=-900+Math.floor(i/19)*420+(i%5)*24;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.28,.48,8,7),this.shared.wood);
+      trunk.position.set(x,base+4,zp); g.add(trunk);
+      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.7,1),wet);
+      crown.scale.set(2.1,2.6,2.0); crown.position.set(x,base+9,zp);
+      g.add(crown);
+    }
   }
 
   addWaikoloa(g,z,cx,cy){
