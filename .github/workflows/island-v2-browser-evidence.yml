@@ -42,6 +42,38 @@ jobs:
           import fs from 'node:fs';
 
           const url = process.env.PREVIEW_URL;
+          const expectedPlaces = JSON.parse(fs.readFileSync('web/public/assets/places_v2.json','utf8'));
+          const expectedServices = JSON.parse(fs.readFileSync('web/public/assets/athlete_services_v1.json','utf8'));
+          const expectedGeocoded = (expectedPlaces.places||[]).filter(p=>typeof p.lat==='number'&&typeof p.lon==='number').length;
+          const expectedPlaceCount = (expectedPlaces.places||[]).length;
+          const expectedServiceCount = (expectedServices.records||[]).length;
+          let deployedFresh = false;
+          let deployedState = null;
+          for (let i=0;i<30;i++) {
+            try {
+              const [pr,sr] = await Promise.all([
+                fetch('https://joaoccaldas.github.io/studio-kona/web/public/assets/places_v2.json?fresh='+Date.now(), { cache:'no-store' }),
+                fetch('https://joaoccaldas.github.io/studio-kona/web/public/assets/athlete_services_v1.json?fresh='+Date.now(), { cache:'no-store' })
+              ]);
+              if (pr.ok && sr.ok) {
+                const [p,s] = await Promise.all([pr.json(),sr.json()]);
+                deployedState = {
+                  placeCount:(p.places||[]).length,
+                  geocoded:(p.places||[]).filter(x=>typeof x.lat==='number'&&typeof x.lon==='number').length,
+                  serviceCount:(s.records||[]).length
+                };
+                if (deployedState.placeCount===expectedPlaceCount && deployedState.geocoded===expectedGeocoded && deployedState.serviceCount===expectedServiceCount) {
+                  deployedFresh = true;
+                  break;
+                }
+              }
+            } catch {}
+            await new Promise(r=>setTimeout(r,10000));
+          }
+          if (!deployedFresh) {
+            throw new Error('GitHub Pages runtime data did not reach checked-out commit: expected='+JSON.stringify({expectedPlaceCount,expectedGeocoded,expectedServiceCount})+' deployed='+JSON.stringify(deployedState));
+          }
+
           const browser = await chromium.launch({ headless: true });
           const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
           const consoleErrors = [];
