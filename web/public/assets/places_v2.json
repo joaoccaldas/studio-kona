@@ -164,7 +164,13 @@
       "address": "75-5742 Kuakini Hwy #101, Kailua-Kona, HI 96740",
       "priority": "medium",
       "recipe": "cafe",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.637284,
+      "lon": -155.989985,
+      "geo_source_url": "https://www.crexi.com/lease/properties/1014665/hawaii-oihana-center",
+      "geo_source_note": "building-level coordinate for 75-5742 Kuakini Hwy",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kona_hospital",
@@ -188,7 +194,13 @@
       "address": "75-5653 Kuakini Hwy #100, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "medical_center",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.64154,
+      "lon": -155.995135,
+      "geo_source_url": "https://phppd.providence.org/BaseSearch/Provider/View/217110613302885",
+      "geo_source_note": "provider directory coordinate for same 75-5653 Kuakini Hwy building",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kona_auto",
@@ -239,7 +251,13 @@
       "address": "55-3412 Akoni Pule Hwy, Hawi, HI 96719",
       "priority": "high",
       "recipe": "historic_storefront",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.2378027,
+      "lon": -155.831332,
+      "geo_source_url": "https://steller.co/p/hawi-coffee-company-4MAGJbkSx2Y6kWZhYmgdEG",
+      "geo_source_note": "address-level coordinate for 55-3412 Akoni Pule Hwy",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kohala_hospital",
@@ -470,7 +488,13 @@
       "address": "75-184 Hualalai Rd Suite 302, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "medical_center",
-      "source": "official_and_business_verified"
+      "source": "official_and_business_verified",
+      "lat": 19.637214,
+      "lon": -155.988599,
+      "geo_source_url": "https://phppd.providence.org/BaseSearch/Provider/View/195635776050056",
+      "geo_source_note": "provider directory coordinate for exact 75-184 Hualalai Rd building",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "sozo_performance",
@@ -494,7 +518,13 @@
       "address": "75-1029 Henry St Suite 101, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "medical_center",
-      "source": "official_and_business_verified"
+      "source": "official_and_business_verified",
+      "lat": 19.6474075317383,
+      "lon": -155.98908996582,
+      "geo_source_url": "https://www.whereorg.com/rehabilitation-hospital-of-the-pacific-foundation-27202924",
+      "geo_source_note": "address and phone match Kona Rehab suite; listing provides GPS coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     }
   ]
 }
