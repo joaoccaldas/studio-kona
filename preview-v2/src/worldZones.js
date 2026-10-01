@@ -113,7 +113,7 @@ export class WorldZoneStreamer {
     const high = z.lod === 'high';
     const rockN = this.coarse ? (hero ? 90 : high ? 55 : 32) : (hero ? 220 : high ? 130 : 75);
     const shrubN = this.coarse ? (hero ? 55 : high ? 75 : 55) : (hero ? 120 : high ? 180 : 110);
-    const bldgN = /hawi|hilo|waimea|waikoloa|kawaihae|keauhou|nelha|airport|old_airport/.test(z.id)
+    const bldgN = /hawi|hilo|waimea|waikoloa|kawaihae|keauhou|nelha|old_airport/.test(z.id)
       ? (this.coarse ? (high ? 22 : 14) : (high ? 48 : 30)) : 0;
 
     const rock = new THREE.InstancedMesh(this.shared.rockGeo, this.shared.lavaMat, rockN);
@@ -126,6 +126,7 @@ export class WorldZoneStreamer {
     for (let i = 0; i < rockN; i++) {
       const a = random() * Math.PI * 2, rr = z.radius_m * (.08 + .78 * Math.sqrt(random()));
       const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+      if (z.id === 'airport' && x > -380 && x < 340 && y > -900 && y < -100) continue;
       const wz = Math.max(0, this.heightAt(cx + x, cy + y));
       const p = this.W(x, y, wz + .35 + random() * 1.1);
       q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), random() * Math.PI * 2);

@@ -586,6 +586,8 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
     const rAngle = (ri / rockCount) * Math.PI * 2;
     const rx = Math.cos(rAngle) * rDist;
     const rz = Math.sin(rAngle) * rDist * 0.7;
+    // Exclude airfield, runway, commercial apron, terminal pavilions, and parking
+    if (rx > -380 && rx < 340 && rz > 100 && rz < 900) continue;
     const rSize = 6 + (ri % 5) * 4;
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(rSize, 1), lavaRock);
     rock.scale.set(1.3, 0.6, 1.1);
