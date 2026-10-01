@@ -519,10 +519,13 @@ export class WorldZoneStreamer {
     if (!n) return;
     const road = new THREE.InstancedMesh(this.shared.roadGeo, this.shared.asphaltMat, n);
     road.name = 'queen_k_route_segments';
+    const lineMat = new THREE.MeshStandardMaterial({ color: 0xe4e1d7, roughness: .78 });
+    const lines = new THREE.InstancedMesh(this.shared.roadGeo, lineMat, n * 2);
+    lines.name = 'queen_k_edge_lines';
     const rocks = new THREE.InstancedMesh(this.shared.rockGeo, this.shared.lavaMat, n * 3);
     rocks.name = 'queen_k_lava_edge';
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-    let ri = 0;
+    let ri = 0, li = 0;
     for (let i = 0; i < n; i++) {
       const a = samples[i], b = samples[Math.min(n - 1, i + 1)];
       const dx = b.x - a.x, dy = b.y - a.y, len = Math.max(10, Math.hypot(dx, dy));
@@ -531,6 +534,15 @@ export class WorldZoneStreamer {
       q.setFromAxisAngle(up, Math.atan2(dx, dy));
       sc.set(6.8, .22, len * .62);
       m.compose(p, q, sc); road.setMatrixAt(i, m);
+
+      // Low-profile edge lines. Slightly above asphalt to avoid z-fighting.
+      for (const side of [-1, 1]) {
+        const lp = this.W(a.x, a.y, z + .49);
+        const localSide = new THREE.Vector3(side * 5.9, 0, 0).applyQuaternion(q);
+        lp.add(localSide);
+        sc.set(.12, .04, len * .60);
+        m.compose(lp, q, sc); lines.setMatrixAt(li++, m);
+      }
 
       const random = rng(hashString('qk' + i));
       const nx = dy / len, ny = -dx / len;
@@ -546,10 +558,11 @@ export class WorldZoneStreamer {
       }
     }
     road.instanceMatrix.needsUpdate = true;
+    lines.count = li; lines.instanceMatrix.needsUpdate = true;
     rocks.count = ri; rocks.instanceMatrix.needsUpdate = true;
-    road.visible = false; rocks.visible = false;
-    this.root.add(road, rocks);
-    this.corridor = { road, rocks, samples, activation: 9000 };
+    road.visible = false; lines.visible = false; rocks.visible = false;
+    this.root.add(road, lines, rocks);
+    this.corridor = { road, lines, rocks, samples, activation: 9000 };
   }
 
   update(dt, camera) {
@@ -573,6 +586,7 @@ export class WorldZoneStreamer {
         if (Math.hypot(p.x - cx, p.y - cy) < this.corridor.activation) { near = true; break; }
       }
       this.corridor.road.visible = !overview && near;
+      this.corridor.lines.visible = !overview && near;
       this.corridor.rocks.visible = !overview && near;
     }
   }
