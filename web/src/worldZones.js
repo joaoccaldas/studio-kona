@@ -137,6 +137,7 @@ export class WorldZoneStreamer {
 
     this.addRegionalLandmark(g, z, cx, cy);
     if (z.id === 'kahaluu') this.addKahaluu(g, z, cx, cy);
+    if (z.id === 'keauhou') this.addKeauhou(g, z, cx, cy);
     if (z.id === 'south_kona_slope') this.addSouthKonaSlope(g, z, cx, cy);
     if (z.id === 'hawi') this.addHawiTown(g, z, cx, cy);
     if (z.id === 'nelha') this.addNELHA(g, z, cx, cy);
@@ -166,6 +167,61 @@ export class WorldZoneStreamer {
       runway.scale.set(34, .18, length);
       runway.position.y = Math.max(1, this.heightAt(cx, cy)) + .18;
       g.add(runway);
+    }
+  }
+
+  addKeauhou(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const asphalt=this.shared.asphalt;
+    const stucco=this.shared.stucco;
+    const roof=this.shared.darkRoof;
+    const lava=this.shared.lava;
+    const green=this.shared.pasture;
+    const water=new THREE.MeshPhysicalMaterial({color:0x377787,roughness:.18,transparent:true,opacity:.78});
+
+    // Keauhou Bay itself.
+    const bay=new THREE.Mesh(new THREE.CircleGeometry(520,56),water);
+    bay.rotation.x=-Math.PI/2; bay.scale.set(1.45,1,.78);
+    bay.position.set(0,base+.18,-120); bay.name='keauhou_bay_proxy';
+    bay.userData.evidence='P bay identity / I simplified shoreline';
+    g.add(bay);
+
+    // Ali'i Drive / local access road relationship.
+    const road=new THREE.Mesh(new THREE.BoxGeometry(1100,.2,9.5),asphalt);
+    road.position.set(0,base+.2,340); road.rotation.y=.11;
+    road.name='keauhou_alii_corridor'; g.add(road);
+
+    // Low resort / neighborhood massing set back from coast.
+    const blocks=[
+      [-360,470,58,28,8],[-240,520,46,24,7],[-110,455,66,30,9],
+      [60,500,54,26,8],[210,440,72,32,9],[360,500,48,24,7],
+      [-280,650,42,22,6],[0,640,60,28,8],[280,650,44,22,6]
+    ];
+    blocks.forEach((b,i)=>{
+      const [x,zp,w,d,h]=b;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),stucco);
+      body.position.set(x,base+h*.5,zp);
+      body.userData.evidence='procedural Keauhou massing pending measured footprint replacement';
+      g.add(body);
+      const r=new THREE.Mesh(new THREE.CylinderGeometry(Math.max(w,d)*.54,Math.max(w,d)*.62,1.9,4),roof);
+      r.rotation.y=Math.PI/4+.08; r.scale.z=.62; r.position.set(x,base+h+.9,zp); g.add(r);
+    });
+
+    // Lava headlands and pocket greenery.
+    for(let i=0;i<18;i++){
+      const a=i*2.03, rr=300+(i%5)*90;
+      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),lava);
+      rock.scale.set(14+(i%4)*6,4+(i%3)*2,11+(i%5)*5);
+      rock.position.set(Math.cos(a)*rr,base+4,-40+Math.sin(a)*rr*.6); g.add(rock);
+    }
+
+    const trees=this.coarse?14:30;
+    for(let i=0;i<trees;i++){
+      const a=i*2.399, rr=220+(i%6)*55;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,6.5,7),this.shared.wood);
+      trunk.position.set(Math.cos(a)*rr,base+3.25,420+Math.sin(a)*rr*.55); g.add(trunk);
+      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.45,1),green);
+      crown.scale.set(2.0,1.6,1.9); crown.position.copy(trunk.position); crown.position.y+=4.8; g.add(crown);
     }
   }
 
