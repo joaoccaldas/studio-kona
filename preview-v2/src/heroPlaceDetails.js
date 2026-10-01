@@ -316,5 +316,276 @@ export function addHeroVisualProfile({group:g,place:p,z,shared}){
     return true;
   }
 
+
+  if(p.visual_profile==='kona_inn_shopping_village'){
+    // Historic 1928 Kona Inn shopping village and oceanfront boardwalk
+    const creamWall = new THREE.MeshStandardMaterial({color:0xfaf4eb, roughness:0.85});
+    const darkWood = new THREE.MeshStandardMaterial({color:0x3a2312, roughness:0.75});
+    const cedarRoof = new THREE.MeshStandardMaterial({color:0x523b28, roughness:0.88});
+    const boardwalkWood = new THREE.MeshStandardMaterial({color:0x6b4f35, roughness:0.7});
+    const brassLamp = new THREE.MeshStandardMaterial({color:0xd97706, roughness:0.3, metalness:0.8});
+    const lawnGreen = new THREE.MeshStandardMaterial({color:0x3f6212, roughness:0.9});
+    const seaWall = new THREE.MeshStandardMaterial({color:0x27272a, roughness:0.95});
+
+    // Historic Two-Story Main Building (44m x 18m)
+    box(g, creamWall, p.id+'_inn_main', 0, z+5.2, 0, 44, 10.4, 18, 'historic 1928 kona inn two-story building');
+    box(g, cedarRoof, p.id+'_inn_roof', 0, z+11.2, 0, 47, 1.8, 21, 'hipped cedar shake roof');
+    for(const cx of [-14, 0, 14]){
+      box(g, creamWall, p.id+'_cupola_'+cx, cx, z+12.6, 0, 4, 1.6, 4, 'roof ventilation cupola');
+      box(g, cedarRoof, p.id+'_cupola_cap_'+cx, cx, z+13.7, 0, 4.6, 0.6, 4.6, 'cupola shake roof cap');
+    }
+
+    // Long One-Story Retail Arcade Wing extending South (36m x 14m)
+    box(g, creamWall, p.id+'_arcade_wing', 26, z+3.8, 14, 36, 7.6, 14, 'boardwalk shops arcade');
+    box(g, cedarRoof, p.id+'_arcade_roof', 26, z+8.2, 14, 38, 1.4, 16, 'arcade hipped roof');
+
+    // Waterfront Timber Boardwalk (70m x 5m) overlooking Kailua Bay
+    box(g, boardwalkWood, p.id+'_boardwalk_deck', 8, z+0.85, -14, 70, 0.5, 5.2, 'historic oceanfront boardwalk');
+    for(let bx=-24; bx<=40; bx+=4.8){
+      box(g, darkWood, p.id+'_rail_post_'+bx, bx, z+1.7, -16.4, 0.22, 1.2, 0.22, 'boardwalk railing post');
+      if(bx % 9.6 === 0){
+        box(g, brassLamp, p.id+'_nautical_lamp_'+bx, bx, z+2.4, -16.4, 0.35, 0.45, 0.35, 'nautical brass post lamp');
+      }
+    }
+    box(g, darkWood, p.id+'_top_rail', 8, z+2.1, -16.4, 70, 0.15, 0.25, 'boardwalk continuous handrail');
+
+    // Kona Inn Restaurant & Grill Covered Dining Lanai
+    box(g, darkWood, p.id+'_grill_deck', -12, z+1.2, -11, 22, 0.6, 7.5, 'kona inn grill oceanfront dining lanai');
+    box(g, cedarRoof, p.id+'_grill_canopy', -12, z+4.6, -11, 23, 0.35, 8.5, 'dining lanai canopy');
+    for(const px of [-22, -12, -2]){
+      box(g, darkWood, p.id+'_lanai_timber_post_'+px, px, z+2.8, -14.8, 0.35, 3.2, 0.35, 'lanai support timber');
+    }
+    box(g, darkWood, p.id+'_koa_bar', -12, z+1.8, -8.5, 12, 1.1, 2.2, 'polished koa wood cocktail bar');
+    for(let tx=-20; tx<=-4; tx+=4){
+      box(g, darkWood, p.id+'_dining_table_'+tx, tx, z+1.6, -12, 1.2, 0.8, 1.2, 'oceanfront cocktail table');
+    }
+
+    // Oceanfront Manicured Green Lawn between Boardwalk and Basalt Seawall
+    box(g, lawnGreen, p.id+'_ocean_lawn', 8, z+0.4, -22, 70, 0.3, 11, 'iconic oceanfront sunset lawn');
+    box(g, seaWall, p.id+'_basalt_seawall', 8, z+0.3, -28, 72, 0.9, 2.4, 'volcanic basalt ocean retaining wall');
+
+    // Shading Coconut Palms along the ocean lawn
+    for(let pi=0; pi<6; pi++){
+      const px = -22 + pi * 12;
+      const pz = -23 + (pi % 2) * 3;
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.4, 8.5, 8), darkWood);
+      trunk.position.set(px, z+4.6, pz);
+      trunk.rotation.z = (pi % 2 === 0 ? 0.08 : -0.06);
+      g.add(trunk);
+      const palmCrown = new THREE.Mesh(new THREE.DodecahedronGeometry(2.4, 0), shared.park||lawnGreen);
+      palmCrown.scale.set(1.4, 0.6, 1.4);
+      palmCrown.position.set(px + (pi % 2 === 0 ? 0.6 : -0.5), z+9.2, pz);
+      g.add(palmCrown);
+    }
+    return true;
+  }
+
+  if(p.visual_profile==='huggos_oceanfront_dining'){
+    // Huggo's world-famous oceanfront dining cantilevered over breaking surf
+    const darkWood = new THREE.MeshStandardMaterial({color:0x3d2716, roughness:0.75});
+    const teakDeck = new THREE.MeshStandardMaterial({color:0x6c4e32, roughness:0.7});
+    const whiteLinen = new THREE.MeshStandardMaterial({color:0xf8fafc, roughness:0.85});
+    const basaltRock = new THREE.MeshStandardMaterial({color:0x1c1917, roughness:0.98});
+    const hurricaneLamp = new THREE.MeshStandardMaterial({color:0xfef08a, emissive:0xfef08a, emissiveIntensity:0.6});
+    const glassRail = shared.glass;
+
+    // Basalt foundation & concrete pilings extending into the surf
+    for(let px=-10; px<=10; px+=5){
+      for(let pz=-12; pz<=2; pz+=5){
+        box(g, basaltRock, p.id+'_piling_'+px+'_'+pz, px, z+1.1, pz, 1.2, 2.2, 1.2, 'heavy concrete/basalt surf piling');
+      }
+    }
+
+    // Over-water Cantilevered Dining Deck (26m x 16m)
+    box(g, teakDeck, p.id+'_overwater_deck', 0, z+2.3, -5, 26, 0.4, 16, 'ipe hardwood over-water dining deck');
+    box(g, glassRail, p.id+'_surf_glass_rail', 0, z+3.1, -13, 26, 1.2, 0.15, 'panoramic glass windbreak over waves');
+    box(g, darkWood, p.id+'_surf_rail_cap', 0, z+3.7, -13, 26.2, 0.12, 0.25, 'mahogany railing cap');
+    for(const side of [-13, 13]){
+      box(g, glassRail, p.id+'_side_glass_'+side, side, z+3.1, -5, 0.15, 1.2, 16, 'side glass windscreen');
+    }
+
+    // Covered Main Dining Room with open oceanfront walls
+    box(g, darkWood, p.id+'_dining_shell', 0, z+5.2, 4, 24, 5.8, 12, 'open-timber ocean dining pavilion');
+    box(g, shared.roof, p.id+'_dining_roof', 0, z+8.4, 4, 26, 1.2, 14, 'hipped cedar roof with clerestory vents');
+
+    // Linen-draped dining tables with glowing hurricane lamps
+    for(let tx=-9; tx<=9; tx+=4.5){
+      for(let tz=-10; tz<=-2; tz+=4){
+        box(g, whiteLinen, p.id+'_table_'+tx+'_'+tz, tx, z+2.9, tz, 1.4, 0.85, 1.4, 'fine dining table with white linen');
+        box(g, hurricaneLamp, p.id+'_lamp_'+tx+'_'+tz, tx, z+3.5, tz, 0.2, 0.35, 0.2, 'flickering hurricane candle lamp');
+      }
+    }
+
+    // Timber boardwalk path connecting to On the Rocks
+    box(g, teakDeck, p.id+'_connecting_walkway', 14, z+2.2, 8, 8, 0.35, 18, 'connecting boardwalk to on the rocks');
+    return true;
+  }
+
+  if(p.visual_profile==='white_nene_coffee_roastery'){
+    // White Nene Coffee Roasters downtown roastery on Aliʻi Dr
+    const whitePlank = new THREE.MeshStandardMaterial({color:0xf3f4f6, roughness:0.85});
+    const sageGreen = new THREE.MeshStandardMaterial({color:0x4d6652, roughness:0.8});
+    const chromeMetal = new THREE.MeshStandardMaterial({color:0xd1d5db, roughness:0.2, metalness:0.9});
+    const darkTimber = new THREE.MeshStandardMaterial({color:0x3f2e1e, roughness:0.75});
+
+    // Historic Plantation Coffee House (20m x 12m)
+    box(g, whitePlank, p.id+'_roastery_body', 0, z+3.8, 0, 20, 7.6, 12, 'whitewashed plantation coffee roastery');
+    box(g, sageGreen, p.id+'_sage_roof', 0, z+8.0, 0, 22, 0.8, 14, 'sage green corrugated metal roof');
+
+    // Covered Porch Veranda with outdoor athlete tables
+    box(g, darkTimber, p.id+'_porch_deck', 0, z+0.5, -8, 22, 0.35, 5, 'covered customer veranda');
+    box(g, sageGreen, p.id+'_porch_canopy', 0, z+4.2, -8, 22, 0.25, 5.5, 'porch awning');
+    for(const px of [-10, 0, 10]){
+      box(g, whitePlank, p.id+'_porch_column_'+px, px, z+2.3, -10.2, 0.3, 3.8, 0.3, 'veranda post');
+    }
+    for(let bx=-6; bx<=6; bx+=6){
+      box(g, darkTimber, p.id+'_picnic_bench_'+bx, bx, z+1.0, -8, 3.2, 0.75, 1.4, 'outdoor coffee table & bench');
+    }
+
+    // Bike Parking Rack for morning ride/swim athletes
+    box(g, shared.service, p.id+'_athlete_bike_rack', -9, z+0.85, -12, 6, 0.9, 0.3, 'triathlete road bike parking rack');
+
+    // Interior Espresso Bar visible through storefront display window
+    box(g, shared.glass, p.id+'_store_window', 0, z+2.8, -6.1, 14, 3.5, 0.15, 'storefront display window');
+    box(g, darkTimber, p.id+'_espresso_bar', 0, z+1.8, -3, 10, 1.1, 1.8, 'dark timber espresso bar counter');
+    box(g, chromeMetal, p.id+'_espresso_machine', -1.5, z+2.5, -3, 1.4, 0.75, 0.8, 'commercial chrome espresso machine');
+    box(g, darkTimber, p.id+'_grinders', 1.5, z+2.5, -3, 0.8, 0.85, 0.5, 'coffee bean burr grinders');
+    return true;
+  }
+
+  if(p.visual_profile==='kta_superstores_kailua'){
+    // KTA Super Stores - Kailua-Kona (Palani Rd)
+    const ktaGreen = new THREE.MeshStandardMaterial({color:0x1b4332, roughness:0.8});
+    const ktaRed = new THREE.MeshStandardMaterial({color:0xb91c1c, roughness:0.6});
+    const wallStucco = new THREE.MeshStandardMaterial({color:0xeee8d5, roughness:0.9});
+    const glassDoor = shared.glass;
+    const yellowFruit = new THREE.MeshStandardMaterial({color:0xeab308, roughness:0.7});
+    const blueWater = new THREE.MeshStandardMaterial({color:0x2563eb, roughness:0.5});
+
+    // Broad Supermarket Building (52m x 36m)
+    box(g, wallStucco, p.id+'_market_shell', 0, z+4.6, 0, 52, 9.2, 36, 'kta super stores supermarket building');
+    box(g, ktaGreen, p.id+'_green_roof', 0, z+9.8, 0, 54, 1.2, 38, 'green standing-seam hipped metal roof');
+
+    // Prominent Red & Green Entrance Portal Canopy
+    box(g, ktaRed, p.id+'_entry_canopy', 0, z+5.2, -19.5, 22, 1.6, 3.5, 'iconic kta red sign marquee');
+    box(g, glassDoor, p.id+'_sliding_doors', 0, z+2.4, -18.1, 16, 4.0, 0.2, 'automatic supermarket sliding entrance doors');
+
+    // Covered Sidewalk Arcade with Local Fruit & Produce Displays
+    box(g, wallStucco, p.id+'_sidewalk_arcade', 0, z+0.35, -21.5, 48, 0.35, 5, 'covered entrance walkway');
+    for(let bx=-18; bx<=-8; bx+=4.5){
+      box(g, wallStucco, p.id+'_produce_stand_'+bx, bx, z+1.1, -21.5, 3.2, 0.9, 1.8, 'outdoor fresh pineapple/papaya fruit stand');
+      box(g, yellowFruit, p.id+'_pineapples_'+bx, bx, z+1.7, -21.5, 2.8, 0.45, 1.4, 'fresh hawaiian pineapples');
+    }
+
+    // Staging Pallets of Bottled Spring Water & Electrolyte Drinks for Race Week
+    for(let wx=8; wx<=18; wx+=4.5){
+      box(g, blueWater, p.id+'_water_pallet_'+wx, wx, z+1.2, -21.5, 3.2, 1.4, 2.2, 'pallets of bottled water for triathletes');
+    }
+
+    // Customer Parking Lot with Marked Stalls & Palm Planters
+    box(g, shared.asphalt, p.id+'_parking_lot', 0, z+0.12, -36, 60, 0.15, 24, 'kta customer parking lot');
+    for(let cx=-20; cx<=20; cx+=10){
+      const truckMat = new THREE.MeshStandardMaterial({color:(cx===0?0xd97706:0x374151), roughness:0.4, metalness:0.3});
+      box(g, truckMat, p.id+'_island_truck_'+cx, cx, z+1.1, -36, 2.4, 1.6, 4.8, 'customer pickup truck/suv');
+    }
+    return true;
+  }
+
+  if(p.visual_profile==='safeway_kona_center'){
+    // Safeway - Kona (Henry St)
+    const sandStone = new THREE.MeshStandardMaterial({color:0xd6cbbe, roughness:0.88});
+    const safewayRed = new THREE.MeshStandardMaterial({color:0xc21807, roughness:0.5});
+    const basaltTrim = new THREE.MeshStandardMaterial({color:0x292524, roughness:0.95});
+    const roofBronze = new THREE.MeshStandardMaterial({color:0x4a3b32, roughness:0.75});
+
+    // Modern Anchor Retail Complex (60m x 40m)
+    box(g, sandStone, p.id+'_safeway_building', 0, z+5.5, 0, 60, 11.0, 40, 'safeway supermarket complex');
+    box(g, roofBronze, p.id+'_safeway_roof', 0, z+11.4, 0, 62, 0.9, 42, 'bronze architectural roof');
+    box(g, basaltTrim, p.id+'_basalt_wainscot', 0, z+1.2, -20.2, 60.5, 2.4, 0.4, 'volcanic basalt wainscot base');
+
+    // Central Signature Red Arched Portal Entrance
+    box(g, safewayRed, p.id+'_red_portal', 0, z+7.2, -21, 24, 2.6, 2.4, 'safeway signature red arched portal entrance');
+    box(g, shared.glass, p.id+'_glass_curtain', 0, z+3.8, -20.2, 22, 5.8, 0.25, 'storefront glass vestibule & clerestory');
+
+    // Outdoor Floral Gazebo & Tropical Plant Pavilion
+    box(g, sandStone, p.id+'_floral_kiosk', -22, z+2.2, -24, 10, 4.4, 8, 'outdoor floral & garden department gazebo');
+    box(g, new THREE.MeshStandardMaterial({color:0xdb2777, roughness:0.8}), p.id+'_orchids', -22, z+1.8, -24, 8, 1.2, 6, 'hawaiian potted orchids display');
+
+    // Athlete Fuel Staging Bay
+    box(g, new THREE.MeshStandardMaterial({color:0x0284c7, roughness:0.5}), p.id+'_sports_fuel', 22, z+1.4, -24, 10, 1.8, 6, 'pallet staging of gatorade & bottled water');
+    return true;
+  }
+
+  if(p.visual_profile==='boss_frogs_dive_and_bike'){
+    // Boss Frog's Snorkel, Bike & Beach Rentals on Palani Rd
+    const frogYellow = new THREE.MeshStandardMaterial({color:0xfacc15, roughness:0.6});
+    const frogGreen = new THREE.MeshStandardMaterial({color:0x16a34a, roughness:0.6});
+    const woodDeck = new THREE.MeshStandardMaterial({color:0x785338, roughness:0.75});
+    const bikeMetal = new THREE.MeshStandardMaterial({color:0x2563eb, roughness:0.4, metalness:0.5});
+
+    // Bright Tropical Storefront (20m x 12m)
+    box(g, frogYellow, p.id+'_shop_shell', 0, z+3.6, 0, 20, 7.2, 12, 'vibrant yellow rental retail building');
+    box(g, frogGreen, p.id+'_green_awning', 0, z+5.2, -6.8, 21, 0.35, 2.8, 'lime green storefront awning');
+    box(g, shared.glass, p.id+'_display_glazing', 0, z+2.6, -6.1, 16, 3.6, 0.15, 'rental gear shopfront window');
+
+    // Outdoor Rental Bike Corral with parked road bikes and cruisers
+    box(g, woodDeck, p.id+'_bike_corral', -6, z+0.25, -9, 10, 0.3, 4.5, 'bike rental staging corral');
+    for(let bi=-10; bi<=-2; bi+=1.8){
+      box(g, bikeMetal, p.id+'_rental_bike_'+bi, bi, z+1.1, -9, 0.9, 0.8, 0.25, 'rental cruiser/road bike');
+    }
+
+    // Vertical Stand-Up Paddleboard (SUP) & Surfboard Racks
+    for(let si=2; si<=8; si+=1.8){
+      const boardMat = new THREE.MeshStandardMaterial({color:(si%2===0?0x06b6d4:0xf97316), roughness:0.4});
+      const board = new THREE.Mesh(new THREE.CapsuleGeometry(0.35, 2.6, 4, 12), boardMat);
+      board.position.set(si, z+2.2, -8.5);
+      board.rotation.z = 0.08;
+      g.add(board);
+    }
+    return true;
+  }
+
+  if(p.visual_profile==='old_kona_airport_recreation_park'){
+    // Old Kona Airport State Recreation Area (historic 3,800 ft runway park)
+    const oldAsphalt = new THREE.MeshStandardMaterial({color:0x374151, roughness:0.95});
+    const markingWhite = new THREE.MeshStandardMaterial({color:0xd1d5db, roughness:0.9});
+    const glulamWood = new THREE.MeshStandardMaterial({color:0x5c3d26, roughness:0.75});
+    const ironwoodGreen = new THREE.MeshStandardMaterial({color:0x14532d, roughness:0.95});
+
+    // Historic 3,800-foot Runway Strip (represented as 280m x 24m corridor in local space)
+    box(g, oldAsphalt, p.id+'_historic_runway', 0, z+0.2, 0, 24, 0.2, 280, 'historic 1940s-1970s airfield asphalt runway');
+    for(let cz=-120; cz<=120; cz+=24){
+      box(g, markingWhite, p.id+'_runway_dash_'+cz, 0, z+0.32, cz, 1.2, 0.06, 12, 'weathered white runway centerline stripe');
+    }
+    box(g, markingWhite, p.id+'_threshold_s', 0, z+0.32, 130, 16, 0.06, 3.5, 'runway 11 south threshold stripe');
+    box(g, markingWhite, p.id+'_threshold_n', 0, z+0.32, -130, 16, 0.06, 3.5, 'runway 29 north threshold stripe');
+
+    // Makaʻeo County Pavilion (Large Timber Arch Community Center)
+    box(g, shared.meeting, p.id+'_makaoe_slab', 28, z+0.4, 20, 26, 0.5, 18, 'makaʻeo pavilion concrete foundation slab');
+    const archRoof = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, 26, 16, 1, false, 0, Math.PI), glulamWood);
+    archRoof.position.set(28, z+6.5, 20);
+    archRoof.rotation.z = Math.PI/2;
+    archRoof.scale.set(0.6, 1, 0.8);
+    g.add(archRoof);
+
+    // Coastal Ironwood Trees lining the ocean breeze side
+    for(let ti=-5; ti<=5; ti++){
+      const tz = ti * 26;
+      const ironwood = new THREE.Mesh(new THREE.ConeGeometry(3.5, 11, 8), ironwoodGreen);
+      ironwood.position.set(-22, z+5.8, tz);
+      g.add(ironwood);
+    }
+
+    // Oceanfront Covered Picnic Pavilions
+    for(const pz of [-60, 60]){
+      box(g, glulamWood, p.id+'_picnic_pavilion_'+pz, -16, z+2.2, pz, 8, 0.35, 6, 'beach picnic pavilion canopy');
+      for(const px of [-19, -13]){
+        box(g, glulamWood, p.id+'_picnic_post_'+px+'_'+pz, px, z+1.1, pz, 0.25, 2.2, 0.25, 'pavilion post');
+      }
+      box(g, glulamWood, p.id+'_picnic_table_'+pz, -16, z+0.85, pz, 4.2, 0.75, 1.8, 'wooden beach park picnic table');
+    }
+    return true;
+  }
+
   return false;
 }

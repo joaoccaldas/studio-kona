@@ -35,7 +35,9 @@
       "lon": -156.0091339,
       "priority": "hero",
       "recipe": "park_runway",
-      "source": "business_verified"
+      "source": "business_verified",
+      "visual_profile": "old_kona_airport_recreation_park",
+      "visual_evidence": "Historic 3,800 ft asphalt runway with weathered numbers 11/29 and centerlines, Maka\u02bbeo open-air community pavilion, oceanfront picnic grove and ironwood trees"
     },
     {
       "id": "kona_inn_village",
@@ -46,7 +48,9 @@
       "lon": -155.9935801,
       "priority": "hero",
       "recipe": "historic_shops",
-      "source": "business_verified"
+      "source": "business_verified",
+      "visual_profile": "kona_inn_shopping_village",
+      "visual_evidence": "Historic 1928 Kona Inn boardwalk, hipped cedar shake roof, cupolas, open-air boutiques, oceanfront dining veranda and coconut palm lawn"
     },
     {
       "id": "kona_commons",
@@ -88,7 +92,9 @@
       "geo_source_url": "https://nextdoor.com/pages/boss-frogs-snorkel-bike-beach-rentals-kailua-kona-hi/",
       "geo_source_note": "business listing coordinates matching official Kona store address",
       "geo_confidence": "high",
-      "geo_verified_at": "2026-10-01"
+      "geo_verified_at": "2026-10-01",
+      "visual_profile": "boss_frogs_dive_and_bike",
+      "visual_evidence": "Vibrant yellow & lime green storefront on Palani Rd, outdoor bike rental fleet rack, surfboard and snorkel display stands"
     },
     {
       "id": "kta_kona",
@@ -103,7 +109,9 @@
       "geo_source_url": "https://maps.me/catalog/shops/shop-supermarket/kta-super-stores-4611686022031643098",
       "geo_source_note": "business listing coordinates",
       "geo_confidence": "high",
-      "geo_verified_at": "2026-10-01"
+      "geo_verified_at": "2026-10-01",
+      "visual_profile": "kta_superstores_kailua",
+      "visual_evidence": "Historic Hawaiian supermarket on Palani Rd, green metal standing-seam roof, KTA red entry canopy, fresh fruit display bins, water case pallets, customer parking lot"
     },
     {
       "id": "safeway_kona",
@@ -118,7 +126,9 @@
       "geo_source_url": "https://www.merchantcircle.com/hi-kailua-kona/professional-services/shipping",
       "geo_source_note": "exact 75-971 Henry St building coordinate from USPS listing in same complex; Safeway official page confirms store at this address",
       "geo_confidence": "medium",
-      "geo_verified_at": "2026-10-01"
+      "geo_verified_at": "2026-10-01",
+      "visual_profile": "safeway_kona_center",
+      "visual_evidence": "Modern retail center on Henry St, sandstone facade, red arched portal entryway, clerestory glass, and outdoor florist pavilion"
     },
     {
       "id": "huggo",
@@ -133,7 +143,9 @@
       "geo_source_url": "https://www.merchantcircle.com/hi-kailua-kona/business-to-business/trade-shows",
       "geo_source_note": "address-level listing for 75-5828 Kahakai Rd",
       "geo_confidence": "high",
-      "geo_verified_at": "2026-10-01"
+      "geo_verified_at": "2026-10-01",
+      "visual_profile": "huggos_oceanfront_dining",
+      "visual_evidence": "Iconic over-water restaurant on basalt and concrete pilings, multi-level open-air dining decks, mahogany tables, white hurricane lamps, and surfside railing"
     },
     {
       "id": "on_the_rocks",
@@ -179,7 +191,9 @@
       "geo_source_url": "https://www.crexi.com/lease/properties/1014665/hawaii-oihana-center",
       "geo_source_note": "building-level coordinate for 75-5742 Kuakini Hwy",
       "geo_confidence": "high",
-      "geo_verified_at": "2026-10-01"
+      "geo_verified_at": "2026-10-01",
+      "visual_profile": "white_nene_coffee_roastery",
+      "visual_evidence": "Plantation coffee roastery storefront, espresso machines, outdoor athlete patio with benches and bike racks"
     },
     {
       "id": "kona_hospital",

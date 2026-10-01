@@ -221,6 +221,11 @@ jobs:
           await shot('10_south_kona', 'southkona');
           await shot('13_kona_airport', 'airport');
           await shot('14_airport_stores', 'airport_stores');
+          await shot('15_alii_finish_chute', 'finish_chute');
+          await shot('16_kona_inn_village', 'kona_inn');
+          await shot('17_huggos_waterfront', 'huggos');
+          await shot('18_palani_climb', 'palani_climb');
+          await shot('19_old_kona_airport', 'old_airport');
 
           const diagnostic = await page.evaluate(() => {
             const z = window.__kona.worldZones;

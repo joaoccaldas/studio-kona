@@ -639,6 +639,217 @@
         "location": "persistent",
         "hours": "volatile_recheck"
       }
+    },
+    {
+      "id": "white_nene",
+      "name": "White Nene Coffee Roasters - Downtown Kona",
+      "category": "athlete_cafe",
+      "address": "75-5744 Ali\u2018i Dr, Kailua-Kona, HI 96740",
+      "phone": "+1 808-329-1988",
+      "website": "https://whitenenecoffee.com/",
+      "hours": {
+        "mon": "06:00-16:00",
+        "tue": "06:00-16:00",
+        "wed": "06:00-16:00",
+        "thu": "06:00-16:00",
+        "fri": "06:00-16:00",
+        "sat": "06:00-16:00",
+        "sun": "06:00-16:00"
+      },
+      "hours_note": "Early morning opening popular for pre-swim pier training.",
+      "services": [
+        "100% kona coffee",
+        "espresso bar",
+        "cold brew",
+        "athlete breakfast",
+        "outdoor bike rack"
+      ],
+      "athlete_relevance": [
+        "swim",
+        "bike",
+        "run",
+        "nutrition",
+        "race_week"
+      ],
+      "race_week_note": "Top morning espresso and pre-swim fuel stop on Ali\u2018i Drive before practice swims at Kailua Pier.",
+      "render": {
+        "tier": "hero",
+        "recipe": "cafe",
+        "place_id": "white_nene"
+      },
+      "directions_query": "White Nene Coffee Roasters, 75-5744 Ali\u2018i Dr, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://whitenenecoffee.com/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "white_nene",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck",
+        "website": "volatile_recheck",
+        "phone": "volatile_recheck"
+      }
+    },
+    {
+      "id": "huggo",
+      "name": "Huggo\u2019s Oceanfront Dining",
+      "category": "athlete_dining",
+      "address": "75-5828 Kahakai Rd, Kailua-Kona, HI 96740",
+      "phone": "+1 808-329-1493",
+      "website": "https://huggos.com/",
+      "hours": {
+        "mon": "17:00-21:00",
+        "tue": "17:00-21:00",
+        "wed": "17:00-21:00",
+        "thu": "17:00-21:00",
+        "fri": "17:00-21:00",
+        "sat": "17:00-21:00",
+        "sun": "17:00-21:00"
+      },
+      "hours_note": "Dinner service over the surf; reservations strongly recommended race week.",
+      "services": [
+        "oceanfront dining",
+        "fresh hawaiian catch",
+        "post-race celebration",
+        "sunset dinner"
+      ],
+      "athlete_relevance": [
+        "nutrition",
+        "race_week",
+        "celebration"
+      ],
+      "race_week_note": "Iconic Kona waterfront institution for athlete carbo-loading dinners and post-race celebrations directly over the surf.",
+      "render": {
+        "tier": "hero",
+        "recipe": "restaurant",
+        "place_id": "huggo"
+      },
+      "directions_query": "Huggos, 75-5828 Kahakai Rd, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://huggos.com/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "huggo",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck",
+        "website": "volatile_recheck",
+        "phone": "volatile_recheck"
+      }
+    },
+    {
+      "id": "safeway_kona",
+      "name": "Safeway - Kona",
+      "category": "athlete_grocery",
+      "address": "75-1027 Henry St, Kailua-Kona, HI 96740",
+      "phone": "+1 808-329-2207",
+      "website": "https://www.safeway.com/",
+      "hours": {
+        "mon": "06:00-23:00",
+        "tue": "06:00-23:00",
+        "wed": "06:00-23:00",
+        "thu": "06:00-23:00",
+        "fri": "06:00-23:00",
+        "sat": "06:00-23:00",
+        "sun": "06:00-23:00"
+      },
+      "hours_note": "Open 6am to 11pm daily during race week.",
+      "services": [
+        "grocery",
+        "fresh produce",
+        "bakery",
+        "pharmacy",
+        "sports hydration",
+        "ice"
+      ],
+      "athlete_relevance": [
+        "nutrition",
+        "hydration",
+        "race_week"
+      ],
+      "race_week_note": "Large supermarket on Henry St for race week hydration, bottled water cases, fresh fruits, and electrolyte fueling supplies.",
+      "render": {
+        "tier": "hero",
+        "recipe": "grocery",
+        "place_id": "safeway_kona"
+      },
+      "directions_query": "Safeway, 75-1027 Henry St, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://www.safeway.com/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "safeway_kona",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck",
+        "website": "volatile_recheck",
+        "phone": "volatile_recheck"
+      }
+    },
+    {
+      "id": "boss_frogs_kona",
+      "name": "Boss Frog\u2019s Snorkel, Bike & Beach Rentals",
+      "category": "bike_rental",
+      "address": "75-5660 Palani Rd, Kailua-Kona, HI 96740",
+      "phone": "+1 808-331-1555",
+      "website": "https://bossfrog.com/",
+      "hours": {
+        "mon": "08:00-18:00",
+        "tue": "08:00-18:00",
+        "wed": "08:00-18:00",
+        "thu": "08:00-18:00",
+        "fri": "08:00-18:00",
+        "sat": "08:00-18:00",
+        "sun": "08:00-18:00"
+      },
+      "hours_note": "Open 7 days a week.",
+      "services": [
+        "road bike rentals",
+        "beach cruiser rentals",
+        "swim masks & snorkels",
+        "fins",
+        "wetsuit hire"
+      ],
+      "athlete_relevance": [
+        "swim",
+        "bike",
+        "rental",
+        "race_week"
+      ],
+      "race_week_note": "Convenient Palani Road rental hub for support crew cruisers, practice swim gear, and training equipment.",
+      "render": {
+        "tier": "hero",
+        "recipe": "bike_rental",
+        "place_id": "boss_frogs_kona"
+      },
+      "directions_query": "Boss Frogs, 75-5660 Palani Rd, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://bossfrog.com/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "boss_frogs_kona",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck",
+        "website": "volatile_recheck",
+        "phone": "volatile_recheck"
+      }
     }
   ]
 }
