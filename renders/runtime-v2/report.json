@@ -1,14 +1,14 @@
 {
-  "capturedAt": "2026-10-01T10:13:51.268Z",
+  "capturedAt": "2026-10-01T10:28:07.013Z",
   "url": "https://joaoccaldas.github.io/studio-kona/preview-v2/",
   "stateBase": {
     "sceneObjects": 6,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790848847589",
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790849928704",
     "ready": true,
     "timings": {
       "bootStartedAt": 0,
-      "baseReadyMs": 1971.5999999999913,
+      "baseReadyMs": 1209.4000000000233,
       "detailsReadyMs": null,
       "coreReadyMs": null,
       "tilesReadyMs": null
@@ -21,16 +21,16 @@
     "islandCoverage": true,
     "detailsReady": true,
     "coreReady": true,
-    "tilesReady": true,
+    "tilesReady": false,
     "timings": {
       "bootStartedAt": 0,
-      "baseReadyMs": 1971.5999999999913,
-      "detailsReadyMs": 38703.29999999999,
-      "coreReadyMs": 23666.899999999994,
-      "tilesReadyMs": 38699
+      "baseReadyMs": 1209.4000000000233,
+      "detailsReadyMs": 25417.599999999977,
+      "coreReadyMs": 22957,
+      "tilesReadyMs": null
     },
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790848847589"
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790849928704"
   },
   "state": {
     "sceneObjects": 13,
@@ -41,7 +41,7 @@
     "coreReady": true,
     "tilesReady": true,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790848847589"
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790849928704"
   },
   "diagnostic": {
     "zones": [
@@ -53,7 +53,7 @@
       {
         "id": "airport",
         "lod": "high",
-        "visible": false
+        "visible": true
       },
       {
         "id": "nelha",
@@ -108,7 +108,7 @@
       {
         "id": "keauhou",
         "lod": "high",
-        "visible": true
+        "visible": false
       },
       {
         "id": "puuhonua",
@@ -188,7 +188,7 @@
       {
         "id": "kahaluu",
         "lod": "high",
-        "visible": true
+        "visible": false
       },
       {
         "id": "south_kona_slope",
@@ -234,11 +234,11 @@
       "coarse": false
     },
     "03_energy_lab": {
-      "drawCalls": 131,
-      "triangles": 1269648,
+      "drawCalls": 106,
+      "triangles": 1278200,
       "lines": 0,
       "points": 0,
-      "geometries": 644,
+      "geometries": 619,
       "textures": 53,
       "dpr": 0.88,
       "coarse": false
@@ -248,7 +248,7 @@
       "triangles": 2381296,
       "lines": 0,
       "points": 0,
-      "geometries": 745,
+      "geometries": 720,
       "textures": 53,
       "dpr": 0.88,
       "coarse": false
@@ -258,7 +258,7 @@
       "triangles": 1229520,
       "lines": 0,
       "points": 0,
-      "geometries": 836,
+      "geometries": 811,
       "textures": 53,
       "dpr": 0.88,
       "coarse": false
@@ -268,7 +268,7 @@
       "triangles": 1248014,
       "lines": 0,
       "points": 0,
-      "geometries": 869,
+      "geometries": 844,
       "textures": 53,
       "dpr": 0.76,
       "coarse": false
@@ -278,7 +278,7 @@
       "triangles": 2279702,
       "lines": 0,
       "points": 0,
-      "geometries": 967,
+      "geometries": 942,
       "textures": 53,
       "dpr": 0.76,
       "coarse": false
@@ -288,47 +288,47 @@
       "triangles": 2194304,
       "lines": 0,
       "points": 0,
-      "geometries": 1120,
+      "geometries": 1095,
       "textures": 53,
       "dpr": 0.76,
       "coarse": false
     },
     "09_kahaluu": {
-      "drawCalls": 83,
-      "triangles": 1399906,
+      "drawCalls": 91,
+      "triangles": 1413634,
       "lines": 0,
       "points": 0,
-      "geometries": 1162,
+      "geometries": 1137,
       "textures": 53,
       "dpr": 0.76,
       "coarse": false
     },
     "10_south_kona": {
-      "drawCalls": 55,
-      "triangles": 1245324,
+      "drawCalls": 37,
+      "triangles": 1213660,
       "lines": 0,
       "points": 0,
-      "geometries": 1170,
+      "geometries": 1145,
       "textures": 53,
       "dpr": 0.72,
       "coarse": false
     },
     "13_kona_airport": {
-      "drawCalls": 2010,
-      "triangles": 3771060,
+      "drawCalls": 1338,
+      "triangles": 3776484,
       "lines": 0,
       "points": 0,
-      "geometries": 1894,
+      "geometries": 1547,
       "textures": 53,
       "dpr": 0.72,
       "coarse": false
     },
     "14_airport_stores": {
-      "drawCalls": 661,
-      "triangles": 2435768,
+      "drawCalls": 357,
+      "triangles": 2465640,
       "lines": 0,
       "points": 0,
-      "geometries": 1910,
+      "geometries": 1548,
       "textures": 53,
       "dpr": 0.72,
       "coarse": false
@@ -338,7 +338,7 @@
       "triangles": 3615182,
       "lines": 0,
       "points": 0,
-      "geometries": 2184,
+      "geometries": 1822,
       "textures": 55,
       "dpr": 0.72,
       "coarse": false
@@ -348,7 +348,7 @@
       "triangles": 3599884,
       "lines": 0,
       "points": 0,
-      "geometries": 2201,
+      "geometries": 1839,
       "textures": 57,
       "dpr": 0.72,
       "coarse": false
@@ -358,7 +358,7 @@
       "triangles": 3601708,
       "lines": 0,
       "points": 0,
-      "geometries": 2203,
+      "geometries": 1841,
       "textures": 58,
       "dpr": 0.72,
       "coarse": false
@@ -368,7 +368,7 @@
       "triangles": 3596202,
       "lines": 0,
       "points": 0,
-      "geometries": 2215,
+      "geometries": 1853,
       "textures": 60,
       "dpr": 0.72,
       "coarse": false
@@ -378,18 +378,28 @@
       "triangles": 3080362,
       "lines": 0,
       "points": 0,
-      "geometries": 2257,
+      "geometries": 1895,
       "textures": 62,
+      "dpr": 0.72,
+      "coarse": false
+    },
+    "20_airport_windsock": {
+      "drawCalls": 968,
+      "triangles": 2481768,
+      "lines": 0,
+      "points": 0,
+      "geometries": 1913,
+      "textures": 55,
       "dpr": 0.72,
       "coarse": false
     }
   },
   "mobileEvidence": {
-    "readyMs": 56847,
-    "detailsReadyMs": 160103,
-    "waikoloaSettleMs": 35949,
-    "fpsSampleMs": 15769,
-    "totalEvidenceMs": 248775,
+    "readyMs": 27848,
+    "detailsReadyMs": 86887,
+    "waikoloaSettleMs": 20554,
+    "fpsSampleMs": 11265,
+    "totalEvidenceMs": 142223,
     "islandStats": {
       "builtZones": [],
       "builtPlaces": [],
@@ -399,8 +409,8 @@
       "triangles": 934302
     },
     "perf": {
-      "sampledFps": 0.2537137347930332,
-      "sampledFrames": 2,
+      "sampledFps": 0.4444576135589191,
+      "sampledFrames": 3,
       "drawCalls": 55,
       "triangles": 340758,
       "geometries": 152,
@@ -415,10 +425,10 @@
       "tilesReady": true,
       "timings": {
         "bootStartedAt": 0,
-        "baseReadyMs": 48765.59999999998,
-        "detailsReadyMs": 155721.8999999999,
-        "coreReadyMs": 96329.3999999999,
-        "tilesReadyMs": 155715.29999999993
+        "baseReadyMs": 23306.199999999953,
+        "detailsReadyMs": 84394,
+        "coreReadyMs": 54631.30000000005,
+        "tilesReadyMs": 84384.69999999995
       }
     },
     "consoleErrors": [],
