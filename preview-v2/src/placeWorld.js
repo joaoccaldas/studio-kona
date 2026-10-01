@@ -16,6 +16,7 @@ export class PlaceWorld {
     this.root=new THREE.Group(); this.root.name='KONA_PLACEWORLD_V2'; scene.add(this.root);
     this.state=loadState();
     this.places=[]; this.t=0; this.current=null;
+    this.serviceByPlace=new Map(); this.serviceCount=0;
     this.shared=this.makeShared();
   }
   makeShared(){
@@ -36,6 +37,15 @@ export class PlaceWorld {
       if(!r.ok) throw new Error('places_v2.json '+r.status);
       return r.json();
     });
+    let serviceCatalog={records:[]};
+    try {
+      const sr=await fetch(this.base+'athlete_services_v1.json');
+      if(sr.ok) serviceCatalog=await sr.json();
+    } catch {}
+    for(const s of serviceCatalog.records||[]) {
+      if(s?.place_id) this.serviceByPlace.set(s.place_id,s);
+    }
+    this.serviceCount=this.serviceByPlace.size;
     const items=cfg.places||[];
     this.sourceCount=items.length;
     this.geocodedCount=items.filter(p=>typeof p.lat==='number'&&typeof p.lon==='number').length;
@@ -44,11 +54,12 @@ export class PlaceWorld {
       if(typeof p.lat!=='number'||typeof p.lon!=='number') continue;
       const [x,y]=this.toLocal(p.lat,p.lon);
       const group=new THREE.Group(); group.name='place_'+p.id; group.visible=false;
-      group.position.copy(this.W(x,y,0)); group.userData.place=p; this.root.add(group);
+      const service=this.serviceByPlace.get(p.id)||null;
+      group.position.copy(this.W(x,y,0)); group.userData.place=p; group.userData.service=service; this.root.add(group);
       const semanticOnly=Math.hypot(x,y)<3500;
       group.userData.semanticOnly=semanticOnly;
       if(!semanticOnly) this.buildSection(group,p,x,y);
-      this.places.push({p,group,x,y,radius:p.priority==='hero'?2400:p.priority==='high'?1500:900,semanticOnly});
+      this.places.push({p,group,x,y,radius:p.priority==='hero'?2400:p.priority==='high'?1500:900,semanticOnly,service});
     }
   }
   matFor(p){
@@ -138,5 +149,12 @@ export class PlaceWorld {
     this.current=nearest&&nd<2500?nearest:null;
   }
   find(id){return this.places.find(x=>x.p.id===id)||null;}
-  list(category=null){return this.places.filter(x=>!category||x.p.category===category).map(x=>({...x.p,state:this.getState(x.p.id)}));}
+  serviceFor(id){return this.serviceByPlace.get(id)||null;}
+  describe(id){
+    const item=this.find(id);
+    if(!item) return null;
+    return {place:item.p,state:this.getState(id),service:item.service||null,semanticOnly:item.semanticOnly};
+  }
+  currentSelection(){return this.current?this.describe(this.current.p.id):null;}
+  list(category=null){return this.places.filter(x=>!category||x.p.category===category).map(x=>({...x.p,state:this.getState(x.p.id),service:this.serviceFor(x.p.id)}));}
 }
