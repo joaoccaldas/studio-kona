@@ -927,33 +927,87 @@ export class WorldZoneStreamer {
     const base = Math.max(0, this.heightAt(cx, cy));
     const wallMat = this.shared.lava;
     const woodMat = this.shared.wood;
-    // Great Wall proxy: long basalt mass with a short return. Evidence tag keeps this replaceable.
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(155, 5.5, 7), wallMat);
-    wall.position.set(0, base + 2.75, 15); wall.rotation.y = -.18;
-    wall.name = 'puuhonua_great_wall_proxy'; wall.userData.evidence = 'P silhouette / I dimensions';
-    g.add(wall);
-    const ret = new THREE.Mesh(new THREE.BoxGeometry(58, 4.5, 6), wallMat);
-    ret.position.set(-68, base + 2.25, -9); ret.rotation.y = 1.25; g.add(ret);
-    // Compact hale cluster, deliberately low-poly.
-    for (let i = 0; i < 5; i++) {
-      const house = new THREE.Mesh(new THREE.BoxGeometry(10 + i % 2 * 4, 4.5, 7), woodMat);
-      house.position.set(-35 + i * 18, base + 2.25, -28 - (i % 2) * 10); g.add(house);
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(8, 3.8, 4), this.shared.cinderMat);
-      roof.rotation.y = Math.PI / 4; roof.position.copy(house.position); roof.position.y += 4.2; roof.scale.z=.65; g.add(roof);
+    const thatch = this.shared.dryGrass;
+
+    // Great Wall: stepped basalt courses instead of one smooth slab.
+    for(let layer=0;layer<3;layer++){
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(156-layer*3, 1.9, 7.5-layer*.4), wallMat);
+      wall.position.set(0, base + 1.0 + layer*1.75, 15);
+      wall.rotation.y = -.18;
+      wall.name = 'puuhonua_great_wall_course_'+layer;
+      wall.userData.evidence = 'P historic wall form / I simplified dimensions';
+      g.add(wall);
+    }
+    const ret = new THREE.Mesh(new THREE.BoxGeometry(60, 4.8, 6.2), wallMat);
+    ret.position.set(-68, base + 2.4, -9); ret.rotation.y = 1.25; g.add(ret);
+
+    // Hale cluster with pitched thatch roofs and shaded lanais.
+    const hale=[[-38,-30,13,8],[-18,-42,11,7],[7,-31,14,8],[31,-44,12,7],[52,-29,13,8]];
+    hale.forEach((h,i)=>{
+      const [x,zp,w,d]=h;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,3.4,d),woodMat);
+      body.position.set(x,base+1.7,zp); g.add(body);
+
+      const roof=new THREE.Mesh(new THREE.CylinderGeometry(Math.max(w,d)*.58,Math.max(w,d)*.72,3.4,4),thatch);
+      roof.rotation.y=Math.PI/4;
+      roof.scale.z=.62;
+      roof.position.set(x,base+4.8,zp);
+      g.add(roof);
+
+      const lanai=new THREE.Mesh(new THREE.BoxGeometry(w*.8,.18,2.4),woodMat);
+      lanai.position.set(x,base+.7,zp-d*.68);
+      g.add(lanai);
+    });
+
+    // Coastal fishpond / royal-ground water cue.
+    const pondMat=new THREE.MeshPhysicalMaterial({color:0x467b7f,roughness:.28,transparent:true,opacity:.72});
+    const pond=new THREE.Mesh(new THREE.CircleGeometry(74,36),pondMat);
+    pond.rotation.x=-Math.PI/2; pond.scale.set(1.5,1,.72);
+    pond.position.set(92,base+.15,-72); g.add(pond);
+
+    // Coconut / coastal planting.
+    const trees=this.coarse?10:20;
+    for(let i=0;i<trees;i++){
+      const a=i*2.399, rr=95+(i%5)*22;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.18,.28,6.8,7),woodMat);
+      trunk.position.set(58+Math.cos(a)*rr,base+3.4,-35+Math.sin(a)*rr*.7);
+      trunk.rotation.z=(i%2?-.06:.05); g.add(trunk);
+      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.4,1),this.shared.pasture);
+      crown.scale.set(2.2,1.2,2.0); crown.position.copy(trunk.position); crown.position.y+=5.1;
+      g.add(crown);
     }
   }
 
   addPuukohola(g, z, cx, cy) {
     const base = Math.max(0, this.heightAt(cx, cy));
     const stone = this.shared.lava;
-    const levels = [
-      [0,0,115,70,6], [0,2,92,54,5], [4,5,68,38,4]
-    ];
+    const levels = [[0,0,118,72,5.5],[1,1,96,58,4.8],[4,4,72,42,4.0]];
     levels.forEach(([x,zp,w,d,h],i)=>{
       const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),stone);
-      m.position.set(x,base+h/2+i*4,zp); m.name='puukohola_terrace_'+i;
-      m.userData.evidence='P stepped-heiau form / I dimensions'; g.add(m);
+      m.position.set(x,base+h/2+i*4.2,zp);
+      m.name='puukohola_terrace_'+i;
+      m.userData.evidence='P stepped-heiau form / I simplified dimensions';
+      g.add(m);
+      // Slightly irregular basalt cap course.
+      for(let k=0;k<Math.max(4,10-i*2);k++){
+        const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),stone);
+        rock.scale.set(3+(k%3),1.2+(k%2)*.5,2.4+(k%4)*.4);
+        rock.position.set(x-w*.38+k*(w*.76/Math.max(1,(9-i*2))),base+i*4.2+h+.8,zp-d*.38+(k%2)*d*.75);
+        rock.rotation.y=k*.37;
+        g.add(rock);
+      }
     });
+
+    // Dry coastal trail and scrub context around the heiau.
+    const trail=new THREE.Mesh(new THREE.BoxGeometry(330,.14,3.2),this.shared.drySoil);
+    trail.position.set(-40,base+.18,95); trail.rotation.y=.28; g.add(trail);
+
+    for(let i=0;i<(this.coarse?12:26);i++){
+      const a=i*2.17, rr=120+(i%6)*45;
+      const shrub=new THREE.Mesh(new THREE.ConeGeometry(1.4+(i%3)*.3,2.5+(i%4)*.35,7),this.shared.dryGrass);
+      shrub.position.set(Math.cos(a)*rr,base+1.2,Math.sin(a)*rr*.7);
+      shrub.rotation.z=(i%2?-.04:.03); g.add(shrub);
+    }
   }
 
   addKaloko(g, z, cx, cy) {
