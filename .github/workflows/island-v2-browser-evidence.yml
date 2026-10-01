@@ -270,6 +270,7 @@ jobs:
           await mobile.screenshot({path:'renders/runtime-v2/11_mobile_island.png'});
           const mobileIslandStats=await mobile.evaluate(() => ({
             builtZones:window.__kona.worldZones?.zones?.filter(z=>z.built).map(z=>z.cfg.id)||[],
+            builtPlaces:window.__kona.placeWorld?.places?.filter(p=>p.built).map(p=>p.p.id)||[],
             geometries:window.__kona.renderer?.info.memory.geometries||0,
             textures:window.__kona.renderer?.info.memory.textures||0,
             drawCalls:window.__kona.renderer?.info.render.calls||0,
