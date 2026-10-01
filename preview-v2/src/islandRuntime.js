@@ -16,6 +16,7 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 const canvas = document.querySelector('#c');
+const bootStartedAt=performance.now();
 const A = window.__KONA_ASSET_BASE || 'assets/';
 const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y);
 const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
@@ -271,12 +272,14 @@ async function initWorldLayers(){
   await coverageDebug.init().catch(()=>{coverageDebug=null;});
   if(new URLSearchParams(location.search).get('coverage')==='1') coverageDebug?.setVisible(true);
   window.__kona.detailsReady=true;
+  window.__kona.timings.detailsReadyMs=performance.now()-bootStartedAt;
 }
 
 async function initTileStreamer(protos){
   streamer=new TileStreamer({scene,W,base:A+'tiles/',radius:coarse?850:1500,palm:protos.palm,onGround:()=>{}});
   await streamer.init().catch(e=>{console.warn('TileStreamer',e);streamer=null;});
   window.__kona.tilesReady=streamer?true:'degraded';
+  window.__kona.timings.tilesReadyMs=performance.now()-bootStartedAt;
 }
 
 function wholeIslandView(){
@@ -360,6 +363,7 @@ window.__kona={
   detailsReady:false,
   coreReady:false,
   tilesReady:false,
+  timings:{bootStartedAt:0,baseReadyMs:null,detailsReadyMs:null,coreReadyMs:null,tilesReadyMs:null},
   scene,camera,renderer,THREE,
   get dpr(){ return dpr; },
   coarse,
@@ -377,6 +381,7 @@ loadBaseIsland().then(()=>{
   controls.enabled=true;
   controls.update();
   window.__kona.ready=true;
+  window.__kona.timings.baseReadyMs=performance.now()-bootStartedAt;
   document.documentElement.dataset.worldReady='true';
   document.querySelector('#loading')?.remove();
 
@@ -389,6 +394,7 @@ loadBaseIsland().then(()=>{
   // Stream the high-detail Kailua core independently. Tile streaming depends on its palm prototype.
   loadKonaCore().then((protos)=>{
     window.__kona.coreReady=true;
+    window.__kona.timings.coreReadyMs=performance.now()-bootStartedAt;
     initTileStreamer(protos).catch(e=>{
       console.warn('KONA tile streamer degraded',e);
       window.__kona.tilesReady='degraded';
