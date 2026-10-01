@@ -129,12 +129,26 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
     }
   }
 
-  // Dashed Centerline along entire 3.3 km runway
+  // Dashed Centerline along entire 3.3 km runway (InstancedMesh for draw call reduction)
   const step = coarse ? 140 : 80;
+  const clDashes = [];
   for (let s = -1500; s <= 1500; s += step) {
-    const cp = rwPos(0, s);
-    box(runwayWhite, `koa_centerline_${s}`, cp[0], cp[1], cp[2], 1.8, 0.05, 32, 0, rwHeading, 0);
+    clDashes.push(s);
   }
+  const clGeo = new THREE.BoxGeometry(1.8, 0.05, 32);
+  const clMesh = new THREE.InstancedMesh(clGeo, runwayWhite, clDashes.length);
+  clMesh.name = 'koa_runway_centerline';
+  const dummy = new THREE.Object3D();
+  clDashes.forEach((s, idx) => {
+    const cp = rwPos(0, s);
+    dummy.position.set(cp[0], cp[1], cp[2]);
+    dummy.rotation.set(0, rwHeading, 0);
+    dummy.scale.set(1, 1, 1);
+    dummy.updateMatrix();
+    clMesh.setMatrixAt(idx, dummy.matrix);
+  });
+  clMesh.instanceMatrix.needsUpdate = true;
+  g.add(clMesh);
 
   // Parallel Taxiway Alpha (22m wide, located 130m east of runway)
   const twX = rwX + 130 * rwCos, twZ = rwZ + 130 * rwSin;
@@ -147,11 +161,51 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
     box(taxiYellow, `koa_exit_line_${exitDist}`, midPos[0], base + 0.23, midPos[2], 108, 0.04, 0.6, 0, rwHeading + 0.55, 0);
   }
 
-  // Windsock (segmented orange/white conical wind cone in segmented circle)
+  // Windsock Station (FAA standard segmented circle + 360° rotating wind cone tracking live METAR wind vector)
   const wsPos = rwPos(95, 300);
   cyl(concrete, 'koa_windsock_base', wsPos[0], base + 0.3, wsPos[2], 9, 9, 0.25, 16);
+
+  // Segmented white marker circle around wind cone station
+  for (let ci = 0; ci < 12; ci++) {
+    const ca = (ci / 12) * Math.PI * 2;
+    box(runwayWhite, `koa_windsock_seg_${ci}`, wsPos[0] + Math.cos(ca) * 11.5, base + 0.18, wsPos[2] + Math.sin(ca) * 11.5, 1.2, 0.08, 3.2, 0, -ca, 0);
+  }
+
+  // Steel mast & obstruction beacon
   cyl(paintedSteel, 'koa_windsock_pole', wsPos[0], base + 4.5, wsPos[2], 0.12, 0.14, 8.5, 8);
-  cyl(redHazard, 'koa_windsock_cone', wsPos[0] + 1.2, base + 8.2, wsPos[2], 0.75, 0.28, 3.8, 10, 0, 0, Math.PI / 2);
+  const beacon = new THREE.Mesh(new THREE.DodecahedronGeometry(0.18, 1), redHazard);
+  beacon.position.set(wsPos[0], base + 8.95, wsPos[2]);
+  g.add(beacon);
+
+  // Rotating Swivel Collar (Rotates freely with live wind direction)
+  const windsockSwivel = new THREE.Group();
+  windsockSwivel.name = 'koa_windsock_swivel';
+  windsockSwivel.position.set(wsPos[0], base + 8.55, wsPos[2]);
+
+  // Throat mounting hoop & pivot bearing
+  const throatHoop = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.04, 8, 16), paintedSteel);
+  throatHoop.rotation.y = Math.PI / 2;
+  windsockSwivel.add(throatHoop);
+
+  // Articulated Cone Arm (Tilts with wind speed / droop)
+  const coneArm = new THREE.Group();
+  coneArm.name = 'koa_windsock_cone_arm';
+
+  // 5 alternating segments: International Orange & FAA White
+  const segMats = [redHazard, runwayWhite, redHazard, runwayWhite, redHazard];
+  const segLen = 0.72;
+  for (let si = 0; si < 5; si++) {
+    const r1 = 0.72 - si * 0.088;
+    const r2 = 0.72 - (si + 1) * 0.088;
+    const segGeo = new THREE.CylinderGeometry(r2, r1, segLen, 12, 1, true);
+    const seg = new THREE.Mesh(segGeo, segMats[si]);
+    seg.rotation.z = Math.PI / 2;
+    seg.position.x = (si + 0.5) * segLen;
+    coneArm.add(seg);
+  }
+  coneArm.rotation.z = -0.6;
+  windsockSwivel.add(coneArm);
+  g.add(windsockSwivel);
 
   // =========================================================================
   // 2. COMMERCIAL PASSENGER APRON (RAMP) & GATE STANDS 1 - 10
@@ -339,6 +393,9 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
   // 4. POLYNESIAN OPEN-AIR TERMINAL PODS (GATES 1-5 & GATES 6-10)
   // Authentic timber-post & lava-column open-air pavilions with steep hipped roofs
   // =========================================================================
+  const pavilionPillars = [];
+  const pavilionPosts = [];
+
   function buildOpenAirPavilion({ id, name, x, z, w, d, h, roofH, isSouth = true }) {
     const pGrp = new THREE.Group();
     pGrp.name = id;
@@ -352,8 +409,8 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
         if (ix === 0 || ix === colsX || iz === 0 || iz === colsZ) {
           const cx_ = x - w * 0.5 + ix * (w / colsX);
           const cz_ = z - d * 0.5 + iz * (d / colsZ);
-          cyl(lavaRock, `${id}_lava_pillar_${ix}_${iz}`, cx_, base + 1.1, cz_, 0.55, 0.65, 1.6, 8);
-          cyl(polynesianWood, `${id}_timber_post_${ix}_${iz}`, cx_, base + 2.8 + h * 0.4, cz_, 0.32, 0.32, h - 0.5, 8);
+          pavilionPillars.push([cx_, base + 1.1, cz_]);
+          pavilionPosts.push([cx_, base + 2.8 + h * 0.4, cz_, h - 0.5]);
         }
       }
     }
@@ -381,6 +438,36 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
   buildOpenAirPavilion({ id: 'koa_gate_6_7', name: 'Gates 6 & 7', x: -18, z: 645, w: 24, d: 40, h: 4.5, roofH: 5.2, isSouth: false });
   buildOpenAirPavilion({ id: 'koa_gate_8_9', name: 'Gates 8 & 9', x: -18, z: 705, w: 24, d: 42, h: 4.5, roofH: 5.4, isSouth: false });
   buildOpenAirPavilion({ id: 'koa_gate_10', name: 'Gate 10', x: -18, z: 760, w: 22, d: 36, h: 4.5, roofH: 5.0, isSouth: false });
+
+  // Batch all pavilion perimeter lava pillars & timber posts into InstancedMeshes (removes 238 draw calls)
+  if (pavilionPillars.length) {
+    const pilGeo = new THREE.CylinderGeometry(0.55, 0.65, 1.6, 8);
+    const pilMesh = new THREE.InstancedMesh(pilGeo, lavaRock, pavilionPillars.length);
+    pilMesh.name = 'koa_pavilion_pillars_instanced';
+    const dPil = new THREE.Object3D();
+    pavilionPillars.forEach((p, idx) => {
+      dPil.position.set(p[0], p[1], p[2]);
+      dPil.updateMatrix();
+      pilMesh.setMatrixAt(idx, dPil.matrix);
+    });
+    pilMesh.instanceMatrix.needsUpdate = true;
+    g.add(pilMesh);
+  }
+
+  if (pavilionPosts.length) {
+    const postGeo = new THREE.CylinderGeometry(0.32, 0.32, 1.0, 8);
+    const postMesh = new THREE.InstancedMesh(postGeo, polynesianWood, pavilionPosts.length);
+    postMesh.name = 'koa_pavilion_posts_instanced';
+    const dPost = new THREE.Object3D();
+    pavilionPosts.forEach((p, idx) => {
+      dPost.position.set(p[0], p[1], p[2]);
+      dPost.scale.set(1, p[3], 1);
+      dPost.updateMatrix();
+      postMesh.setMatrixAt(idx, dPost.matrix);
+    });
+    postMesh.instanceMatrix.needsUpdate = true;
+    g.add(postMesh);
+  }
 
   // Connecting Open-Air Covered Walkways between Pavilions
   for (const walkZ of [458, 512, 675, 732]) {
@@ -549,6 +636,7 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
   // Centered at x = 220, z = 630
   // =========================================================================
   const rentX = 220, rentZ = 630;
+  const rentalWheels = [];
   box(asphalt, 'koa_rental_car_lot', rentX, base + 0.12, rentZ, 160, 0.22, 190);
   box(concrete, 'koa_rental_office', rentX - 45, base + 2.2, rentZ, 18, 4.2, 54);
   hipRoof(thatchRoof, 'koa_rental_roof', rentX - 45, base + 4.4, rentZ, 21, 58, 3.6);
@@ -565,12 +653,25 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
     box(glass, `koa_rental_car_cabin_${ci}`, cX - 0.3, base + 2.1, cZ, 2.8, 0.85, 2.0);
     for (const wx of [-1.5, 1.5]) {
       for (const wz of [-1.15, 1.15]) {
-        const wt = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.32, 10), rubberTire);
-        wt.rotation.x = Math.PI / 2;
-        wt.position.set(cX + wx, base + 0.42, cZ + wz);
-        g.add(wt);
+        rentalWheels.push([cX + wx, base + 0.42, cZ + wz]);
       }
     }
+  }
+
+  if (rentalWheels.length) {
+    const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.32, 10);
+    const wheelMesh = new THREE.InstancedMesh(wheelGeo, rubberTire, rentalWheels.length);
+    wheelMesh.name = 'koa_rental_car_wheels_instanced';
+    const dWheel = new THREE.Object3D();
+    rentalWheels.forEach((w, idx) => {
+      dWheel.position.set(w[0], w[1], w[2]);
+      dWheel.rotation.set(Math.PI / 2, 0, 0);
+      dWheel.scale.set(1, 1, 1);
+      dWheel.updateMatrix();
+      wheelMesh.setMatrixAt(idx, dWheel.matrix);
+    });
+    wheelMesh.instanceMatrix.needsUpdate = true;
+    g.add(wheelMesh);
   }
 
   const shutX = curbX + 18, shutZ = 580;
@@ -582,22 +683,41 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
   // 10. TROPICAL GARDEN PALMS & SURROUNDING VOLCANIC LAVA OASIS
   // =========================================================================
   const palmCount = coarse ? 14 : 32;
+  const palmTrunkGeo = new THREE.CylinderGeometry(0.24, 0.42, 1.0, 7);
+  const palmCrownGeo = new THREE.DodecahedronGeometry(2.4, 1);
+  const palmTrunksMesh = new THREE.InstancedMesh(palmTrunkGeo, polynesianWood, palmCount);
+  palmTrunksMesh.name = 'koa_palms_trunks_instanced';
+  const palmCrownsMesh = new THREE.InstancedMesh(palmCrownGeo, palmGreen, palmCount);
+  palmCrownsMesh.name = 'koa_palms_crowns_instanced';
+
+  const dTrunk = new THREE.Object3D();
+  const dCrown = new THREE.Object3D();
+
   for (let pi = 0; pi < palmCount; pi++) {
     const angle = (pi / palmCount) * Math.PI * 2;
     const pDist = 12 + (pi % 5) * 6;
     const px = plazaCenterX + Math.cos(angle) * pDist;
     const pz = plazaCenterZ + Math.sin(angle) * pDist;
     const trunkH = 8.5 + (pi % 4) * 1.5;
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.42, trunkH, 7), polynesianWood);
-    trunk.position.set(px, base + trunkH * 0.5, pz);
-    trunk.rotation.z = Math.sin(angle) * 0.12;
-    g.add(trunk);
-    const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(2.4, 1), palmGreen);
-    crown.scale.set(1.9, 0.9, 1.9);
-    crown.position.set(px + Math.sin(angle) * 0.8, base + trunkH + 0.6, pz);
-    g.add(crown);
-  }
 
+    dTrunk.position.set(px, base + trunkH * 0.5, pz);
+    dTrunk.rotation.set(0, 0, Math.sin(angle) * 0.12);
+    dTrunk.scale.set(1, trunkH, 1);
+    dTrunk.updateMatrix();
+    palmTrunksMesh.setMatrixAt(pi, dTrunk.matrix);
+
+    dCrown.position.set(px + Math.sin(angle) * 0.8, base + trunkH + 0.6, pz);
+    dCrown.rotation.set(0, 0, 0);
+    dCrown.scale.set(1.9, 0.9, 1.9);
+    dCrown.updateMatrix();
+    palmCrownsMesh.setMatrixAt(pi, dCrown.matrix);
+  }
+  palmTrunksMesh.instanceMatrix.needsUpdate = true;
+  palmCrownsMesh.instanceMatrix.needsUpdate = true;
+  g.add(palmTrunksMesh);
+  g.add(palmCrownsMesh);
+
+  const rockPositions = [];
   const rockCount = coarse ? 22 : 55;
   for (let ri = 0; ri < rockCount; ri++) {
     const rDist = 280 + (ri % 8) * 90;
@@ -607,10 +727,27 @@ export function buildKonaAirport({ group: g, z, cx, cy, shared, coarse = false, 
     // Exclude airfield, runway, commercial apron, terminal pavilions, and parking
     if (rx > -380 && rx < 340 && rz > 100 && rz < 900) continue;
     const rSize = 6 + (ri % 5) * 4;
-    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(rSize, 1), lavaRock);
-    rock.scale.set(1.3, 0.6, 1.1);
-    rock.position.set(rx, base + rSize * 0.35, rz);
-    rock.rotation.set((ri % 3) * 0.4, (ri % 7) * 0.9, (ri % 5) * 0.3);
-    g.add(rock);
+    rockPositions.push({
+      x: rx,
+      y: base + rSize * 0.35,
+      z: rz,
+      size: rSize,
+      rot: [(ri % 3) * 0.4, (ri % 7) * 0.9, (ri % 5) * 0.3]
+    });
+  }
+  if (rockPositions.length) {
+    const rockGeo = new THREE.DodecahedronGeometry(1.0, 1);
+    const rocksMesh = new THREE.InstancedMesh(rockGeo, lavaRock, rockPositions.length);
+    rocksMesh.name = 'koa_lava_rocks_instanced';
+    const dRock = new THREE.Object3D();
+    rockPositions.forEach((rp, idx) => {
+      dRock.position.set(rp.x, rp.y, rp.z);
+      dRock.rotation.set(rp.rot[0], rp.rot[1], rp.rot[2]);
+      dRock.scale.set(rp.size * 1.3, rp.size * 0.6, rp.size * 1.1);
+      dRock.updateMatrix();
+      rocksMesh.setMatrixAt(idx, dRock.matrix);
+    });
+    rocksMesh.instanceMatrix.needsUpdate = true;
+    g.add(rocksMesh);
   }
 }
