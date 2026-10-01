@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'preview-v2/**'
+      - 'web/public/assets/places_v2.json'
+      - 'web/public/assets/athlete_services_v1.json'
+      - 'web/public/assets/island_world_v2.json'
+      - 'web/public/assets/routes.json'
       - '.github/workflows/island-v2-browser-evidence.yml'
   workflow_dispatch:
 
@@ -135,6 +139,21 @@ jobs:
             url, stateBase, state, diagnostic, consoleErrors, pageErrors, requestFailures
           }, null, 2));
 
+          const serviceIntegrity = await page.evaluate(async () => {
+            const [placesRes, servicesRes] = await Promise.all([
+              fetch(window.__KONA_ASSET_BASE + 'places_v2.json'),
+              fetch(window.__KONA_ASSET_BASE + 'athlete_services_v1.json')
+            ]);
+            if (!placesRes.ok || !servicesRes.ok) {
+              return { ok:false, error:'catalog fetch failed', placeStatus:placesRes.status, serviceStatus:servicesRes.status };
+            }
+            const places = await placesRes.json();
+            const services = await servicesRes.json();
+            const ids = new Set((places.places || []).map(x => x.id));
+            const broken = (services.records || []).filter(x => !ids.has(x.place_id)).map(x => x.place_id);
+            return { ok:broken.length===0, broken, serviceCount:(services.records||[]).length, placeCount:(places.places||[]).length };
+          });
+          if (!serviceIntegrity.ok) throw new Error('Athlete service referential integrity failed: ' + JSON.stringify(serviceIntegrity));
           if (!state.worldZones || !state.placeWorld || !state.islandCoverage) {
             throw new Error('Island V2 detail systems did not initialize: ' + JSON.stringify(state));
           }
