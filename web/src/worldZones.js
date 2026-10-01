@@ -136,6 +136,7 @@ export class WorldZoneStreamer {
     }
 
     this.addRegionalLandmark(g, z, cx, cy);
+    if (z.id === 'hawi') this.addHawiTown(g, z, cx, cy);
     if (z.id === 'puuhonua') this.addPuuhonua(g, z, cx, cy);
     if (z.id === 'puukohola') this.addPuukohola(g, z, cx, cy);
     if (z.id === 'kaloko_honokohau') this.addKaloko(g, z, cx, cy);
@@ -236,6 +237,72 @@ export class WorldZoneStreamer {
     for(let i=0;i<3;i++){
       const pier=new THREE.Mesh(new THREE.BoxGeometry(280,4,28),pierMat);
       pier.position.set(-250+i*260,base+2,-720+i*80); pier.rotation.y=.15; g.add(pier);
+    }
+  }
+
+  addHawiTown(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const asphalt=this.shared.asphalt;
+    const stucco=this.shared.stucco;
+    const roof=this.shared.darkRoof;
+    const wood=this.shared.wood;
+    const green=this.shared.pasture;
+
+    // Akoni Pule Highway proxy spine through town.
+    const road=new THREE.Mesh(new THREE.BoxGeometry(520,0.25,10),asphalt);
+    road.position.set(0,base+.22,0); road.rotation.y=-.12;
+    road.name='hawi_main_street_proxy';
+    road.userData.evidence='P town street orientation / I local dimensions';
+    g.add(road);
+
+    // Low-rise storefront rhythm with restrained variation.
+    const stores=[
+      [-180,-18,36,15,6],[-120,18,28,14,5.5],[-68,-17,30,16,6],
+      [-12,17,34,14,5.8],[52,-16,38,16,6.5],[118,18,30,14,5.5],[178,-18,34,15,6]
+    ];
+    stores.forEach((s,i)=>{
+      const [x,zp,w,d,h]=s;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),i%3===0?wood:stucco);
+      body.position.set(x,base+h*.5,zp);
+      body.rotation.y=-.12;
+      body.name='hawi_storefront_'+i;
+      body.userData.evidence='procedural town massing pending measured footprint replacement';
+      g.add(body);
+
+      const rg=new THREE.CylinderGeometry(Math.max(w,d)*.56,Math.max(w,d)*.63,2.1,4);
+      const r=new THREE.Mesh(rg,roof);
+      r.rotation.y=Math.PI/4-.12;
+      r.scale.z=.58;
+      r.position.set(x,base+h+1.0,zp);
+      g.add(r);
+
+      // Covered lanai / awning gives human-scale street depth.
+      const awn=new THREE.Mesh(new THREE.BoxGeometry(w*.72,.22,3.2),roof);
+      awn.position.set(x,base+h*.62,zp-(d*.52+1.4));
+      awn.rotation.y=-.12;
+      g.add(awn);
+    });
+
+    // Utility poles along road.
+    for(let i=-5;i<=5;i++){
+      const x=i*46;
+      for(const side of [-1,1]){
+        const pole=new THREE.Mesh(new THREE.CylinderGeometry(.16,.22,8,7),wood);
+        pole.position.set(x,base+4,side*11.5);
+        pole.rotation.z=(i%2?-.012:.012);
+        g.add(pole);
+      }
+    }
+
+    // Wind-shaped roadside vegetation and pasture clumps.
+    const count=this.coarse?20:42;
+    for(let i=0;i<count;i++){
+      const a=(i*2.399)%6.283;
+      const rr=90+(i%9)*28;
+      const tree=new THREE.Mesh(new THREE.ConeGeometry(2.2+(i%3)*.4,5+(i%4),7),green);
+      tree.position.set(Math.cos(a)*rr,base+2.5,Math.sin(a)*rr*.62);
+      tree.scale.x=1.25; tree.rotation.z=(i%2?-.08:.06);
+      g.add(tree);
     }
   }
 
