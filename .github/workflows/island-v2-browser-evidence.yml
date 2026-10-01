@@ -134,7 +134,8 @@ jobs:
             sceneObjects: window.__kona.scene.children.length,
             renderer: window.__kona.THREE.REVISION,
             href: location.href,
-            ready: window.__kona.ready
+            ready: window.__kona.ready,
+            timings: window.__kona.timings
           }));
 
           const viewStats = {};
@@ -177,6 +178,7 @@ jobs:
             detailsReady: window.__kona.detailsReady,
             coreReady: window.__kona.coreReady,
             tilesReady: window.__kona.tilesReady,
+            timings: window.__kona.timings,
             renderer: window.__kona.THREE.REVISION,
             href: location.href
           }));
@@ -351,7 +353,8 @@ jobs:
               ready:window.__kona.ready,
               detailsReady:window.__kona.detailsReady,
               coreReady:window.__kona.coreReady,
-              tilesReady:window.__kona.tilesReady
+              tilesReady:window.__kona.tilesReady,
+              timings:window.__kona.timings
             })),
             consoleErrors:mobileConsoleErrors,
             pageErrors:mobilePageErrors,
