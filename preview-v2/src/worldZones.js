@@ -1201,6 +1201,27 @@ export class WorldZoneStreamer {
     this.corridor = { road, lines, rocks, samples, activation: 9000 };
   }
 
+  unloadZone(z){
+    if(!z?.built) return;
+    const sharedValues=new Set(Object.values(this.shared));
+    z.group.traverse(o=>{
+      if(o===z.group) return;
+      if(o.geometry && !sharedValues.has(o.geometry)) o.geometry.dispose?.();
+      const mats=Array.isArray(o.material)?o.material:[o.material];
+      for(const m of mats){
+        if(m && !sharedValues.has(m)){
+          if(m.map && !sharedValues.has(m.map)) m.map.dispose?.();
+          m.dispose?.();
+        }
+      }
+    });
+    z.group.clear();
+    z.built=false;
+    z.building=false;
+    const profile=regionalProfileFor(z.cfg.id);
+    this.regionalGrammarStats[z.cfg.id]={profile,accentCount:0,lazy:true};
+  }
+
   update(dt, camera) {
     this.t += dt;
     if (this.t < .45) return;
@@ -1220,6 +1241,7 @@ export class WorldZoneStreamer {
         z.building=false;
       }
       z.group.visible = shouldShow && z.built;
+      if(!shouldShow&&z.built&&d>z.activation*2.5) this.unloadZone(z);
     }
     if (this.corridor) {
       let near = false;
