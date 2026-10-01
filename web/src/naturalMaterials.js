@@ -58,8 +58,11 @@ function roughnessTexture({base=.8,variation=.16,seed=10,size=128}) {
 function material(name, opts){
   const map=canvasTexture(opts.albedo);
   const roughnessMap=roughnessTexture(opts.roughnessMap);
-  map.repeat.set(opts.repeat??3,opts.repeat??3);
-  roughnessMap.repeat.copy(map.repeat);
+  const rep=Math.min(opts.repeat??3,4);
+  map.repeat.set(rep,rep);
+  roughnessMap.repeat.set(rep,rep);
+  map.wrapS=map.wrapT=THREE.MirroredRepeatWrapping;
+  roughnessMap.wrapS=roughnessMap.wrapT=THREE.MirroredRepeatWrapping;
   const m=new THREE.MeshStandardMaterial({
     name,
     map,
