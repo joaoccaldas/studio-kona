@@ -153,11 +153,14 @@ async function loadIsland() {
     const i = new Image(); i.onload = () => resolve(i); i.onerror = reject; i.src = A + 'island_height.png';
   });
   const cv = document.createElement('canvas');
-  cv.width = img.width; cv.height = img.height;
+  // The source DEM is 2048², but the mobile terrain mesh is only 360².
+  // Downsample before getImageData to avoid processing >4M pixels on coarse devices.
+  const sampleN = coarse ? Math.min(768, img.width) : img.width;
+  cv.width = sampleN; cv.height = sampleN;
   const cx = cv.getContext('2d', { willReadFrequently: true });
-  cx.drawImage(img, 0, 0);
-  const px = cx.getImageData(0, 0, img.width, img.height).data;
-  const N = img.width, H = new Float32Array(N * N);
+  cx.drawImage(img, 0, 0, sampleN, sampleN);
+  const px = cx.getImageData(0, 0, sampleN, sampleN).data;
+  const N = sampleN, H = new Float32Array(N * N);
   for (let i = 0; i < N * N; i++) H[i] = (px[i * 4] * 256 + px[i * 4 + 1]) / 6 - 6000;
   heightAt = (x, y) => {
     const u = (x - isl.x0) / isl.size * N - .5, v = (1 - (y - isl.y0) / isl.size) * N - .5;
