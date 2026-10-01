@@ -2,6 +2,7 @@
 // Geometry is lightweight/procedural; identity and state survive unload/reload.
 import * as THREE from 'three';
 import { createNaturalMaterials } from './naturalMaterials.js';
+import { buildPlaceRecipe } from './placeRecipes.js';
 
 const KEY='kona.placeworld.v2';
 
@@ -72,59 +73,14 @@ export class PlaceWorld {
   }
   buildSection(g,p,cx,cy){
     const z=Math.max(0,this.heightAt(cx,cy));
-    const m=this.matFor(p);
-    const hero=p.priority==='hero';
-    const sx=hero?22:14, sz=hero?28:18, sy=hero?8:6;
-    const main=new THREE.Mesh(this.shared.box,m);
-    main.name=p.id+'_shell'; main.scale.set(sx,sy,sz); main.position.y=z+sy;
-    main.userData.evidence='procedural shell until OSM/official/photo-specific geometry replaces it';
-    g.add(main);
-    const roofGeo=new THREE.CylinderGeometry(Math.max(sx,sz)*.78,Math.max(sx,sz)*.88,1.4,4);
-    const roof=new THREE.Mesh(roofGeo,this.shared.roof);
-    roof.rotation.y=Math.PI/4;
-    roof.scale.set(1,.7,.72);
-    roof.name=p.id+'_roof'; roof.position.y=z+sy*2+.7; g.add(roof);
-
-    if(p.recipe==='waterfront_restaurant'){
-      const deck=new THREE.Mesh(this.shared.box,this.shared.food);
-      deck.scale.set(sx*1.25,.25,sz*.55); deck.position.set(0,z+.4,-sz*1.15); g.add(deck);
-      for(let i=-2;i<=2;i++){
-        const t=new THREE.Mesh(this.shared.cyl,this.shared.shop); t.scale.set(.9,.45,.9); t.position.set(i*4,z+1,-sz*1.2); g.add(t);
-      }
-    }
-    if(p.recipe==='running_shop'){
-      const awning=new THREE.Mesh(this.shared.box,this.shared.darkRoof||this.shared.roof);
-      awning.scale.set(sx*.9,.22,2.2); awning.position.set(0,z+sy*1.45,-sz-1.1); g.add(awning);
-      const glass=new THREE.Mesh(this.shared.box,this.shared.glass);
-      glass.scale.set(sx*.76,sy*.42,.16); glass.position.set(0,z+sy*.95,-sz-.25); g.add(glass);
-    }
-    if(p.recipe==='bike_shop'){
-      for(let i=-2;i<=2;i++){
-        const wheel=new THREE.Mesh(new THREE.TorusGeometry(1.15,.08,8,20),this.shared.service);
-        wheel.rotation.y=Math.PI/2; wheel.position.set(i*3.2,z+2.2,-sz-1.5); g.add(wheel);
-      }
-    }
-    if(p.recipe==='hospital_campus'){
-      for(let i=0;i<3;i++){
-        const wing=new THREE.Mesh(this.shared.box,this.shared.medical);
-        wing.scale.set(sx*(.7+i*.15),sy*.7,sz*.35);
-        wing.position.set((i-1)*sx*1.25,z+sy*.7,(i%2?1:-1)*sz*.9); g.add(wing);
-      }
-      const helipad=new THREE.Mesh(new THREE.CylinderGeometry(6,6,.25,32),this.shared.meeting);
-      helipad.position.set(sx*1.8,z+.4,0); g.add(helipad);
-    }
-    if(p.recipe==='park_runway'){
-      const runway=new THREE.Mesh(this.shared.box,this.shared.service);
-      runway.scale.set(12,.15,220); runway.position.y=z+.25; g.add(runway);
-    }
-    if(p.recipe==='park_campus'||p.recipe==='pavilion'){
-      for(let i=0;i<(this.coarse?8:16);i++){
-        const tree=new THREE.Mesh(this.shared.cone,this.shared.park);
-        const a=i/(this.coarse?8:16)*Math.PI*2;
-        tree.scale.set(2,5,2); tree.position.set(Math.cos(a)*35,z+5,Math.sin(a)*35); g.add(tree);
-      }
-    }
-
+    buildPlaceRecipe({
+      group:g,
+      place:p,
+      z,
+      shared:this.shared,
+      coarse:this.coarse,
+      material:this.matFor(p)
+    });
   }
   setVisited(id){
     const s=this.state[id]||(this.state[id]={});
