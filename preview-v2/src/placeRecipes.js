@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { addHeroVisualProfile } from './heroPlaceDetails.js';
 
 function addBox(g,geo,mat,name,x,y,z,sx,sy,sz,evidence='procedural approximation'){
   const m=new THREE.Mesh(geo,mat);
@@ -94,6 +95,7 @@ export function buildPlaceRecipe({group:g,place:p,z,shared,coarse=false,material
   const hero=p.priority==='hero';
   const sx=hero?22:14, sz=hero?28:18, sy=hero?8:6;
   const baseMat=material||shared.shop;
+  if(addHeroVisualProfile({group:g,place:p,z,shared})) return;
   addBox(g,shared.box,baseMat,p.id+'_shell',0,z+sy,0,sx,sy,sz,'procedural shell; identity/location verified, geometry inferred');
   addRoof(g,shared,p.id,z,sx,sy,sz);
 
