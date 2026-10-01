@@ -30,10 +30,16 @@ export class PlaceWorld {
     };
   }
   async init(){
-    let cfg;
-    try { cfg=await fetch(this.base+'place_geocodes_v2.json').then(r=>{if(!r.ok) throw Error('no cache'); return r.json();}); }
-    catch { cfg=await fetch(this.base+'places_v2.json').then(r=>r.json()); }
+    // places_v2.json is now canonical and already carries verified coordinates.
+    // Keep one source of truth and avoid probing a secondary geocode file at runtime.
+    const cfg=await fetch(this.base+'places_v2.json').then(r=>{
+      if(!r.ok) throw new Error('places_v2.json '+r.status);
+      return r.json();
+    });
     const items=cfg.places||[];
+    this.sourceCount=items.length;
+    this.geocodedCount=items.filter(p=>typeof p.lat==='number'&&typeof p.lon==='number').length;
+    this.unresolvedCount=this.sourceCount-this.geocodedCount;
     for(const p of items){
       if(typeof p.lat!=='number'||typeof p.lon!=='number') continue;
       const [x,y]=this.toLocal(p.lat,p.lon);
