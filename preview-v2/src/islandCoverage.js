@@ -43,6 +43,19 @@ export class IslandCoverage {
     const centerH=Math.max(0,this.heightAt(cx,cy));
     const biome=this.classify(cx,cy,centerH);
     const mat=(this.materials[biome]||this.materials.drySoil).clone();
+    if(mat.map){
+      mat.map=mat.map.clone();
+      mat.map.offset.set(hash2(cx*.0007,cy*.0009),hash2(cx*.0011,cy*.0005));
+      mat.map.needsUpdate=true;
+    }
+    if(mat.roughnessMap){
+      mat.roughnessMap=mat.roughnessMap.clone();
+      mat.roughnessMap.offset.set(hash2(cx*.0003,cy*.0013),hash2(cx*.0017,cy*.0004));
+      mat.roughnessMap.needsUpdate=true;
+    }
+    mat.transparent=true;
+    mat.opacity=biome==='wetForest'||biome==='pasture'?.58:.46;
+    mat.depthWrite=false;
     mat.polygonOffset=true; mat.polygonOffsetFactor=-1; mat.polygonOffsetUnits=-1;
     const mesh=new THREE.Mesh(g,mat);
     mesh.position.set(cx,.22,-cy);
