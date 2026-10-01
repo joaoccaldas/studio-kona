@@ -266,7 +266,18 @@
       "geo_source_url": "https://www.merchantcircle.com/hi-hawi/food-and-dining/restaurants/hawaiian-restaurants",
       "geo_source_note": "business listing coordinates",
       "geo_confidence": "high",
-      "geo_verified_at": "2026-10-01"
+      "geo_verified_at": "2026-10-01",
+      "visual_profile": "historic_plantation_storefront",
+      "visual_evidence": {
+        "source_url": "https://www.bamboorestauranthawaii.com/story",
+        "verified_at": "2026-10-01",
+        "confidence": "high",
+        "cues": [
+          "historic fully restored plantation building",
+          "restored Old Takata store",
+          "original exterior green"
+        ]
+      }
     },
     {
       "id": "as_hawi_turns",
@@ -356,7 +367,19 @@
       "geo_source_url": "https://www.whereorg.com/north-hawaii-community-hosp-5017807",
       "geo_source_note": "hospital listing coordinates",
       "geo_confidence": "high",
-      "geo_verified_at": "2026-10-01"
+      "geo_verified_at": "2026-10-01",
+      "visual_profile": "garden_courtyard_hospital",
+      "visual_evidence": {
+        "source_url": "https://www.queens.org/locations/",
+        "secondary_source_url": "https://www.queens.org/services/cancer-care/locations/hospitals/north-hawaii/contact/",
+        "verified_at": "2026-10-01",
+        "confidence": "high",
+        "cues": [
+          "garden foreground",
+          "courtyard landscaping",
+          "light blue roof"
+        ]
+      }
     },
     {
       "id": "parker_ranch_center",
