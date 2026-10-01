@@ -137,6 +137,7 @@ export class WorldZoneStreamer {
 
     this.addRegionalLandmark(g, z, cx, cy);
     if (z.id === 'hawi') this.addHawiTown(g, z, cx, cy);
+    if (z.id === 'hilo') this.addHiloCity(g, z, cx, cy);
     if (z.id === 'puuhonua') this.addPuuhonua(g, z, cx, cy);
     if (z.id === 'puukohola') this.addPuukohola(g, z, cx, cy);
     if (z.id === 'kaloko_honokohau') this.addKaloko(g, z, cx, cy);
@@ -237,6 +238,56 @@ export class WorldZoneStreamer {
     for(let i=0;i<3;i++){
       const pier=new THREE.Mesh(new THREE.BoxGeometry(280,4,28),pierMat);
       pier.position.set(-250+i*260,base+2,-720+i*80); pier.rotation.y=.15; g.add(pier);
+    }
+  }
+
+  addHiloCity(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const stucco=this.shared.stucco;
+    const roof=this.shared.darkRoof;
+    const concrete=this.shared.concrete;
+    const wet=this.shared.wetForest;
+    const asphalt=this.shared.asphalt;
+
+    // Bayfront road / urban edge, simplified from the real shoreline-city relationship.
+    const road=new THREE.Mesh(new THREE.BoxGeometry(780,.22,11),asphalt);
+    road.position.set(0,base+.18,40); road.rotation.y=.08;
+    road.name='hilo_bayfront_road_proxy'; road.userData.evidence='P urban bayfront relation / I dimensions';
+    g.add(road);
+
+    const blocks=[];
+    for(let row=0;row<3;row++){
+      for(let i=-5;i<=5;i++){
+        const x=i*58+(row%2?20:0), zp=95+row*52+(i%3)*4;
+        const w=28+(i+7)%4*7, d=24+(i+3)%5*4, h=7+((i+row+20)%4)*2.2;
+        blocks.push([x,zp,w,d,h]);
+      }
+    }
+    blocks.forEach((b,i)=>{
+      const [x,zp,w,d,h]=b;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),i%5===0?concrete:stucco);
+      body.position.set(x,base+h*.5,zp); body.rotation.y=.08;
+      body.name='hilo_urban_block_'+i; body.userData.evidence='procedural urban massing pending OSM footprint replacement';
+      g.add(body);
+      const r=new THREE.Mesh(new THREE.BoxGeometry(w*1.02,.5,d*1.02),roof);
+      r.position.set(x,base+h+.28,zp); r.rotation.y=.08; g.add(r);
+    });
+
+    // Banyan-drive / tropical canopy cue. Broad irregular crowns, not cones.
+    const treeCount=this.coarse?18:38;
+    for(let i=0;i<treeCount;i++){
+      const x=-430+(i%19)*48, zp=-40+Math.floor(i/19)*34;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.35,.55,7.5,8),this.shared.wood);
+      trunk.position.set(x,base+3.75,zp); g.add(trunk);
+      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.8,1),wet);
+      crown.scale.set(2.7,1.7,2.5); crown.position.set(x+(i%2?1.4:-.9),base+9,zp);
+      g.add(crown);
+    }
+
+    // Harbor breakwater / piers for silhouette.
+    for(let i=0;i<3;i++){
+      const pier=new THREE.Mesh(new THREE.BoxGeometry(180,2.2,18),concrete);
+      pier.position.set(-180+i*190,base+1.2,-260-i*24); pier.rotation.y=.12; g.add(pier);
     }
   }
 
