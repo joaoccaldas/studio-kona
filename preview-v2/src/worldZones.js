@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { createNaturalMaterials, varyInstanceColors } from './naturalMaterials.js';
 import { applyRegionalGrammar, regionalProfileFor } from './regionalGrammar.js';
 import { buildRaceCorridorContext } from './raceCorridor.js';
+import { buildKonaAirport } from './konaAirport.js';
 
 function hashString(s) {
   let h = 2166136261 >>> 0;
@@ -195,10 +196,10 @@ export class WorldZoneStreamer {
     if (z.id === 'mauna_kea') this.addMaunaKeaSummit(g, z, cx, cy);
     if (z.id === 'kilauea') this.addKilaueaSummit(g, z, cx, cy);
 
-    if (/airport|old_airport/.test(z.id)) {
+    if (z.id === 'old_airport') {
       const runway = new THREE.Mesh(this.shared.roadGeo, this.shared.asphaltMat);
       runway.name = z.id + '_runway_proxy';
-      const length = z.id === 'airport' ? 3350 : 1100;
+      const length = 1100;
       runway.scale.set(34, .18, length);
       runway.position.y = Math.max(1, this.heightAt(cx, cy)) + .18;
       g.add(runway);
@@ -820,37 +821,7 @@ export class WorldZoneStreamer {
   }
 
   addKonaAirport(g,z,cx,cy){
-    const base=Math.max(0,this.heightAt(cx,cy));
-    const asphalt=this.shared.asphalt;
-    const concrete=this.shared.concrete;
-    const metal=this.shared.metal;
-    const lava=this.shared.lava;
-
-    // Terminal clusters kept low and spread out, matching the airport's open-air character.
-    const terms=[[-240,-70,90,34,8],[-90,-90,84,30,7],[70,-72,96,34,8],[230,-95,82,30,7]];
-    terms.forEach((b,i)=>{
-      const [x,zp,w,d,h]=b;
-      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),concrete);
-      body.position.set(x,base+h*.5,zp); g.add(body);
-      const canopy=new THREE.Mesh(new THREE.BoxGeometry(w*1.1,.32,d*1.18),metal);
-      canopy.position.set(x,base+h+.2,zp); g.add(canopy);
-    });
-
-    const apron=new THREE.Mesh(new THREE.BoxGeometry(900,.24,310),asphalt);
-    apron.position.set(0,base+.16,120); g.add(apron);
-
-    // Taxiway/runway shoulder cues around the existing runway proxy.
-    for(const zoff of [-48,48]){
-      const line=new THREE.Mesh(new THREE.BoxGeometry(2500,.08,.18),new THREE.MeshStandardMaterial({color:0xe2dfd4,roughness:.75}));
-      line.position.set(0,base+.43,zoff); g.add(line);
-    }
-
-    for(let i=0;i<(this.coarse?18:40);i++){
-      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),lava);
-      rock.scale.set(10+(i%4)*5,3+(i%3)*1.5,8+(i%5)*4);
-      rock.position.set(-900+(i%10)*190,base+3,-420+Math.floor(i/10)*300);
-      g.add(rock);
-    }
+    buildKonaAirport({ group: g, z, cx, cy, shared: this.shared, coarse: this.coarse, heightAt: this.heightAt });
   }
 
   addOldAirport(g,z,cx,cy){

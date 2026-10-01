@@ -35,7 +35,7 @@ footer{margin-top:28px;color:var(--muted);font-size:12px;line-height:1.5}
 </main>
 <script>
 let DATA=[];
-const cats=[['all','All'],['triathlon_shop','Triathlon'],['running_shop','Run'],['bike_service','Bike'],['physical_therapy','Recovery'],['sports_medicine','Sports medicine'],['grocery','Nutrition']];
+const cats=[['all','All'],['triathlon_shop','Triathlon'],['running_shop','Run'],['bike_service','Bike'],['restaurant','Dining & Pubs'],['cafe','Cafes'],['physical_therapy','Recovery'],['sports_medicine','Sports medicine'],['grocery','Nutrition']];
 let active='all';
 const F=document.querySelector('#filters'),G=document.querySelector('#grid');
 for(const [id,label] of cats){const b=document.createElement('button');b.textContent=label;b.dataset.id=id;b.onclick=()=>{active=id;render();};F.appendChild(b);}

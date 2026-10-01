@@ -50,6 +50,7 @@ jobs:
           const runtimeFiles = [
             'preview-v2/src/islandRuntime.js',
             'preview-v2/src/worldZones.js',
+            'preview-v2/src/konaAirport.js',
             'preview-v2/src/placeWorld.js',
             'preview-v2/src/placeRecipes.js',
             'preview-v2/src/heroPlaceDetails.js',
@@ -218,6 +219,8 @@ jobs:
           await shot('08_hilo', 'hilo');
           await shot('09_kahaluu', 'kahaluu');
           await shot('10_south_kona', 'southkona');
+          await shot('13_kona_airport', 'airport');
+          await shot('14_airport_stores', 'airport_stores');
 
           const diagnostic = await page.evaluate(() => {
             const z = window.__kona.worldZones;

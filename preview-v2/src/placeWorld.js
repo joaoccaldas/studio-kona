@@ -57,7 +57,7 @@ export class PlaceWorld {
       const group=new THREE.Group(); group.name='place_'+p.id; group.visible=false;
       const service=this.serviceByPlace.get(p.id)||null;
       group.position.copy(this.W(x,y,0)); group.userData.place=p; group.userData.service=service; this.root.add(group);
-      const semanticOnly=Math.hypot(x,y)<3500;
+      const semanticOnly = Math.hypot(x,y) < 3500 && !p.visual_profile && p.priority !== 'hero';
       group.userData.semanticOnly=semanticOnly;
       this.places.push({
         p,group,x,y,

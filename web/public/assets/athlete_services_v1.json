@@ -62,7 +62,7 @@
       "id": "big_island_running",
       "name": "Big Island Running Company",
       "category": "running_shop",
-      "address": "75-5807 Aliʻi Dr Ste C8, Kailua-Kona, HI 96740",
+      "address": "75-5807 Ali\u02bbi Dr Ste C8, Kailua-Kona, HI 96740",
       "phone": "+1 808-327-9333",
       "website": "https://www.bigislandrunningcompany.com/",
       "hours": {
@@ -86,13 +86,13 @@
         "run",
         "race_week"
       ],
-      "race_week_note": "Running-specialty stop on Aliʻi Drive; useful for footwear, socks, accessories and local run knowledge.",
+      "race_week_note": "Running-specialty stop on Ali\u02bbi Drive; useful for footwear, socks, accessories and local run knowledge.",
       "render": {
         "tier": "hero",
         "recipe": "running_shop",
         "place_id": "big_island_running"
       },
-      "directions_query": "Big Island Running Company, 75-5807 Aliʻi Dr Ste C8, Kailua-Kona, HI 96740",
+      "directions_query": "Big Island Running Company, 75-5807 Ali\u02bbi Dr Ste C8, Kailua-Kona, HI 96740",
       "sources": [
         {
           "url": "https://www.bigislandrunningcompany.com/",
@@ -344,6 +344,300 @@
         "hours": "volatile_recheck",
         "website": "volatile_recheck",
         "phone": "volatile_recheck"
+      }
+    },
+    {
+      "id": "koa_bike_claim",
+      "name": "KOA Oversized Baggage & Triathlete Bike Claim",
+      "category": "bike_service",
+      "address": "KOA Baggage Claim B, 73-200 Kupipi St, Kailua-Kona, HI 96740",
+      "phone": "+1 808-329-3423",
+      "website": "https://airports.hawaii.gov/koa/",
+      "hours": {
+        "mon": "05:00-23:00",
+        "tue": "05:00-23:00",
+        "wed": "05:00-23:00",
+        "thu": "05:00-23:00",
+        "fri": "05:00-23:00",
+        "sat": "05:00-23:00",
+        "sun": "05:00-23:00"
+      },
+      "hours_note": "Operates continuously with flight arrivals.",
+      "services": [
+        "oversized baggage pickup",
+        "bike box collection",
+        "luggage cart rental",
+        "airline luggage claim"
+      ],
+      "athlete_relevance": [
+        "bike",
+        "race_week"
+      ],
+      "race_week_note": "Primary arrival point for hundreds of triathletes collecting hard/soft bike cases upon landing on the Big Island.",
+      "render": {
+        "tier": "hero",
+        "recipe": "service_shop",
+        "place_id": "koa_bike_claim"
+      },
+      "directions_query": "KOA Baggage Claim, 73-200 Kupipi St, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://airports.hawaii.gov/koa/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "koa_bike_claim",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck"
+      }
+    },
+    {
+      "id": "kona_brewing_airport",
+      "name": "Kona Brewing Co. (KOA Airport Lanai Pub)",
+      "category": "restaurant",
+      "address": "KOA Central Courtyard, 73-200 Kupipi St, Kailua-Kona, HI 96740",
+      "phone": "+1 808-329-8733",
+      "website": "https://konabrewinghawaii.com/",
+      "hours": {
+        "mon": "08:00-21:30",
+        "tue": "08:00-21:30",
+        "wed": "08:00-21:30",
+        "thu": "08:00-21:30",
+        "fri": "08:00-21:30",
+        "sat": "08:00-21:30",
+        "sun": "08:00-21:30"
+      },
+      "hours_note": "Verify current flight-schedule hours before travel.",
+      "services": [
+        "open-air lanai dining",
+        "craft beer on tap",
+        "island burgers & sliders",
+        "post-flight recovery dining"
+      ],
+      "athlete_relevance": [
+        "race_week",
+        "dining"
+      ],
+      "race_week_note": "Open-air airport pub in the central terminal courtyard; traditional arrival and departure gathering spot for athletes.",
+      "render": {
+        "tier": "hero",
+        "recipe": "restaurant",
+        "place_id": "kona_brewing_airport"
+      },
+      "directions_query": "Kona Brewing Co KOA Airport, 73-200 Kupipi St, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://konabrewinghawaii.com/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "kona_brewing_airport",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck"
+      }
+    },
+    {
+      "id": "hp_bikeworks",
+      "name": "HP Bikeworks (Hawaii Performance Bikeworks)",
+      "category": "bike_service",
+      "address": "74-5599 Luhia St, Kailua-Kona, HI 96740",
+      "phone": "+1 808-326-1770",
+      "website": "https://hpbikeworks.com/",
+      "hours": {
+        "mon": "09:00-17:00",
+        "tue": "09:00-17:00",
+        "wed": "09:00-17:00",
+        "thu": "09:00-17:00",
+        "fri": "09:00-17:00",
+        "sat": "09:00-16:00",
+        "sun": "closed"
+      },
+      "hours_note": "Race week hours extended for athlete arrivals.",
+      "services": [
+        "pro triathlon bike fitting",
+        "electronic Di2/AXS diagnostics",
+        "carbon wheel repair & rental",
+        "race tune-up",
+        "aerodynamic consultations"
+      ],
+      "athlete_relevance": [
+        "bike",
+        "repair",
+        "race_week"
+      ],
+      "race_week_note": "High-performance triathlon specialist; Retul 3D fitting, custom cockpit builds, and race wheel support.",
+      "render": {
+        "tier": "hero",
+        "recipe": "bike_shop",
+        "place_id": "hp_bikeworks"
+      },
+      "directions_query": "HP Bikeworks, 74-5599 Luhia St, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://hpbikeworks.com/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "hp_bikeworks",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck"
+      }
+    },
+    {
+      "id": "lava_java",
+      "name": "Island Lava Java",
+      "category": "cafe",
+      "address": "75-5801 Ali\u02bbi Dr, Kailua-Kona, HI 96740",
+      "phone": "+1 808-327-2161",
+      "website": "https://www.islandlavajava.com/",
+      "hours": {
+        "mon": "06:30-20:30",
+        "tue": "06:30-20:30",
+        "wed": "06:30-20:30",
+        "thu": "06:30-20:30",
+        "fri": "06:30-20:30",
+        "sat": "06:30-20:30",
+        "sun": "06:30-20:30"
+      },
+      "hours_note": "Opens early at 6:30 AM for morning athletes.",
+      "services": [
+        "100% Kona single-estate coffee",
+        "pre-ride breakfast & acai bowls",
+        "fresh cinnamon rolls",
+        "oceanfront lanai dining",
+        "bike racks on sidewalk"
+      ],
+      "athlete_relevance": [
+        "run",
+        "bike",
+        "race_week",
+        "dining"
+      ],
+      "race_week_note": "The quintessential morning athlete breakfast and coffee hub on Ali\u02bbi Drive.",
+      "render": {
+        "tier": "hero",
+        "recipe": "cafe",
+        "place_id": "lava_java"
+      },
+      "directions_query": "Island Lava Java, 75-5801 Ali\u02bbi Dr, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://www.islandlavajava.com/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "lava_java",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck"
+      }
+    },
+    {
+      "id": "kona_brewing",
+      "name": "Kona Brewing Co. (Brewhouse & Pub)",
+      "category": "restaurant",
+      "address": "74-5612 Pawai Pl, Kailua-Kona, HI 96740",
+      "phone": "+1 808-334-2739",
+      "website": "https://konabrewinghawaii.com/",
+      "hours": {
+        "mon": "11:00-21:00",
+        "tue": "11:00-21:00",
+        "wed": "11:00-21:00",
+        "thu": "11:00-21:00",
+        "fri": "11:00-22:00",
+        "sat": "11:00-22:00",
+        "sun": "11:00-21:00"
+      },
+      "hours_note": "Reservations recommended during race week.",
+      "services": [
+        "wood-fired artisan pizzas",
+        "craft beer tasting flights",
+        "giant covered garden lanai",
+        "brewhouse tours",
+        "athlete group dinners"
+      ],
+      "athlete_relevance": [
+        "race_week",
+        "dining"
+      ],
+      "race_week_note": "Legendary post-ride and finish celebration venue on Pawai Place.",
+      "render": {
+        "tier": "hero",
+        "recipe": "restaurant",
+        "place_id": "kona_brewing"
+      },
+      "directions_query": "Kona Brewing Co, 74-5612 Pawai Pl, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://konabrewinghawaii.com/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "kona_brewing",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck"
+      }
+    },
+    {
+      "id": "on_the_rocks",
+      "name": "Huggo's on the Rocks",
+      "category": "restaurant",
+      "address": "75-5824 Kahakai Rd, Kailua-Kona, HI 96740",
+      "phone": "+1 808-329-1493",
+      "website": "https://huggosontherocks.com/",
+      "hours": {
+        "mon": "11:30-22:00",
+        "tue": "11:30-22:00",
+        "wed": "11:30-22:00",
+        "thu": "11:30-22:00",
+        "fri": "11:30-22:00",
+        "sat": "11:30-22:00",
+        "sun": "11:30-22:00"
+      },
+      "hours_note": "Sunset seating fills early during race week.",
+      "services": [
+        "oceanfront sand floor dining",
+        "tropical craft cocktails & mai tais",
+        "live Hawaiian music",
+        "sunset views over breaking surf"
+      ],
+      "athlete_relevance": [
+        "race_week",
+        "dining"
+      ],
+      "race_week_note": "Iconic open-air beach bar and grill perched on volcanic lava rocks over the breaking waves.",
+      "render": {
+        "tier": "hero",
+        "recipe": "waterfront_restaurant",
+        "place_id": "on_the_rocks"
+      },
+      "directions_query": "Huggo's on the Rocks, 75-5824 Kahakai Rd, Kailua-Kona, HI 96740",
+      "sources": [
+        {
+          "url": "https://huggosontherocks.com/",
+          "kind": "official"
+        }
+      ],
+      "verified_at": "2026-10-01",
+      "place_id": "on_the_rocks",
+      "data_policy": {
+        "identity": "persistent",
+        "location": "persistent",
+        "hours": "volatile_recheck"
       }
     }
   ]

@@ -19,7 +19,7 @@ html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#071019}
 {"imports":{"three":"https://esm.sh/three@0.160.0","three/":"https://esm.sh/three@0.160.0/","three-mesh-bvh":"https://esm.sh/three-mesh-bvh@0.7.8?external=three"}}
 </script>
 <script>
-window.__KONA_ASSET_BASE='https://joaoccaldas.github.io/studio-kona/web/public/assets/';
+window.__KONA_ASSET_BASE=(location.hostname==='localhost'||location.hostname==='127.0.0.1')?'../web/public/assets/':'https://joaoccaldas.github.io/studio-kona/web/public/assets/';
 </script>
 <script type="module">
 import './src/islandRuntime.js';
