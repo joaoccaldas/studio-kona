@@ -346,11 +346,37 @@ const views={
   kahaluu:()=>regionalView(19.5792921,-155.966673,{dx:-700,dy:-620,alt:420}),
   southkona:()=>regionalView(19.5,-155.9,{dx:-1600,dy:-1400,alt:920})
 };
-function goTo(id='island'){
+let flight=null;
+function goTo(id='island', { animate=true, duration=1.35 } = {}){
   const v=(views[id]||views.island)();
-  camera.position.copy(v.pos); controls.target.copy(v.look); controls.update();
-  worldZones?.update(1.0,camera);
-  placeWorld?.update(1.0,camera);
+  if(!animate){
+    camera.position.copy(v.pos); controls.target.copy(v.look); controls.update();
+    worldZones?.update(1.0,camera);
+    placeWorld?.update(1.0,camera);
+    return;
+  }
+  flight={
+    id,
+    t:0,
+    duration:Math.max(.35,duration),
+    fromPos:camera.position.clone(),
+    fromTarget:controls.target.clone(),
+    toPos:v.pos.clone(),
+    toTarget:v.look.clone()
+  };
+}
+function updateFlight(dt){
+  if(!flight) return;
+  flight.t=Math.min(1,flight.t+dt/flight.duration);
+  const u=flight.t<.5 ? 4*flight.t*flight.t*flight.t : 1-Math.pow(-2*flight.t+2,3)/2;
+  camera.position.lerpVectors(flight.fromPos,flight.toPos,u);
+  controls.target.lerpVectors(flight.fromTarget,flight.toTarget,u);
+  controls.update();
+  if(flight.t>=1){
+    worldZones?.update(1.0,camera);
+    placeWorld?.update(1.0,camera);
+    flight=null;
+  }
 }
 
 function updateRegionalAtmosphere(){
@@ -380,6 +406,7 @@ let idleTime=0;
 
 renderer.setAnimationLoop(()=>{
   const now=performance.now(),dt=Math.min((now-last)/1000,.05);last=now;
+  updateFlight(dt);
   controls.update();
 
   const camMoved = lastCamPos.distanceToSquared(camera.position) > 0.002 ||
@@ -421,7 +448,7 @@ window.__kona={
   coreReady:false,
   tilesReady:false,
   timings:{bootStartedAt:0,baseReadyMs:null,detailsReadyMs:null,coreReadyMs:null,tilesReadyMs:null},
-  scene,camera,renderer,THREE,
+  scene,camera,renderer,controls,THREE,
   get dpr(){ return dpr; },
   coarse,
   get worldZones(){ return worldZones; },
@@ -430,6 +457,7 @@ window.__kona={
   get coverageDebug(){ return coverageDebug; },
   get live(){ return liveSuite; },
   go:goTo,goTo,setHour,
+  views:Object.keys(views),
   setCoverageDebug:(v=true)=>coverageDebug?.setVisible(v),
   toggleCoverageDebug:()=>coverageDebug?.toggle()
 };
