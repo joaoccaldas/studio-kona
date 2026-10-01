@@ -169,6 +169,9 @@ jobs:
               placeUnresolvedCount: p?.unresolvedCount ?? 0,
               placeCoverageRatio: p?.sourceCount ? p.geocodedCount / p.sourceCount : 0,
               athleteServiceCount: p?.serviceCount ?? 0,
+              visualProfileCount: p?.places?.filter(x => !!x.p?.visual_profile).length ?? 0,
+              raceCorridorCount: z?.raceCorridor?.count ?? 0,
+              regionalGrammarProfileCount: Object.values(z?.regionalGrammarStats || {}).filter(x => !!x?.profile).length,
               coverageTileCount: c?.tiles?.length ?? 0,
               coverageDebug: window.__kona.coverageDebug?.summary?.() ?? null
             };
@@ -199,6 +202,9 @@ jobs:
           if (pageErrors.length) throw new Error('Page errors: ' + JSON.stringify(pageErrors));
           if (requestFailures.length) throw new Error('HTTP/request failures: ' + JSON.stringify(requestFailures));
           if (diagnostic.athleteServiceCount < 7) throw new Error('Athlete service metadata did not attach to PlaceWorld: ' + JSON.stringify(diagnostic));
+          if (diagnostic.visualProfileCount < 2) throw new Error('Sourced hero visual profiles did not load: ' + JSON.stringify(diagnostic));
+          if (diagnostic.raceCorridorCount < 20) throw new Error('Race corridor context did not initialize: ' + JSON.stringify(diagnostic));
+          if (diagnostic.regionalGrammarProfileCount < 10) throw new Error('Regional grammar coverage too low: ' + JSON.stringify(diagnostic));
           if (diagnostic.placeSourceCount && diagnostic.placeCoverageRatio < 0.95) {
             throw new Error('Place geocode coverage regressed below 95%: ' + JSON.stringify(diagnostic));
           }

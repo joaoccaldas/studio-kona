@@ -2,6 +2,8 @@
 // Complements (does not replace) the Ring 1 500 m TileStreamer.
 import * as THREE from 'three';
 import { createNaturalMaterials, varyInstanceColors } from './naturalMaterials.js';
+import { applyRegionalGrammar } from './regionalGrammar.js';
+import { buildRaceCorridorContext } from './raceCorridor.js';
 
 function hashString(s) {
   let h = 2166136261 >>> 0;
@@ -26,6 +28,8 @@ export class WorldZoneStreamer {
     this.scene.add(this.root);
     this.zones = [];
     this.t = 0;
+    this.raceCorridor = null;
+    this.regionalGrammarStats = {};
     this.shared = this.makeShared();
   }
 
@@ -78,6 +82,7 @@ export class WorldZoneStreamer {
     this.routes = routes;
     this.buildZones();
     this.buildQueenK(routes.bike || []);
+    this.raceCorridor = buildRaceCorridorContext({scene:this.scene,W:this.W,toLocal:this.toLocal,heightAt:this.heightAt,shared:this.shared,coarse:this.coarse,route:routes.bike||[]});
   }
 
   buildZones() {
@@ -161,6 +166,7 @@ export class WorldZoneStreamer {
       g.add(buildings);
     }
 
+    this.regionalGrammarStats[z.id]=applyRegionalGrammar({group:g,z,shared:this.shared,coarse:this.coarse,heightAt:this.heightAt,cx,cy});
     this.addRegionalLandmark(g, z, cx, cy);
     if (z.id === 'kahaluu') this.addKahaluu(g, z, cx, cy);
     if (z.id === 'keauhou') this.addKeauhou(g, z, cx, cy);
