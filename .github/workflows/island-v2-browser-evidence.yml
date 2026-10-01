@@ -169,12 +169,36 @@ jobs:
             { timeout: 30000 }
           );
 
+          const stagedState = await page.evaluate(() => ({
+            sceneObjects: window.__kona.scene.children.length,
+            worldZones: !!window.__kona.worldZones,
+            placeWorld: !!window.__kona.placeWorld,
+            islandCoverage: !!window.__kona.islandCoverage,
+            detailsReady: window.__kona.detailsReady,
+            coreReady: window.__kona.coreReady,
+            tilesReady: window.__kona.tilesReady,
+            renderer: window.__kona.THREE.REVISION,
+            href: location.href
+          }));
+
+          await page.waitForFunction(
+            () => window.__kona && (window.__kona.coreReady === true || window.__kona.coreReady === 'degraded'),
+            null,
+            { timeout: 60000 }
+          );
+          await page.waitForFunction(
+            () => window.__kona && (window.__kona.tilesReady === true || window.__kona.tilesReady === 'degraded'),
+            null,
+            { timeout: 30000 }
+          );
           const state = await page.evaluate(() => ({
             sceneObjects: window.__kona.scene.children.length,
             worldZones: !!window.__kona.worldZones,
             placeWorld: !!window.__kona.placeWorld,
             islandCoverage: !!window.__kona.islandCoverage,
             detailsReady: window.__kona.detailsReady,
+            coreReady: window.__kona.coreReady,
+            tilesReady: window.__kona.tilesReady,
             renderer: window.__kona.THREE.REVISION,
             href: location.href
           }));
@@ -214,7 +238,7 @@ jobs:
           });
           fs.writeFileSync('renders/runtime-v2/report.json', JSON.stringify({
             capturedAt: new Date().toISOString(),
-            url, stateBase, state, diagnostic, viewStats, consoleErrors, pageErrors, requestFailures
+            url, stateBase, stagedState, state, diagnostic, viewStats, consoleErrors, pageErrors, requestFailures
           }, null, 2));
 
           const serviceIntegrity = await page.evaluate(async () => {
@@ -233,8 +257,10 @@ jobs:
           });
           if (!serviceIntegrity.ok) throw new Error('Athlete service referential integrity failed: ' + JSON.stringify(serviceIntegrity));
           if (!state.worldZones || !state.placeWorld || !state.islandCoverage) {
-            throw new Error('Island V2 detail systems did not initialize: ' + JSON.stringify(state));
+            throw new Error('Island V2 geographic detail systems did not initialize: ' + JSON.stringify(state));
           }
+          if (state.coreReady !== true) throw new Error('Kona core did not initialize cleanly: ' + JSON.stringify(state));
+          if (state.tilesReady !== true) throw new Error('Tile streamer did not initialize cleanly: ' + JSON.stringify(state));
           if (pageErrors.length) throw new Error('Page errors: ' + JSON.stringify(pageErrors));
           if (requestFailures.length) throw new Error('HTTP/request failures: ' + JSON.stringify(requestFailures));
           if (diagnostic.athleteServiceCount < 7) throw new Error('Athlete service metadata did not attach to PlaceWorld: ' + JSON.stringify(diagnostic));
@@ -321,13 +347,19 @@ jobs:
             totalEvidenceMs:Date.now()-mobileStart,
             islandStats:mobileIslandStats,
             perf:mobilePerf,
+            endState:await mobile.evaluate(() => ({
+              ready:window.__kona.ready,
+              detailsReady:window.__kona.detailsReady,
+              coreReady:window.__kona.coreReady,
+              tilesReady:window.__kona.tilesReady
+            })),
             consoleErrors:mobileConsoleErrors,
             pageErrors:mobilePageErrors,
             requestFailures:mobileRequestFailures
           };
           fs.writeFileSync('renders/runtime-v2/report.json', JSON.stringify({
             capturedAt:new Date().toISOString(),
-            url,stateBase,state,diagnostic,viewStats,mobileEvidence,consoleErrors,pageErrors,requestFailures
+            url,stateBase,stagedState,state,diagnostic,viewStats,mobileEvidence,consoleErrors,pageErrors,requestFailures
           }, null, 2));
           if(mobileConsoleErrors.length || mobilePageErrors.length || mobileRequestFailures.length){
             throw new Error('Mobile evidence errors: '+JSON.stringify(mobileEvidence));
