@@ -191,9 +191,13 @@ function orthoMaterial(file, seabed=false) {
   return m;
 }
 
-async function loadCore() {
+async function loadBaseIsland() {
   man = await fetch(A+'kona_manifest.json').then(r=>r.json());
-  const islandPromise = loadIsland();
+  await loadIsland();
+  makeOcean();
+}
+
+async function loadKonaCore() {
   const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(A+'kona_p1.glb');
   const protos={};
   const coreWallMats=[
@@ -239,8 +243,6 @@ async function loadCore() {
     im.instanceMatrix.needsUpdate=true; scene.add(im);
   }
 
-  await islandPromise;
-  makeOcean();
   return protos;
 }
 
@@ -366,15 +368,23 @@ window.__kona={
   toggleCoverageDebug:()=>coverageDebug?.toggle()
 };
 
-loadCore().then((protos)=>{
+loadBaseIsland().then(()=>{
   goTo(new URLSearchParams(location.search).get('view')||'island');
   controls.enabled=true;
   controls.update();
   window.__kona.ready=true;
   document.documentElement.dataset.worldReady='true';
   document.querySelector('#loading')?.remove();
-  initDetailLayers(protos).catch(e=>{
-    console.warn('KONA detail layers degraded',e);
+
+  // The whole-island base is now interactive. Stream the heavy Kona core and
+  // detail systems independently so first interaction no longer waits on kona_p1.glb.
+  loadKonaCore().then((protos)=>{
+    initDetailLayers(protos).catch(e=>{
+      console.warn('KONA detail layers degraded',e);
+      window.__kona.detailsReady='degraded';
+    });
+  }).catch(e=>{
+    console.warn('KONA core degraded',e);
     window.__kona.detailsReady='degraded';
   });
 }).catch(e=>{
