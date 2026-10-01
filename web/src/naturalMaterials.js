@@ -4,16 +4,27 @@ import * as THREE from 'three';
 
 function fract(x){ return x-Math.floor(x); }
 function hash(x,y,s=0){ return fract(Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453123); }
+function smooth(t){ return t*t*(3-2*t); }
+function valueNoise(x,y,seed=0){
+  const ix=Math.floor(x), iy=Math.floor(y), fx=smooth(x-ix), fy=smooth(y-iy);
+  const a=hash(ix,iy,seed), b=hash(ix+1,iy,seed), c=hash(ix,iy+1,seed), d=hash(ix+1,iy+1,seed);
+  return (a*(1-fx)+b*fx)*(1-fy)+(c*(1-fx)+d*fx)*fy;
+}
+function fbm(x,y,seed=0){
+  let v=0, amp=.5, f=1, sum=0;
+  for(let o=0;o<5;o++){ v+=valueNoise(x*f,y*f,seed+o*13)*amp; sum+=amp; amp*=.5; f*=2.03; }
+  return v/sum;
+}
 
 function canvasTexture({base=[80,80,80], variation=24, grain=0.45, seed=1, streak=0, size=256}) {
   const c=document.createElement('canvas'); c.width=c.height=size;
   const ctx=c.getContext('2d'); const im=ctx.createImageData(size,size);
   for(let y=0;y<size;y++) for(let x=0;x<size;x++){
     const i=(y*size+x)*4;
-    const n=(hash(x*.22,y*.22,seed)-.5)*2;
-    const low=(hash(Math.floor(x/16),Math.floor(y/16),seed+3)-.5)*2;
-    const st=streak?Math.sin((x+y*.17)*streak)*.25:0;
-    const v=n*grain+low*(1-grain)+st;
+    const n=(fbm(x/42,y/42,seed)-.5)*2;
+    const fine=(fbm(x/9,y/9,seed+31)-.5)*2;
+    const st=streak?Math.sin((x+y*.17)*streak)*.12:0;
+    const v=n*(1-grain*.35)+fine*(grain*.35)+st;
     im.data[i]=Math.max(0,Math.min(255,base[0]+v*variation));
     im.data[i+1]=Math.max(0,Math.min(255,base[1]+v*variation));
     im.data[i+2]=Math.max(0,Math.min(255,base[2]+v*variation));
@@ -32,9 +43,9 @@ function roughnessTexture({base=.8,variation=.16,seed=10,size=128}) {
   const ctx=c.getContext('2d'); const im=ctx.createImageData(size,size);
   for(let y=0;y<size;y++) for(let x=0;x<size;x++){
     const i=(y*size+x)*4;
-    const n=(hash(x*.31,y*.31,seed)-.5)*2;
-    const low=(hash(Math.floor(x/12),Math.floor(y/12),seed+8)-.5)*2;
-    const r=Math.max(0,Math.min(1,base+n*variation*.45+low*variation*.55));
+    const n=(fbm(x/28,y/28,seed)-.5)*2;
+    const fine=(fbm(x/7,y/7,seed+17)-.5)*2;
+    const r=Math.max(0,Math.min(1,base+n*variation*.7+fine*variation*.3));
     const v=Math.round(r*255);
     im.data[i]=im.data[i+1]=im.data[i+2]=v; im.data[i+3]=255;
   }
@@ -47,7 +58,7 @@ function roughnessTexture({base=.8,variation=.16,seed=10,size=128}) {
 function material(name, opts){
   const map=canvasTexture(opts.albedo);
   const roughnessMap=roughnessTexture(opts.roughnessMap);
-  map.repeat.set(opts.repeat??8,opts.repeat??8);
+  map.repeat.set(opts.repeat??3,opts.repeat??3);
   roughnessMap.repeat.copy(map.repeat);
   const m=new THREE.MeshStandardMaterial({
     name,
