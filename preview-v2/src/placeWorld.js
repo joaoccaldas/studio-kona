@@ -59,8 +59,13 @@ export class PlaceWorld {
       group.position.copy(this.W(x,y,0)); group.userData.place=p; group.userData.service=service; this.root.add(group);
       const semanticOnly=Math.hypot(x,y)<3500;
       group.userData.semanticOnly=semanticOnly;
-      if(!semanticOnly) this.buildSection(group,p,x,y);
-      this.places.push({p,group,x,y,radius:p.priority==='hero'?2400:p.priority==='high'?1500:900,semanticOnly,service});
+      this.places.push({
+        p,group,x,y,
+        radius:p.priority==='hero'?2400:p.priority==='high'?1500:900,
+        semanticOnly,service,
+        built:false,
+        building:false
+      });
     }
   }
   matFor(p){
@@ -98,7 +103,14 @@ export class PlaceWorld {
     let nearest=null, nd=Infinity;
     for(const item of this.places){
       const d=Math.hypot(item.x-cx,item.y-cy);
-      item.group.visible=!overview&&!item.semanticOnly&&d<item.radius;
+      const shouldShow=!overview&&!item.semanticOnly&&d<item.radius;
+      if(shouldShow&&!item.built&&!item.building){
+        item.building=true;
+        this.buildSection(item.group,item.p,item.x,item.y);
+        item.built=true;
+        item.building=false;
+      }
+      item.group.visible=shouldShow&&item.built;
       if(d<nd){nd=d;nearest=item;}
       if(d<55&&!this.state[item.p.id]?.visited) this.setVisited(item.p.id);
     }
@@ -109,7 +121,7 @@ export class PlaceWorld {
   describe(id){
     const item=this.find(id);
     if(!item) return null;
-    return {place:item.p,state:this.getState(id),service:item.service||null,semanticOnly:item.semanticOnly};
+    return {place:item.p,state:this.getState(id),service:item.service||null,semanticOnly:item.semanticOnly,built:item.built};
   }
   currentSelection(){return this.current?this.describe(this.current.p.id):null;}
   list(category=null){return this.places.filter(x=>!category||x.p.category===category).map(x=>({...x.p,state:this.getState(x.p.id),service:this.serviceFor(x.p.id)}));}
