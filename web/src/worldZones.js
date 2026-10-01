@@ -1012,13 +1012,57 @@ export class WorldZoneStreamer {
 
   addKaloko(g, z, cx, cy) {
     const base = Math.max(0, this.heightAt(cx, cy));
-    const water = new THREE.MeshStandardMaterial({ color: 0x2b6870, roughness:.38, transparent:true, opacity:.72 });
+    const water = new THREE.MeshPhysicalMaterial({ color: 0x356f78, roughness:.28, transparent:true, opacity:.72 });
     const stone = this.shared.lava;
-    const pond = new THREE.Mesh(new THREE.CircleGeometry(210, 48), water);
-    pond.rotation.x=-Math.PI/2; pond.scale.set(1.55,1,.78); pond.position.set(0,base+.35,0);
-    pond.name='kaloko_fishpond_proxy'; pond.userData.evidence='P feature / I simplified shoreline'; g.add(pond);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(215,4.5,8,64),stone);
-    ring.rotation.x=Math.PI/2; ring.scale.set(1.55,.78,1); ring.position.y=base+1.1; g.add(ring);
+    const wet = this.shared.wetForest;
+    const dry = this.shared.dryGrass;
+
+    // Main Kaloko fishpond.
+    const pond = new THREE.Mesh(new THREE.CircleGeometry(230, 56), water);
+    pond.rotation.x=-Math.PI/2; pond.scale.set(1.6,1,.82); pond.position.set(0,base+.28,0);
+    pond.name='kaloko_fishpond_proxy'; pond.userData.evidence='P fishpond identity / I simplified shoreline';
+    g.add(pond);
+
+    // Stone kuapā wall broken into segments instead of one perfect torus.
+    for(let i=0;i<28;i++){
+      const a=(i/28)*Math.PI*2;
+      const rx=Math.cos(a)*350, rz=Math.sin(a)*180;
+      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),stone);
+      rock.scale.set(7+(i%4)*2,2.4+(i%3)*.6,5+(i%5));
+      rock.position.set(rx,base+2.1,rz);
+      rock.rotation.y=a+.2*(i%3);
+      g.add(rock);
+    }
+
+    // Secondary wetland / marsh patches.
+    for(let i=0;i<5;i++){
+      const marsh=new THREE.Mesh(new THREE.CircleGeometry(55+(i%3)*18,28),water);
+      marsh.rotation.x=-Math.PI/2; marsh.scale.set(1.3,1,.7);
+      marsh.position.set(-420+i*190,base+.24,260+(i%2)*90);
+      g.add(marsh);
+    }
+
+    // Lava shoreline and low coastal vegetation.
+    for(let i=0;i<(this.coarse?24:52);i++){
+      const a=i*2.21, rr=300+(i%9)*55;
+      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),stone);
+      rock.scale.set(8+(i%4)*4,3+(i%3)*1.2,7+(i%5)*3);
+      rock.position.set(Math.cos(a)*rr,base+3,-180+Math.sin(a)*rr*.58);
+      g.add(rock);
+    }
+
+    const veg=this.coarse?20:42;
+    for(let i=0;i<veg;i++){
+      const a=i*2.399, rr=260+(i%6)*45;
+      const shrub=new THREE.Mesh(new THREE.DodecahedronGeometry(1.1,1),i%3===0?wet:dry);
+      shrub.scale.set(1.8,1.2,1.6);
+      shrub.position.set(Math.cos(a)*rr,base+1.2,180+Math.sin(a)*rr*.62);
+      g.add(shrub);
+    }
+
+    // Simple walking-trail cue through the cultural landscape.
+    const trail=new THREE.Mesh(new THREE.BoxGeometry(620,.12,2.6),this.shared.drySoil);
+    trail.position.set(60,base+.22,320); trail.rotation.y=.18; g.add(trail);
   }
 
   addValley(g, z, cx, cy) {
