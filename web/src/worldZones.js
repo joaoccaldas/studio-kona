@@ -141,6 +141,8 @@ export class WorldZoneStreamer {
     if (z.id === 'waikoloa') this.addWaikoloa(g, z, cx, cy);
     if (z.id === 'waimea') this.addWaimea(g, z, cx, cy);
     if (z.id === 'hamakua') this.addHamakua(g, z, cx, cy);
+    if (z.id === 'puna') this.addPuna(g, z, cx, cy);
+    if (z.id === 'kau') this.addKau(g, z, cx, cy);
     if (z.id === 'kawaihae') this.addKawaihae(g, z, cx, cy);
     if (z.id === 'puuhonua') this.addPuuhonua(g, z, cx, cy);
     if (z.id === 'puukohola') this.addPuukohola(g, z, cx, cy);
@@ -271,6 +273,83 @@ export class WorldZoneStreamer {
     rim.position.y=base+8;
     rim.userData.evidence='caldera rim cue / DEM remains authoritative';
     g.add(rim);
+  }
+
+  addPuna(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const wet=this.shared.wetForest;
+    const aa=this.shared.aaLava;
+    const lava=this.shared.lava;
+    const asphalt=this.shared.asphalt;
+
+    // Young lava sheets interleaved with wet forest islands.
+    for(let i=0;i<10;i++){
+      const patch=new THREE.Mesh(new THREE.CircleGeometry(520+(i%4)*130,40),i%2?aa:lava);
+      patch.rotation.x=-Math.PI/2;
+      patch.scale.set(1.5,1,.55+(i%3)*.08);
+      patch.position.set(-1700+i*360,base+.2,-300+(i%4)*380);
+      patch.rotation.z=(i%5)*.17;
+      patch.userData.evidence='young-lava landscape proxy on DEM';
+      g.add(patch);
+    }
+
+    // Rainforest survives in islands between flows.
+    const treeCount=this.coarse?55:120;
+    for(let i=0;i<treeCount;i++){
+      const x=-2100+(i%24)*185+(i%3)*17;
+      const zp=-1450+Math.floor(i/24)*620+(i%7)*35;
+      const flowGap=((i*37)%11)<4;
+      if(flowGap) continue;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.24,.42,7.5,7),this.shared.wood);
+      trunk.position.set(x,base+3.75,zp); g.add(trunk);
+      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(1.6,1),wet);
+      crown.scale.set(2.1,2.8,2.0); crown.position.set(x,base+9,zp);
+      g.add(crown);
+    }
+
+    // Puna road cue cutting across the lava/forest mosaic.
+    const road=new THREE.Mesh(new THREE.BoxGeometry(3600,.2,9.5),asphalt);
+    road.position.set(0,base+.22,180); road.rotation.y=.035;
+    road.name='puna_road_proxy'; road.userData.evidence='context road / I dimensions';
+    g.add(road);
+  }
+
+  addKau(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const lava=this.shared.lava;
+    const aa=this.shared.aaLava;
+    const dry=this.shared.dryGrass;
+    const cinder=this.shared.cinder;
+
+    // Broad lava tongues descending Mauna Loa toward the coast.
+    for(let i=0;i<8;i++){
+      const tongue=new THREE.Mesh(new THREE.PlaneGeometry(520,2200,1,1),i%2?aa:lava);
+      tongue.rotation.x=-Math.PI/2;
+      tongue.rotation.z=(-.22+i*.065);
+      tongue.position.set(-1500+i*430,base+.24,-200+(i%3)*260);
+      tongue.scale.x=.75+(i%3)*.16;
+      tongue.userData.evidence='procedural lava-flow cue on DEM';
+      g.add(tongue);
+    }
+
+    // Dry grass shelves between flows.
+    for(let i=0;i<7;i++){
+      const field=new THREE.Mesh(new THREE.CircleGeometry(420+(i%3)*90,28),dry);
+      field.rotation.x=-Math.PI/2;
+      field.scale.set(1.6,1,.7);
+      field.position.set(-1450+i*470,base+.28,850+(i%2)*220);
+      g.add(field);
+    }
+
+    // Small cinder cones, never replacing the DEM mountain mass.
+    for(let i=0;i<6;i++){
+      const h=55+(i%3)*22, r=95+(i%2)*25;
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(r,h,18,4),cinder);
+      cone.position.set(-1100+i*430,base+h*.5,-1050+(i%2)*250);
+      cone.rotation.y=i*.41;
+      cone.userData.evidence='minor cinder cone proxy on DEM';
+      g.add(cone);
+    }
   }
 
   addWaimea(g,z,cx,cy){
