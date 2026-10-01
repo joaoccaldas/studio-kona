@@ -47,22 +47,43 @@ jobs:
           const expectedGeocoded = (expectedPlaces.places||[]).filter(p=>typeof p.lat==='number'&&typeof p.lon==='number').length;
           const expectedPlaceCount = (expectedPlaces.places||[]).length;
           const expectedServiceCount = (expectedServices.records||[]).length;
+          const runtimeFiles = [
+            'preview-v2/src/islandRuntime.js',
+            'preview-v2/src/worldZones.js',
+            'preview-v2/src/placeWorld.js',
+            'preview-v2/src/placeRecipes.js',
+            'preview-v2/src/heroPlaceDetails.js',
+            'preview-v2/src/regionalGrammar.js',
+            'preview-v2/src/raceCorridor.js'
+          ];
+          const expectedRuntime = Object.fromEntries(runtimeFiles.map(path => [path, fs.readFileSync(path,'utf8')]));
           let deployedFresh = false;
           let deployedState = null;
           for (let i=0;i<30;i++) {
             try {
-              const [pr,sr] = await Promise.all([
-                fetch('https://joaoccaldas.github.io/studio-kona/web/public/assets/places_v2.json?fresh='+Date.now(), { cache:'no-store' }),
-                fetch('https://joaoccaldas.github.io/studio-kona/web/public/assets/athlete_services_v1.json?fresh='+Date.now(), { cache:'no-store' })
+              const cacheBust=Date.now();
+              const [pr,sr,...runtimeResponses] = await Promise.all([
+                fetch('https://joaoccaldas.github.io/studio-kona/web/public/assets/places_v2.json?fresh='+cacheBust, { cache:'no-store' }),
+                fetch('https://joaoccaldas.github.io/studio-kona/web/public/assets/athlete_services_v1.json?fresh='+cacheBust, { cache:'no-store' }),
+                ...runtimeFiles.map(path => fetch('https://joaoccaldas.github.io/studio-kona/'+path+'?fresh='+cacheBust, { cache:'no-store' }))
               ]);
-              if (pr.ok && sr.ok) {
-                const [p,s] = await Promise.all([pr.json(),sr.json()]);
+              if (pr.ok && sr.ok && runtimeResponses.every(r=>r.ok)) {
+                const [p,s,...runtimeTexts] = await Promise.all([
+                  pr.json(),sr.json(),...runtimeResponses.map(r=>r.text())
+                ]);
+                const runtimeMismatches = runtimeFiles.filter((path,i)=>runtimeTexts[i]!==expectedRuntime[path]);
                 deployedState = {
                   placeCount:(p.places||[]).length,
                   geocoded:(p.places||[]).filter(x=>typeof x.lat==='number'&&typeof x.lon==='number').length,
-                  serviceCount:(s.records||[]).length
+                  serviceCount:(s.records||[]).length,
+                  runtimeMismatches
                 };
-                if (deployedState.placeCount===expectedPlaceCount && deployedState.geocoded===expectedGeocoded && deployedState.serviceCount===expectedServiceCount) {
+                if (
+                  deployedState.placeCount===expectedPlaceCount &&
+                  deployedState.geocoded===expectedGeocoded &&
+                  deployedState.serviceCount===expectedServiceCount &&
+                  runtimeMismatches.length===0
+                ) {
                   deployedFresh = true;
                   break;
                 }
