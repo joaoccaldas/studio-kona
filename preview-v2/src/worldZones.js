@@ -136,6 +136,8 @@ export class WorldZoneStreamer {
     }
 
     this.addRegionalLandmark(g, z, cx, cy);
+    if (z.id === 'kahaluu') this.addKahaluu(g, z, cx, cy);
+    if (z.id === 'south_kona_slope') this.addSouthKonaSlope(g, z, cx, cy);
     if (z.id === 'hawi') this.addHawiTown(g, z, cx, cy);
     if (z.id === 'hilo') this.addHiloCity(g, z, cx, cy);
     if (z.id === 'waikoloa') this.addWaikoloa(g, z, cx, cy);
@@ -161,6 +163,71 @@ export class WorldZoneStreamer {
       runway.scale.set(34, .18, length);
       runway.position.y = Math.max(1, this.heightAt(cx, cy)) + .18;
       g.add(runway);
+    }
+  }
+
+  addKahaluu(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const water=new THREE.MeshPhysicalMaterial({color:0x3f8390,roughness:.2,transparent:true,opacity:.76});
+    const sand=this.shared.drySoil;
+    const lava=this.shared.lava;
+    const stucco=this.shared.stucco;
+    const roof=this.shared.darkRoof;
+
+    const bay=new THREE.Mesh(new THREE.CircleGeometry(420,48),water);
+    bay.rotation.x=-Math.PI/2; bay.scale.set(1.45,1,.72); bay.position.set(0,base+.18,-120);
+    bay.name='kahaluu_bay_proxy'; bay.userData.evidence='P bay identity / I simplified shoreline';
+    g.add(bay);
+
+    const beach=new THREE.Mesh(new THREE.CircleGeometry(260,36),sand);
+    beach.rotation.x=-Math.PI/2; beach.scale.set(1.3,1,.34); beach.position.set(40,base+.24,80);
+    g.add(beach);
+
+    for(let i=0;i<10;i++){
+      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),lava);
+      rock.scale.set(18+(i%3)*8,5+(i%2)*2,14+(i%4)*6);
+      rock.position.set(-360+i*78,base+3,-10+(i%2)*22); g.add(rock);
+    }
+
+    const houses=this.coarse?8:15;
+    for(let i=0;i<houses;i++){
+      const x=-430+(i%5)*205, zp=300+Math.floor(i/5)*120;
+      const w=30+(i%3)*8, d=22+(i%2)*7, h=5.5+(i%3)*1.2;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),stucco);
+      body.position.set(x,base+h*.5,zp); body.userData.evidence='procedural neighborhood massing';
+      g.add(body);
+      const r=new THREE.Mesh(new THREE.CylinderGeometry(Math.max(w,d)*.52,Math.max(w,d)*.6,1.7,4),roof);
+      r.rotation.y=Math.PI/4; r.scale.z=.62; r.position.set(x,base+h+.8,zp); g.add(r);
+    }
+  }
+
+  addSouthKonaSlope(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const soil=this.shared.drySoil;
+    const green=this.shared.pasture;
+    const wood=this.shared.wood;
+
+    // Stepped agricultural bands climbing the volcanic slope.
+    for(let row=0;row<7;row++){
+      const field=new THREE.Mesh(new THREE.PlaneGeometry(2600,420,1,1),row%2?green:soil);
+      field.rotation.x=-Math.PI/2+.05;
+      field.position.set(0,base+row*18,-1250+row*430);
+      field.rotation.z=(row%3-1)*.015;
+      field.userData.evidence='procedural agricultural slope proxy';
+      g.add(field);
+    }
+
+    // Coffee-tree rows, dense enough to read agriculturally but instanced in future pass.
+    const count=this.coarse?60:130;
+    for(let i=0;i<count;i++){
+      const col=i%26, row=Math.floor(i/26);
+      const x=-1250+col*100+(row%2)*20;
+      const zp=-1000+row*430+(col%2)*10;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12,.16,2.1,6),wood);
+      trunk.position.set(x,base+1.05+row*18,zp); g.add(trunk);
+      const crown=new THREE.Mesh(new THREE.DodecahedronGeometry(.9,1),green);
+      crown.scale.set(1.5,1.1,1.4); crown.position.set(x,base+2.8+row*18,zp);
+      g.add(crown);
     }
   }
 
