@@ -16,6 +16,7 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 const canvas = document.querySelector('#c');
+const bootStartedAt=performance.now();
 const A = window.__KONA_ASSET_BASE || 'assets/';
 const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y);
 const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
@@ -191,9 +192,13 @@ function orthoMaterial(file, seabed=false) {
   return m;
 }
 
-async function loadCore() {
+async function loadBaseIsland() {
   man = await fetch(A+'kona_manifest.json').then(r=>r.json());
-  const islandPromise = loadIsland();
+  await loadIsland();
+  makeOcean();
+}
+
+async function loadKonaCore() {
   const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(A+'kona_p1.glb');
   const protos={};
   const coreWallMats=[
@@ -239,19 +244,13 @@ async function loadCore() {
     im.instanceMatrix.needsUpdate=true; scene.add(im);
   }
 
-  await islandPromise;
-  makeOcean();
   return protos;
 }
 
-async function initDetailLayers(protos){
-  // Yield to the browser first so the overview becomes interactive before detail construction.
+async function initWorldLayers(){
+  // Yield first so the base island can paint and accept input before geographic detail setup.
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-  streamer=new TileStreamer({scene,W,base:A+'tiles/',radius:coarse?850:1500,palm:protos.palm,onGround:()=>{}});
-  await streamer.init().catch(e=>{console.warn('TileStreamer',e);streamer=null;});
-
-  await new Promise(resolve=>setTimeout(resolve,0));
   worldZones=new WorldZoneStreamer({scene,W,heightAt,toLocal,coarse,base:A});
   await worldZones.init().catch(e=>{console.warn('WorldZoneStreamer',e);worldZones=null;});
 
@@ -273,6 +272,14 @@ async function initDetailLayers(protos){
   await coverageDebug.init().catch(()=>{coverageDebug=null;});
   if(new URLSearchParams(location.search).get('coverage')==='1') coverageDebug?.setVisible(true);
   window.__kona.detailsReady=true;
+  window.__kona.timings.detailsReadyMs=performance.now()-bootStartedAt;
+}
+
+async function initTileStreamer(protos){
+  streamer=new TileStreamer({scene,W,base:A+'tiles/',radius:coarse?850:1500,palm:protos.palm,onGround:()=>{}});
+  await streamer.init().catch(e=>{console.warn('TileStreamer',e);streamer=null;});
+  window.__kona.tilesReady=streamer?true:'degraded';
+  window.__kona.timings.tilesReadyMs=performance.now()-bootStartedAt;
 }
 
 function wholeIslandView(){
@@ -354,6 +361,9 @@ window.__kona={
   mode:'world-only',
   ready:false,
   detailsReady:false,
+  coreReady:false,
+  tilesReady:false,
+  timings:{bootStartedAt:0,baseReadyMs:null,detailsReadyMs:null,coreReadyMs:null,tilesReadyMs:null},
   scene,camera,renderer,THREE,
   get dpr(){ return dpr; },
   coarse,
@@ -366,16 +376,33 @@ window.__kona={
   toggleCoverageDebug:()=>coverageDebug?.toggle()
 };
 
-loadCore().then((protos)=>{
+loadBaseIsland().then(()=>{
   goTo(new URLSearchParams(location.search).get('view')||'island');
   controls.enabled=true;
   controls.update();
   window.__kona.ready=true;
+  window.__kona.timings.baseReadyMs=performance.now()-bootStartedAt;
   document.documentElement.dataset.worldReady='true';
   document.querySelector('#loading')?.remove();
-  initDetailLayers(protos).catch(e=>{
-    console.warn('KONA detail layers degraded',e);
+
+  // Geographic/world metadata can initialize without the heavy Kona core.
+  initWorldLayers().catch(e=>{
+    console.warn('KONA world layers degraded',e);
     window.__kona.detailsReady='degraded';
+  });
+
+  // Stream the high-detail Kailua core independently. Tile streaming depends on its palm prototype.
+  loadKonaCore().then((protos)=>{
+    window.__kona.coreReady=true;
+    window.__kona.timings.coreReadyMs=performance.now()-bootStartedAt;
+    initTileStreamer(protos).catch(e=>{
+      console.warn('KONA tile streamer degraded',e);
+      window.__kona.tilesReady='degraded';
+    });
+  }).catch(e=>{
+    console.warn('KONA core degraded',e);
+    window.__kona.coreReady='degraded';
+    window.__kona.tilesReady='degraded';
   });
 }).catch(e=>{
   console.error(e);
