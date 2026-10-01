@@ -140,8 +140,8 @@ jobs:
           }
           if (pageErrors.length) throw new Error('Page errors: ' + JSON.stringify(pageErrors));
           if (requestFailures.length) throw new Error('HTTP/request failures: ' + JSON.stringify(requestFailures));
-          if (diagnostic.placeSourceCount && diagnostic.placeCoverageRatio < 0.5) {
-            throw new Error('Place geocode coverage regressed below 50%: ' + JSON.stringify(diagnostic));
+          if (diagnostic.placeSourceCount && diagnostic.placeCoverageRatio < 0.65) {
+            throw new Error('Place geocode coverage regressed below 65%: ' + JSON.stringify(diagnostic));
           }
           await browser.close();
           EOF
