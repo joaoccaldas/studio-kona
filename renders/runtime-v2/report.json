@@ -1,10 +1,10 @@
 {
-  "capturedAt": "2026-10-01T04:19:45.772Z",
+  "capturedAt": "2026-10-01T04:25:53.991Z",
   "url": "https://joaoccaldas.github.io/studio-kona/preview-v2/",
   "stateBase": {
     "sceneObjects": 7,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790828215423",
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790828486164",
     "ready": true
   },
   "state": {
@@ -14,7 +14,7 @@
     "islandCoverage": true,
     "detailsReady": true,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790828215423"
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790828486164"
   },
   "diagnostic": {
     "zones": [
@@ -184,6 +184,123 @@
       "high": 15,
       "medium": 9
     }
+  },
+  "viewStats": {
+    "01_island_overview": {
+      "drawCalls": 27,
+      "triangles": 1649852,
+      "lines": 0,
+      "points": 0,
+      "geometries": 34,
+      "textures": 4,
+      "dpr": 1,
+      "coarse": false
+    },
+    "02_kailua_pier": {
+      "drawCalls": 309,
+      "triangles": 1906747,
+      "lines": 0,
+      "points": 0,
+      "geometries": 481,
+      "textures": 42,
+      "dpr": 0.88,
+      "coarse": false
+    },
+    "03_energy_lab": {
+      "drawCalls": 109,
+      "triangles": 1269292,
+      "lines": 0,
+      "points": 0,
+      "geometries": 497,
+      "textures": 42,
+      "dpr": 0.88,
+      "coarse": false
+    },
+    "04_hawi": {
+      "drawCalls": 264,
+      "triangles": 2381296,
+      "lines": 0,
+      "points": 0,
+      "geometries": 598,
+      "textures": 49,
+      "dpr": 0.76,
+      "coarse": false
+    },
+    "05_waikoloa": {
+      "drawCalls": 120,
+      "triangles": 1233616,
+      "lines": 0,
+      "points": 0,
+      "geometries": 694,
+      "textures": 49,
+      "dpr": 0.76,
+      "coarse": false
+    },
+    "06_kawaihae": {
+      "drawCalls": 57,
+      "triangles": 1240142,
+      "lines": 0,
+      "points": 0,
+      "geometries": 727,
+      "textures": 49,
+      "dpr": 0.76,
+      "coarse": false
+    },
+    "07_waimea": {
+      "drawCalls": 238,
+      "triangles": 2279702,
+      "lines": 0,
+      "points": 0,
+      "geometries": 823,
+      "textures": 51,
+      "dpr": 0.72,
+      "coarse": false
+    },
+    "08_hilo": {
+      "drawCalls": 22,
+      "triangles": 2102636,
+      "lines": 0,
+      "points": 0,
+      "geometries": 824,
+      "textures": 51,
+      "dpr": 0.72,
+      "coarse": false
+    },
+    "09_kahaluu": {
+      "drawCalls": 172,
+      "triangles": 2747432,
+      "lines": 0,
+      "points": 0,
+      "geometries": 1018,
+      "textures": 51,
+      "dpr": 0.72,
+      "coarse": false
+    },
+    "10_south_kona": {
+      "drawCalls": 37,
+      "triangles": 1213660,
+      "lines": 0,
+      "points": 0,
+      "geometries": 1026,
+      "textures": 51,
+      "dpr": 0.72,
+      "coarse": false
+    }
+  },
+  "mobileEvidence": {
+    "loadMs": 123874,
+    "perf": {
+      "sampledFps": 1.4515397738207463,
+      "drawCalls": 55,
+      "triangles": 340758,
+      "geometries": 143,
+      "textures": 32,
+      "dpr": 0.7899999999999998,
+      "coarse": true
+    },
+    "consoleErrors": [],
+    "pageErrors": [],
+    "requestFailures": []
   },
   "consoleErrors": [],
   "pageErrors": [],
