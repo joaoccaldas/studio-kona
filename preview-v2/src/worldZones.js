@@ -145,16 +145,10 @@ export class WorldZoneStreamer {
     if (z.id === 'kaloko_honokohau') this.addKaloko(g, z, cx, cy);
     if (z.id === 'pololu' || z.id === 'waipio') this.addValley(g, z, cx, cy);
 
-    if (/mauna_kea|mauna_loa|hualalai|kilauea/.test(z.id)) {
-      const r = Math.min(z.radius_m * .48, z.id === 'mauna_loa' ? 14000 : 8500);
-      const h = z.id === 'mauna_kea' ? 4205 : z.id === 'mauna_loa' ? 4169 : z.id === 'hualalai' ? 2521 : 950;
-      const geo = new THREE.ConeGeometry(r, h * .92, hero ? 96 : 64, 8);
-      geo.translate(0, h * .46, 0);
-      const massif = new THREE.Mesh(geo, z.id === 'kilauea' ? this.shared.lavaMat : this.shared.cinderMat);
-      massif.name = z.id + '_proxy_massif';
-      massif.userData.evidence = 'proxy; replace with public DEM terrain';
-      g.add(massif);
-    }
+    // Major volcano shape comes from the real whole-island DEM.
+    // Add only summit-scale detail here; never duplicate the mountain with a primitive cone.
+    if (z.id === 'mauna_kea') this.addMaunaKeaSummit(g, z, cx, cy);
+    if (z.id === 'kilauea') this.addKilaueaSummit(g, z, cx, cy);
 
     if (/airport|old_airport/.test(z.id)) {
       const runway = new THREE.Mesh(this.shared.roadGeo, this.shared.asphaltMat);
@@ -241,6 +235,40 @@ export class WorldZoneStreamer {
       const pier=new THREE.Mesh(new THREE.BoxGeometry(280,4,28),pierMat);
       pier.position.set(-250+i*260,base+2,-720+i*80); pier.rotation.y=.15; g.add(pier);
     }
+  }
+
+  addMaunaKeaSummit(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    // Small cinder-cone cluster only. Real mountain form remains DEM-driven.
+    for(let i=0;i<9;i++){
+      const a=i*2.399, rr=260+(i%4)*170;
+      const h=45+(i%5)*18, r=70+(i%3)*25;
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(r,h,18,4),this.shared.cinder);
+      cone.position.set(Math.cos(a)*rr,base+h*.5,Math.sin(a)*rr);
+      cone.rotation.y=a*.3;
+      cone.userData.evidence='summit-scale cinder proxy on DEM';
+      g.add(cone);
+    }
+    // Observatory silhouettes, intentionally minimal at current LOD.
+    for(let i=0;i<5;i++){
+      const dome=new THREE.Mesh(new THREE.SphereGeometry(12+(i%2)*3,18,10,0,Math.PI*2,0,Math.PI/2),this.shared.concrete);
+      dome.position.set(-130+i*65,base+12,120+(i%2)*35);
+      g.add(dome);
+      const baseBox=new THREE.Mesh(new THREE.BoxGeometry(24,9,24),this.shared.concrete);
+      baseBox.position.set(dome.position.x,base+4.5,dome.position.z);
+      g.add(baseBox);
+    }
+  }
+
+  addKilaueaSummit(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    // Caldera rim cue only; actual elevation/depression comes from DEM.
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(560,18,10,72),this.shared.cinder);
+    rim.rotation.x=Math.PI/2;
+    rim.scale.set(1.35,.86,1);
+    rim.position.y=base+8;
+    rim.userData.evidence='caldera rim cue / DEM remains authoritative';
+    g.add(rim);
   }
 
   addWaikoloa(g,z,cx,cy){
@@ -519,10 +547,13 @@ export class WorldZoneStreamer {
     if (!n) return;
     const road = new THREE.InstancedMesh(this.shared.roadGeo, this.shared.asphaltMat, n);
     road.name = 'queen_k_route_segments';
+    const lineMat = new THREE.MeshStandardMaterial({ color: 0xe4e1d7, roughness: .78 });
+    const lines = new THREE.InstancedMesh(this.shared.roadGeo, lineMat, n * 2);
+    lines.name = 'queen_k_edge_lines';
     const rocks = new THREE.InstancedMesh(this.shared.rockGeo, this.shared.lavaMat, n * 3);
     rocks.name = 'queen_k_lava_edge';
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-    let ri = 0;
+    let ri = 0, li = 0;
     for (let i = 0; i < n; i++) {
       const a = samples[i], b = samples[Math.min(n - 1, i + 1)];
       const dx = b.x - a.x, dy = b.y - a.y, len = Math.max(10, Math.hypot(dx, dy));
@@ -531,6 +562,15 @@ export class WorldZoneStreamer {
       q.setFromAxisAngle(up, Math.atan2(dx, dy));
       sc.set(6.8, .22, len * .62);
       m.compose(p, q, sc); road.setMatrixAt(i, m);
+
+      // Low-profile edge lines. Slightly above asphalt to avoid z-fighting.
+      for (const side of [-1, 1]) {
+        const lp = this.W(a.x, a.y, z + .49);
+        const localSide = new THREE.Vector3(side * 5.9, 0, 0).applyQuaternion(q);
+        lp.add(localSide);
+        sc.set(.12, .04, len * .60);
+        m.compose(lp, q, sc); lines.setMatrixAt(li++, m);
+      }
 
       const random = rng(hashString('qk' + i));
       const nx = dy / len, ny = -dx / len;
@@ -546,10 +586,11 @@ export class WorldZoneStreamer {
       }
     }
     road.instanceMatrix.needsUpdate = true;
+    lines.count = li; lines.instanceMatrix.needsUpdate = true;
     rocks.count = ri; rocks.instanceMatrix.needsUpdate = true;
-    road.visible = false; rocks.visible = false;
-    this.root.add(road, rocks);
-    this.corridor = { road, rocks, samples, activation: 9000 };
+    road.visible = false; lines.visible = false; rocks.visible = false;
+    this.root.add(road, lines, rocks);
+    this.corridor = { road, lines, rocks, samples, activation: 9000 };
   }
 
   update(dt, camera) {
@@ -573,6 +614,7 @@ export class WorldZoneStreamer {
         if (Math.hypot(p.x - cx, p.y - cy) < this.corridor.activation) { near = true; break; }
       }
       this.corridor.road.visible = !overview && near;
+      this.corridor.lines.visible = !overview && near;
       this.corridor.rocks.visible = !overview && near;
     }
   }
