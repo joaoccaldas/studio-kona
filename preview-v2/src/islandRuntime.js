@@ -246,14 +246,10 @@ async function loadKonaCore() {
   return protos;
 }
 
-async function initDetailLayers(protos){
-  // Yield to the browser first so the overview becomes interactive before detail construction.
+async function initWorldLayers(){
+  // Yield first so the base island can paint and accept input before geographic detail setup.
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 
-  streamer=new TileStreamer({scene,W,base:A+'tiles/',radius:coarse?850:1500,palm:protos.palm,onGround:()=>{}});
-  await streamer.init().catch(e=>{console.warn('TileStreamer',e);streamer=null;});
-
-  await new Promise(resolve=>setTimeout(resolve,0));
   worldZones=new WorldZoneStreamer({scene,W,heightAt,toLocal,coarse,base:A});
   await worldZones.init().catch(e=>{console.warn('WorldZoneStreamer',e);worldZones=null;});
 
@@ -275,6 +271,12 @@ async function initDetailLayers(protos){
   await coverageDebug.init().catch(()=>{coverageDebug=null;});
   if(new URLSearchParams(location.search).get('coverage')==='1') coverageDebug?.setVisible(true);
   window.__kona.detailsReady=true;
+}
+
+async function initTileStreamer(protos){
+  streamer=new TileStreamer({scene,W,base:A+'tiles/',radius:coarse?850:1500,palm:protos.palm,onGround:()=>{}});
+  await streamer.init().catch(e=>{console.warn('TileStreamer',e);streamer=null;});
+  window.__kona.tilesReady=streamer?true:'degraded';
 }
 
 function wholeIslandView(){
@@ -356,6 +358,8 @@ window.__kona={
   mode:'world-only',
   ready:false,
   detailsReady:false,
+  coreReady:false,
+  tilesReady:false,
   scene,camera,renderer,THREE,
   get dpr(){ return dpr; },
   coarse,
@@ -376,16 +380,23 @@ loadBaseIsland().then(()=>{
   document.documentElement.dataset.worldReady='true';
   document.querySelector('#loading')?.remove();
 
-  // The whole-island base is now interactive. Stream the heavy Kona core and
-  // detail systems independently so first interaction no longer waits on kona_p1.glb.
+  // Geographic/world metadata can initialize without the heavy Kona core.
+  initWorldLayers().catch(e=>{
+    console.warn('KONA world layers degraded',e);
+    window.__kona.detailsReady='degraded';
+  });
+
+  // Stream the high-detail Kailua core independently. Tile streaming depends on its palm prototype.
   loadKonaCore().then((protos)=>{
-    initDetailLayers(protos).catch(e=>{
-      console.warn('KONA detail layers degraded',e);
-      window.__kona.detailsReady='degraded';
+    window.__kona.coreReady=true;
+    initTileStreamer(protos).catch(e=>{
+      console.warn('KONA tile streamer degraded',e);
+      window.__kona.tilesReady='degraded';
     });
   }).catch(e=>{
     console.warn('KONA core degraded',e);
-    window.__kona.detailsReady='degraded';
+    window.__kona.coreReady='degraded';
+    window.__kona.tilesReady='degraded';
   });
 }).catch(e=>{
   console.error(e);
