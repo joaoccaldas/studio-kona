@@ -82,6 +82,7 @@ export class WorldZoneStreamer {
     this.routes = routes;
     this.buildZones();
     this.buildQueenK(routes.bike || []);
+    this.raceCorridor = buildRaceCorridorContext({scene:this.scene,W:this.W,toLocal:this.toLocal,heightAt:this.heightAt,shared:this.shared,coarse:this.coarse,route:routes.bike||[]});
   }
 
   buildZones() {
