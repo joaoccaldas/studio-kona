@@ -91,11 +91,48 @@ function addHistoricShops(g,shared,p,z,sx,sy,sz){
   }
 }
 
+
+function addSpecificHospital(g,shared,p,z){
+  const cfg={
+    kona_hospital:{w:46,d:28,h:10,wings:4},
+    queens_north_hawaii:{w:52,d:30,h:10,wings:4},
+    hilo_benioff:{w:58,d:34,h:12,wings:5}
+  }[p.id];
+  if(!cfg) return false;
+  addBox(g,shared.box,shared.medical,p.id+'_core',0,z+cfg.h*.5,0,cfg.w,cfg.h,cfg.d,'place-specific hospital campus proxy');
+  for(let i=0;i<cfg.wings;i++){
+    const a=i/cfg.wings*Math.PI*2;
+    const wing=addBox(g,shared.box,shared.medical,p.id+'_wing_'+i,Math.cos(a)*cfg.w*.62,z+cfg.h*.36,Math.sin(a)*cfg.d*.78,cfg.w*.56,cfg.h*.72,cfg.d*.42,'place-specific hospital wing proxy');
+    wing.rotation.y=-a+.2;
+  }
+  addBox(g,shared.box,shared.roof,p.id+'_roof',0,z+cfg.h+.3,0,cfg.w*1.03,.55,cfg.d*1.03,'hospital roof proxy');
+  const parking=new THREE.Mesh(new THREE.PlaneGeometry(cfg.w*3.2,cfg.d*2.2),shared.service);
+  parking.rotation.x=-Math.PI/2; parking.position.set(cfg.w*.85,z+.18,cfg.d*1.1); parking.name=p.id+'_parking'; g.add(parking);
+  const helipad=new THREE.Mesh(new THREE.CylinderGeometry(8,8,.25,32),shared.meeting);
+  helipad.position.set(-cfg.w*.95,z+.24,-cfg.d*.95); helipad.name=p.id+'_helipad'; g.add(helipad);
+  return true;
+}
+function addSpecificBikeService(g,shared,p,z){
+  if(!['bike_works_waikoloa','bike_works_mauka','hilo_bike_hub'].includes(p.id)) return false;
+  const w=34,d=22,h=7;
+  addBox(g,shared.box,shared.wall,p.id+'_shell',0,z+h*.5,0,w,h,d,'place-specific bike-service storefront proxy');
+  addBox(g,shared.box,shared.roof,p.id+'_roof',0,z+h+.22,0,w*1.04,.42,d*1.04,'bike-service roof proxy');
+  addBox(g,shared.box,shared.glass,p.id+'_glass',0,z+h*.54,-d*.51,w*.7,h*.46,.18,'bike-service glazing proxy');
+  addBox(g,shared.box,shared.roof,p.id+'_awning',0,z+h*.78,-d*.62,w*.74,.18,3.1,'bike-service awning proxy');
+  for(let i=-2;i<=2;i++){
+    const wheel=new THREE.Mesh(new THREE.TorusGeometry(1.05,.075,8,20),shared.service);
+    wheel.rotation.y=Math.PI/2; wheel.position.set(i*3.4,z+2,-d*.58); wheel.name=p.id+'_wheel_'+(i+2); g.add(wheel);
+  }
+  return true;
+}
+
 export function buildPlaceRecipe({group:g,place:p,z,shared,coarse=false,material}){
   const hero=p.priority==='hero';
   const sx=hero?22:14, sz=hero?28:18, sy=hero?8:6;
   const baseMat=material||shared.shop;
   if(addHeroVisualProfile({group:g,place:p,z,shared})) return;
+  if(addSpecificHospital(g,shared,p,z)) return;
+  if(addSpecificBikeService(g,shared,p,z)) return;
   addBox(g,shared.box,baseMat,p.id+'_shell',0,z+sy,0,sx,sy,sz,'procedural shell; identity/location verified, geometry inferred');
   addRoof(g,shared,p.id,z,sx,sy,sz);
 
