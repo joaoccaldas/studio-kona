@@ -138,6 +138,8 @@ export class WorldZoneStreamer {
     this.addRegionalLandmark(g, z, cx, cy);
     if (z.id === 'hawi') this.addHawiTown(g, z, cx, cy);
     if (z.id === 'hilo') this.addHiloCity(g, z, cx, cy);
+    if (z.id === 'waikoloa') this.addWaikoloa(g, z, cx, cy);
+    if (z.id === 'kawaihae') this.addKawaihae(g, z, cx, cy);
     if (z.id === 'puuhonua') this.addPuuhonua(g, z, cx, cy);
     if (z.id === 'puukohola') this.addPuukohola(g, z, cx, cy);
     if (z.id === 'kaloko_honokohau') this.addKaloko(g, z, cx, cy);
@@ -238,6 +240,87 @@ export class WorldZoneStreamer {
     for(let i=0;i<3;i++){
       const pier=new THREE.Mesh(new THREE.BoxGeometry(280,4,28),pierMat);
       pier.position.set(-250+i*260,base+2,-720+i*80); pier.rotation.y=.15; g.add(pier);
+    }
+  }
+
+  addWaikoloa(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const lava=this.shared.lava;
+    const dry=this.shared.dryGrass;
+    const stucco=this.shared.stucco;
+    const roof=this.shared.darkRoof;
+    const asphalt=this.shared.asphalt;
+
+    // Resort-road spine and lava-field islands.
+    const road=new THREE.Mesh(new THREE.BoxGeometry(920,.22,12),asphalt);
+    road.position.set(0,base+.18,20); road.rotation.y=.16;
+    road.name='waikoloa_resort_road_proxy'; road.userData.evidence='P corridor context / I dimensions';
+    g.add(road);
+
+    for(let i=0;i<16;i++){
+      const a=(i*2.17)%6.283, rr=180+(i%6)*95;
+      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),lava);
+      rock.scale.set(26+(i%4)*11,6+(i%3)*3,18+(i%5)*8);
+      rock.position.set(Math.cos(a)*rr,base+4,Math.sin(a)*rr*.7);
+      g.add(rock);
+    }
+
+    // Low, broad resort massing with courtyards instead of towers.
+    const blocks=[
+      [-250,-120,100,34,10],[-110,-150,92,30,9],[45,-135,105,36,11],
+      [190,-105,88,32,9],[-190,145,82,28,8],[-40,155,94,30,9],[120,150,108,34,10]
+    ];
+    blocks.forEach((b,i)=>{
+      const [x,zp,w,d,h]=b;
+      const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),stucco);
+      body.position.set(x,base+h*.5,zp); body.rotation.y=.08;
+      body.userData.evidence='procedural resort massing pending measured footprints';
+      g.add(body);
+      const r=new THREE.Mesh(new THREE.BoxGeometry(w*1.02,.5,d*1.02),roof);
+      r.position.set(x,base+h+.3,zp); r.rotation.y=.08; g.add(r);
+    });
+
+    // Golf / irrigated green ribbons constrained to near resort massing.
+    for(let i=0;i<5;i++){
+      const green=new THREE.Mesh(new THREE.CircleGeometry(90+i*8,32),dry);
+      green.rotation.x=-Math.PI/2; green.scale.set(1.7,1,.55);
+      green.position.set(-250+i*125,base+.3,290+(i%2)*80);
+      g.add(green);
+    }
+  }
+
+  addKawaihae(g,z,cx,cy){
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const concrete=this.shared.concrete;
+    const asphalt=this.shared.asphalt;
+    const metal=this.shared.metal;
+    const lava=this.shared.lava;
+
+    // Harbor basin edge and industrial apron.
+    const apron=new THREE.Mesh(new THREE.BoxGeometry(760,.3,260),asphalt);
+    apron.position.set(0,base+.16,80); apron.rotation.y=-.08;
+    apron.name='kawaihae_harbor_apron_proxy'; g.add(apron);
+
+    for(let i=0;i<4;i++){
+      const pier=new THREE.Mesh(new THREE.BoxGeometry(220,3,24),concrete);
+      pier.position.set(-260+i*175,base+1.5,-130-i*22); pier.rotation.y=-.05;
+      g.add(pier);
+    }
+    for(let i=0;i<9;i++){
+      const w=38+(i%3)*18, d=28+(i%4)*10, h=8+(i%2)*3;
+      const shed=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),metal);
+      shed.position.set(-290+(i%5)*145,base+h*.5,120+Math.floor(i/5)*90);
+      shed.userData.evidence='procedural harbor massing pending measured footprint replacement';
+      g.add(shed);
+    }
+
+    // Dry basalt breakwater gives Kawaihae its strong coastal silhouette.
+    for(let i=0;i<18;i++){
+      const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),lava);
+      rock.scale.set(14+(i%4)*5,8+(i%3)*3,12+(i%5)*4);
+      rock.position.set(-390+i*46,base+5,-240+(i%2)*5);
+      rock.rotation.y=i*.31;
+      g.add(rock);
     }
   }
 
