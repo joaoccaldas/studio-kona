@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "rendering": {
     "persistence_key": "kona.placeworld.v2",
     "load_policy": "proximity",
@@ -65,7 +65,13 @@
       "address": "75-5660 Kopiko St, Kailua-Kona, HI 96740",
       "priority": "hero",
       "recipe": "bike_shop",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.6426633,
+      "lon": -155.9938018,
+      "geo_source_url": "https://www.whereorg.com/cingular-wireless-4995481",
+      "geo_source_note": "address-level geocode for 75-5660 Kopiko St",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "boss_frogs_kona",
@@ -74,7 +80,13 @@
       "address": "75-5725 Ali‘i Dr, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "small_shop",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.63867,
+      "lon": -155.993369,
+      "geo_source_url": "https://nextdoor.com/pages/boss-frogs-snorkel-bike-beach-rentals-kailua-kona-hi/",
+      "geo_source_note": "business listing coordinates matching official Kona store address",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kta_kona",
@@ -83,7 +95,13 @@
       "address": "74-5594 Palani Rd, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "grocery",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.644512,
+      "lon": -155.99522,
+      "geo_source_url": "https://maps.me/catalog/shops/shop-supermarket/kta-super-stores-4611686022031643098",
+      "geo_source_note": "business listing coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "safeway_kona",
@@ -101,7 +119,13 @@
       "address": "75-5828 Kahakai Rd, Kailua-Kona, HI 96740",
       "priority": "hero",
       "recipe": "waterfront_restaurant",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.632311,
+      "lon": -155.989825,
+      "geo_source_url": "https://www.merchantcircle.com/hi-kailua-kona/business-to-business/trade-shows",
+      "geo_source_note": "address-level listing for 75-5828 Kahakai Rd",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "on_the_rocks",
@@ -110,7 +134,13 @@
       "address": "75-5824 Kahakai Rd, Kailua-Kona, HI 96740",
       "priority": "hero",
       "recipe": "waterfront_restaurant",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.6335,
+      "lon": -155.99,
+      "geo_source_url": "https://untappd.com/w/huggo-s-on-the-rocks/569402/photos",
+      "geo_source_note": "venue coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kau_coffee_kona",
@@ -119,7 +149,13 @@
       "address": "75-5663 Palani Rd, Kailua-Kona, HI 96740",
       "priority": "medium",
       "recipe": "cafe",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.6404842,
+      "lon": -155.9968228,
+      "geo_source_url": "https://www.whereorg.com/bubi-sportswear-4980210",
+      "geo_source_note": "address-level geocode for 75-5663 Palani Rd",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "white_nene",
@@ -128,7 +164,13 @@
       "address": "75-5742 Kuakini Hwy #101, Kailua-Kona, HI 96740",
       "priority": "medium",
       "recipe": "cafe",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.637284,
+      "lon": -155.989985,
+      "geo_source_url": "https://www.crexi.com/lease/properties/1014665/hawaii-oihana-center",
+      "geo_source_note": "building-level coordinate for 75-5742 Kuakini Hwy",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kona_hospital",
@@ -137,7 +179,13 @@
       "address": "79-1019 Haukapila St, Kealakekua, HI 96750",
       "priority": "hero",
       "recipe": "hospital_campus",
-      "source": "state_and_business_verified"
+      "source": "state_and_business_verified",
+      "lat": 19.520089,
+      "lon": -155.917473,
+      "geo_source_url": "https://phppd.providence.org/BaseSearch/Provider/View/23839229697211",
+      "geo_source_note": "provider directory coordinate for exact hospital address",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "queens_kona",
@@ -146,7 +194,13 @@
       "address": "75-5653 Kuakini Hwy #100, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "medical_center",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.64154,
+      "lon": -155.995135,
+      "geo_source_url": "https://phppd.providence.org/BaseSearch/Provider/View/217110613302885",
+      "geo_source_note": "provider directory coordinate for same 75-5653 Kuakini Hwy building",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kona_auto",
@@ -182,7 +236,13 @@
       "address": "55-3415 Akoni Pule Hwy, Hawi, HI 96719",
       "priority": "hero",
       "recipe": "historic_storefront",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.2381376085,
+      "lon": -155.831352174,
+      "geo_source_url": "https://www.merchantcircle.com/hi-hawi/food-and-dining/restaurants/hawaiian-restaurants",
+      "geo_source_note": "business listing coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "as_hawi_turns",
@@ -191,7 +251,13 @@
       "address": "55-3412 Akoni Pule Hwy, Hawi, HI 96719",
       "priority": "high",
       "recipe": "historic_storefront",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.2378027,
+      "lon": -155.831332,
+      "geo_source_url": "https://steller.co/p/hawi-coffee-company-4MAGJbkSx2Y6kWZhYmgdEG",
+      "geo_source_note": "address-level coordinate for 55-3412 Akoni Pule Hwy",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kohala_hospital",
@@ -200,7 +266,13 @@
       "address": "54-383 Hospital Rd, Kapaau, HI 96755",
       "priority": "high",
       "recipe": "hospital_campus",
-      "source": "state_and_business_verified"
+      "source": "state_and_business_verified",
+      "lat": 20.23208,
+      "lon": -155.7968,
+      "geo_source_url": "https://mapcarta.com/24044762",
+      "geo_source_note": "OpenStreetMap-backed hospital location",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "merrimans_waimea",
@@ -209,7 +281,13 @@
       "address": "65-1227 Opelo Rd B, Waimea, HI 96743",
       "priority": "hero",
       "recipe": "restaurant",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.022843,
+      "lon": -155.67662,
+      "geo_source_url": "https://fotospot.com/attractions/hawaii-big-island/merrimans-big-island",
+      "geo_source_note": "business listing coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "fish_hog",
@@ -227,7 +305,13 @@
       "address": "64-1066 Mamalahoa Hwy, Waimea, HI 96743",
       "priority": "high",
       "recipe": "bike_shop",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.02486,
+      "lon": -155.66145,
+      "geo_source_url": "https://kilo.land/tmk/3-6-4-001-119",
+      "geo_source_note": "county GIS parcel centroid for exact street address",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "queens_north_hawaii",
@@ -236,7 +320,13 @@
       "address": "67-1125 Mamalahoa Hwy, Waimea, HI 96743",
       "priority": "hero",
       "recipe": "hospital_campus",
-      "source": "state_and_business_verified"
+      "source": "state_and_business_verified",
+      "lat": 20.02287,
+      "lon": -155.6650027,
+      "geo_source_url": "https://www.whereorg.com/north-hawaii-community-hosp-5017807",
+      "geo_source_note": "hospital listing coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "parker_ranch_center",
@@ -245,7 +335,13 @@
       "address": "67-1185 Hawaiʻi Belt Rd, Waimea, HI 96743",
       "priority": "high",
       "recipe": "retail_center",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.02033,
+      "lon": -155.66704,
+      "geo_source_url": "https://mapcarta.com/W199013178",
+      "geo_source_note": "OpenStreetMap-backed shopping center coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "foodland_waimea",
@@ -254,7 +350,13 @@
       "address": "Parker Ranch Center #109, Waimea, HI 96743",
       "priority": "medium",
       "recipe": "grocery",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.02033,
+      "lon": -155.66704,
+      "geo_source_url": "https://mapcarta.com/W199013178",
+      "geo_source_note": "Foodland is within Parker Ranch Center; center coordinate used until unit-level geocode is verified",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "bike_works_waikoloa",
@@ -263,7 +365,13 @@
       "address": "69-201 Waikōloa Beach Dr, Waikoloa Village, HI 96738",
       "priority": "high",
       "recipe": "bike_shop",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.9132707,
+      "lon": -155.8805031,
+      "geo_source_url": "https://www.geocords.com/place/69-201-waik%C5%8Dloa-beach-dr-waikoloa-village-hi-96738-usa-136977/",
+      "geo_source_note": "address-level geocode for 69-201 Waikoloa Beach Dr",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "hilo_benioff",
@@ -272,7 +380,13 @@
       "address": "1190 Waianuenue Ave, Hilo, HI 96720",
       "priority": "hero",
       "recipe": "hospital_campus",
-      "source": "state_and_business_verified"
+      "source": "state_and_business_verified",
+      "lat": 19.7183199,
+      "lon": -155.1124631,
+      "geo_source_url": "https://medical-centers.org/hilo-medical-center/",
+      "geo_source_note": "coordinate matched to current facility name and exact address",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "hilo_bike_hub",
@@ -281,7 +395,13 @@
       "address": "318 E Kawili St B, Hilo, HI 96720",
       "priority": "high",
       "recipe": "bike_shop",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.705774,
+      "lon": -155.067709,
+      "geo_source_url": "https://www.merchantcircle.com/hi-hilo/recreation/other-sports",
+      "geo_source_note": "business listing coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "moon_turtle",
@@ -299,7 +419,13 @@
       "address": "600 Imiloa Pl, Hilo, HI 96720",
       "priority": "high",
       "recipe": "restaurant",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.7008333,
+      "lon": -155.0888889,
+      "geo_source_url": "https://trek.zone/de/vereinigte-staaten/orte/68351/imiloa-astronomy-center-hilo",
+      "geo_source_note": "address-level coordinate for 600 Imiloa Pl; restaurant is inside Imiloa",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kta_hilo",
@@ -308,7 +434,13 @@
       "address": "321 Keawe St, Hilo, HI 96720",
       "priority": "medium",
       "recipe": "grocery",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.7232,
+      "lon": -155.086,
+      "geo_source_url": "https://pintown.com/dir/hilo-hi/malls-and-supermarkets/",
+      "geo_source_note": "business listing coordinates for Downtown Hilo store",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "prince_kuhio",
@@ -317,7 +449,13 @@
       "address": "111 Puainako St, Hilo, HI 96720",
       "priority": "medium",
       "recipe": "retail_center",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.697376,
+      "lon": -155.063346,
+      "geo_source_url": "https://www.merchantcircle.com/hi-hilo/retail-shopping/clothing/womens-clothing",
+      "geo_source_note": "mall address business coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "midas_hilo",
@@ -335,7 +473,13 @@
       "address": "75-5807 Aliʻi Dr Ste C8, Kailua-Kona, HI 96740",
       "priority": "hero",
       "recipe": "running_shop",
-      "source": "official_and_business_verified"
+      "source": "official_and_business_verified",
+      "lat": 19.6417475,
+      "lon": -155.9964344,
+      "geo_source_url": "https://www.merchantcircle.com/business/Big.Island.Running.Company.808-327-9333",
+      "geo_source_note": "business listing coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "pt_hawaii_kona",
@@ -344,7 +488,13 @@
       "address": "75-184 Hualalai Rd Suite 302, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "medical_center",
-      "source": "official_and_business_verified"
+      "source": "official_and_business_verified",
+      "lat": 19.637214,
+      "lon": -155.988599,
+      "geo_source_url": "https://phppd.providence.org/BaseSearch/Provider/View/195635776050056",
+      "geo_source_note": "provider directory coordinate for exact 75-184 Hualalai Rd building",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "sozo_performance",
@@ -353,7 +503,13 @@
       "address": "75-5597 Palani Rd, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "medical_center",
-      "source": "official_and_business_verified"
+      "source": "official_and_business_verified",
+      "lat": 19.6434667,
+      "lon": -155.9949,
+      "geo_source_url": "https://www.waymarking.com/waymarks/WM1408_Burger_King_Palani_Rd_Kailua_Kona_Hawaii",
+      "geo_source_note": "address-level GPS coordinate for 75-5597 Palani Rd",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kona_rehab",
@@ -362,7 +518,13 @@
       "address": "75-1029 Henry St Suite 101, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "medical_center",
-      "source": "official_and_business_verified"
+      "source": "official_and_business_verified",
+      "lat": 19.6474075317383,
+      "lon": -155.98908996582,
+      "geo_source_url": "https://www.whereorg.com/rehabilitation-hospital-of-the-pacific-foundation-27202924",
+      "geo_source_note": "address and phone match Kona Rehab suite; listing provides GPS coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     }
   ]
 }
