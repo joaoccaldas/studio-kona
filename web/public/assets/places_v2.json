@@ -80,7 +80,13 @@
       "address": "75-5725 Ali‘i Dr, Kailua-Kona, HI 96740",
       "priority": "high",
       "recipe": "small_shop",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.63867,
+      "lon": -155.993369,
+      "geo_source_url": "https://nextdoor.com/pages/boss-frogs-snorkel-bike-beach-rentals-kailua-kona-hi/",
+      "geo_source_note": "business listing coordinates matching official Kona store address",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kta_kona",
@@ -311,7 +317,13 @@
       "address": "67-1185 Hawaiʻi Belt Rd, Waimea, HI 96743",
       "priority": "high",
       "recipe": "retail_center",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.02033,
+      "lon": -155.66704,
+      "geo_source_url": "https://mapcarta.com/W199013178",
+      "geo_source_note": "OpenStreetMap-backed shopping center coordinates",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "foodland_waimea",
@@ -320,7 +332,13 @@
       "address": "Parker Ranch Center #109, Waimea, HI 96743",
       "priority": "medium",
       "recipe": "grocery",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 20.02033,
+      "lon": -155.66704,
+      "geo_source_url": "https://mapcarta.com/W199013178",
+      "geo_source_note": "Foodland is within Parker Ranch Center; center coordinate used until unit-level geocode is verified",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "bike_works_waikoloa",
@@ -344,7 +362,13 @@
       "address": "1190 Waianuenue Ave, Hilo, HI 96720",
       "priority": "hero",
       "recipe": "hospital_campus",
-      "source": "state_and_business_verified"
+      "source": "state_and_business_verified",
+      "lat": 19.7183199,
+      "lon": -155.1124631,
+      "geo_source_url": "https://medical-centers.org/hilo-medical-center/",
+      "geo_source_note": "coordinate matched to current facility name and exact address",
+      "geo_confidence": "high",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "hilo_bike_hub",
@@ -377,7 +401,13 @@
       "address": "600 Imiloa Pl, Hilo, HI 96720",
       "priority": "high",
       "recipe": "restaurant",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.7008333,
+      "lon": -155.0888889,
+      "geo_source_url": "https://trek.zone/de/vereinigte-staaten/orte/68351/imiloa-astronomy-center-hilo",
+      "geo_source_note": "address-level coordinate for 600 Imiloa Pl; restaurant is inside Imiloa",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "kta_hilo",
@@ -386,7 +416,13 @@
       "address": "321 Keawe St, Hilo, HI 96720",
       "priority": "medium",
       "recipe": "grocery",
-      "source": "business_verified"
+      "source": "business_verified",
+      "lat": 19.7232,
+      "lon": -155.086,
+      "geo_source_url": "https://pintown.com/dir/hilo-hi/malls-and-supermarkets/",
+      "geo_source_note": "business listing coordinates for Downtown Hilo store",
+      "geo_confidence": "medium",
+      "geo_verified_at": "2026-10-01"
     },
     {
       "id": "prince_kuhio",
