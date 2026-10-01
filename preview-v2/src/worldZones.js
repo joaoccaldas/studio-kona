@@ -2,8 +2,6 @@
 // Complements (does not replace) the Ring 1 500 m TileStreamer.
 import * as THREE from 'three';
 import { createNaturalMaterials, varyInstanceColors } from './naturalMaterials.js';
-import { applyRegionalGrammar } from './regionalGrammar.js';
-import { buildRaceCorridorContext } from './raceCorridor.js';
 
 function hashString(s) {
   let h = 2166136261 >>> 0;
@@ -28,8 +26,6 @@ export class WorldZoneStreamer {
     this.scene.add(this.root);
     this.zones = [];
     this.t = 0;
-    this.raceCorridor = null;
-    this.regionalGrammarStats = {};
     this.shared = this.makeShared();
   }
 
@@ -82,7 +78,6 @@ export class WorldZoneStreamer {
     this.routes = routes;
     this.buildZones();
     this.buildQueenK(routes.bike || []);
-    this.raceCorridor = buildRaceCorridorContext({scene:this.scene,W:this.W,toLocal:this.toLocal,heightAt:this.heightAt,shared:this.shared,coarse:this.coarse,route:routes.bike||[]});
   }
 
   buildZones() {
@@ -166,7 +161,6 @@ export class WorldZoneStreamer {
       g.add(buildings);
     }
 
-    this.regionalGrammarStats[z.id]=applyRegionalGrammar({group:g,z,shared:this.shared,coarse:this.coarse,heightAt:this.heightAt,cx,cy});
     this.addRegionalLandmark(g, z, cx, cy);
     if (z.id === 'kahaluu') this.addKahaluu(g, z, cx, cy);
     if (z.id === 'keauhou') this.addKeauhou(g, z, cx, cy);
@@ -1091,22 +1085,49 @@ export class WorldZoneStreamer {
   }
 
   addValley(g, z, cx, cy) {
-    const base = Math.max(0, this.heightAt(cx, cy));
-    const wet = this.shared.wetForest;
-    const cliff = this.shared.cliff;
+    const base=Math.max(0,this.heightAt(cx,cy));
+    const wet=this.shared.wetForest;
+    const water=new THREE.MeshPhysicalMaterial({color:0x86b8c6,roughness:.18,transparent:true,opacity:.82});
     const isWaipio=z.id==='waipio';
-    const span=isWaipio?5200:3600, depth=isWaipio?4800:3000, h=isWaipio?950:720;
-    for (const side of [-1,1]) {
-      const ridgeGeo=new THREE.CylinderGeometry(span*.22,span*.34,h,18,4);
-      const ridge=new THREE.Mesh(ridgeGeo,cliff);
-      ridge.position.set(side*span*.32,base+h*.48,0);
-      ridge.rotation.z=side*.16; ridge.name=z.id+'_cliff_proxy_'+side;
-      ridge.userData.evidence='terrain proxy; replace with high-resolution DEM'; g.add(ridge);
-      const cap=new THREE.Mesh(new THREE.CylinderGeometry(span*.23,span*.27,42,18),wet);
-      cap.position.set(side*span*.32,base+h+10,0); cap.rotation.z=side*.16; cap.scale.z=.7; g.add(cap);
+
+    // Real valley form remains DEM-driven. Add only local hydrology and vegetation cues.
+    const stream=new THREE.Mesh(new THREE.PlaneGeometry(isWaipio?1700:1050,isWaipio?38:28),water);
+    stream.rotation.x=-Math.PI/2;
+    stream.rotation.z=isWaipio?.18:-.12;
+    stream.position.set(0,base+1.2,isWaipio?-150:40);
+    stream.name=z.id+'_valley_stream_proxy';
+    stream.userData.evidence='hydrology cue on DEM / simplified alignment';
+    g.add(stream);
+
+    const fallCount=isWaipio?3:1;
+    for(let i=0;i<fallCount;i++){
+      const fall=new THREE.Mesh(new THREE.PlaneGeometry(isWaipio?22:18,isWaipio?260:180,1,6),water);
+      fall.position.set((i-(fallCount-1)/2)*(isWaipio?280:0),base+(isWaipio?360:260),isWaipio?760:520);
+      fall.rotation.y=(i-(fallCount-1)/2)*.09;
+      fall.name=z.id+'_waterfall_'+i;
+      fall.userData.evidence='visual waterfall cue / DEM remains authoritative';
+      g.add(fall);
     }
-    const floor=new THREE.Mesh(new THREE.PlaneGeometry(span*.55,depth*.92,1,1),wet);
-    floor.rotation.x=-Math.PI/2; floor.position.y=base+4; floor.name=z.id+'_valley_floor_proxy'; g.add(floor);
+
+    const count=this.coarse?(isWaipio?42:28):(isWaipio?90:58);
+    const trees=[];
+    for(let i=0;i<count;i++){
+      const a=i*2.399, rr=(isWaipio?420:300)+(i%10)*(isWaipio?90:65);
+      const x=Math.cos(a)*rr;
+      const zp=(isWaipio?180:80)+Math.sin(a)*rr*.55;
+      const slopeBias=(i%4===0)?1.25:1;
+      trees.push({
+        x,y:base,z:zp,trunkH:(isWaipio?9:8)*slopeBias,trunkR:1.1,
+        crownScale:[2.2*slopeBias,2.8*slopeBias,2.1*slopeBias],rot:i*.31
+      });
+    }
+    this.addTreeInstances(g,trees,wet,z.id+'_forest');
+
+    // Small lookout platform cue only, never a giant landmark primitive.
+    const lookout=new THREE.Mesh(new THREE.BoxGeometry(isWaipio?18:14,.35,isWaipio?9:7),this.shared.wood);
+    lookout.position.set(isWaipio?-520:-360,base+2.2,isWaipio?620:420);
+    lookout.userData.evidence='lookout cue / simplified dimensions';
+    g.add(lookout);
   }
 
   buildQueenK(bikeLonLat) {
