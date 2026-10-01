@@ -2,7 +2,7 @@
 // Complements (does not replace) the Ring 1 500 m TileStreamer.
 import * as THREE from 'three';
 import { createNaturalMaterials, varyInstanceColors } from './naturalMaterials.js';
-import { applyRegionalGrammar } from './regionalGrammar.js';
+import { applyRegionalGrammar, regionalProfileFor } from './regionalGrammar.js';
 import { buildRaceCorridorContext } from './raceCorridor.js';
 
 function hashString(s) {
@@ -95,11 +95,14 @@ export class WorldZoneStreamer {
       g.position.copy(this.W(x, y, 0));
       g.visible = false;
       this.root.add(g);
-      this.populateZone(g, z, x, y);
+      // Keep the full zone registry immediately available, but defer geometry construction
+      // until the camera approaches. This is the main mobile startup optimization.
+      const profile=regionalProfileFor(z.id);
+      this.regionalGrammarStats[z.id]={profile,accentCount:0,lazy:true};
       const activation = z.lod === 'hero' ? Math.max(22000, z.radius_m * 1.6)
         : z.lod === 'high' ? Math.max(11000, z.radius_m * 1.8)
           : Math.max(8000, z.radius_m * 1.5);
-      this.zones.push({ cfg: z, group: g, x, y, activation });
+      this.zones.push({ cfg: z, group: g, x, y, activation, built:false, building:false });
     }
   }
 
@@ -1207,9 +1210,16 @@ export class WorldZoneStreamer {
     const overview = altitude > 45000;
     for (const z of this.zones) {
       const d = Math.hypot(z.x - cx, z.y - cy);
-      // At whole-island altitude, hero/proxy geometry should not punch through the overview.
-      // The Ring-3 terrain owns the view; Ring-2 activates only once the camera descends.
-      z.group.visible = !overview && d < z.activation;
+      const shouldShow = !overview && d < z.activation;
+      if (shouldShow && !z.built && !z.building) {
+        z.building=true;
+        // Build one approached zone synchronously at the coarse update cadence. All other
+        // invisible zones remain metadata-only until visited.
+        this.populateZone(z.group, z.cfg, z.x, z.y);
+        z.built=true;
+        z.building=false;
+      }
+      z.group.visible = shouldShow && z.built;
     }
     if (this.corridor) {
       let near = false;

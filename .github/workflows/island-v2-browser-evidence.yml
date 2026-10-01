@@ -262,14 +262,26 @@ jobs:
           const mobileRes=await mobile.goto(url+'?mobileEvidence='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
           if(!mobileRes?.ok()) throw new Error('Mobile preview HTTP '+mobileRes?.status());
           await mobile.waitForFunction(() => window.__kona?.ready === true, null, {timeout:30000});
+          const mobileReadyMs=Date.now()-mobileStart;
           await mobile.waitForFunction(() => window.__kona && (window.__kona.detailsReady === true || window.__kona.detailsReady === 'degraded'), null, {timeout:30000});
+          const mobileDetailsReadyMs=Date.now()-mobileStart;
           await mobile.evaluate(() => window.__kona.go('island'));
           await mobile.waitForTimeout(1500);
           await mobile.screenshot({path:'renders/runtime-v2/11_mobile_island.png'});
+          const mobileIslandStats=await mobile.evaluate(() => ({
+            builtZones:window.__kona.worldZones?.zones?.filter(z=>z.built).map(z=>z.cfg.id)||[],
+            geometries:window.__kona.renderer?.info.memory.geometries||0,
+            textures:window.__kona.renderer?.info.memory.textures||0,
+            drawCalls:window.__kona.renderer?.info.render.calls||0,
+            triangles:window.__kona.renderer?.info.render.triangles||0
+          }));
+          const waikoloaStart=Date.now();
           await mobile.evaluate(() => window.__kona.go('waikoloa'));
           await mobile.waitForTimeout(2500);
           await mobile.screenshot({path:'renders/runtime-v2/12_mobile_waikoloa.png'});
+          const mobileWaikoloaMs=Date.now()-waikoloaStart;
           await mobile.bringToFront();
+          const sampleStart=Date.now();
           const mobilePerf=await mobile.evaluate(async () => {
             const deltas=[];
             let previous=performance.now();
@@ -301,7 +313,12 @@ jobs:
             };
           });
           const mobileEvidence={
-            loadMs:Date.now()-mobileStart,
+            readyMs:mobileReadyMs,
+            detailsReadyMs:mobileDetailsReadyMs,
+            waikoloaSettleMs:mobileWaikoloaMs,
+            fpsSampleMs:Date.now()-sampleStart,
+            totalEvidenceMs:Date.now()-mobileStart,
+            islandStats:mobileIslandStats,
             perf:mobilePerf,
             consoleErrors:mobileConsoleErrors,
             pageErrors:mobilePageErrors,
