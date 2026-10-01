@@ -481,6 +481,36 @@
         "parks",
         "Banyan Drive context"
       ]
+    },
+    {
+      "id": "kahaluu",
+      "name": "Kahaluʻu Bay / Beach Park",
+      "lat": 19.5792921,
+      "lon": -155.966673,
+      "lod": "high",
+      "radius_m": 2400,
+      "features": [
+        "reef bay",
+        "beach park",
+        "Aliʻi corridor",
+        "low-rise neighborhood",
+        "palms"
+      ]
+    },
+    {
+      "id": "south_kona_slope",
+      "name": "South Kona Coffee-Country Slope",
+      "lat": 19.5,
+      "lon": -155.9,
+      "lod": "medium",
+      "radius_m": 12000,
+      "features": [
+        "coffee farms",
+        "terraced vegetation",
+        "rural roads",
+        "lava-soil transition",
+        "ocean views"
+      ]
     }
   ],
   "biomes": [
