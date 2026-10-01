@@ -1,10 +1,10 @@
 {
-  "capturedAt": "2026-10-01T03:21:44.137Z",
+  "capturedAt": "2026-10-01T03:53:22.097Z",
   "url": "https://joaoccaldas.github.io/studio-kona/preview-v2/",
   "stateBase": {
     "sceneObjects": 7,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790824781259",
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790826673666",
     "ready": true
   },
   "state": {
@@ -14,7 +14,7 @@
     "islandCoverage": true,
     "detailsReady": true,
     "renderer": "160",
-    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790824781259"
+    "href": "https://joaoccaldas.github.io/studio-kona/preview-v2/?evidence=1790826673666"
   },
   "diagnostic": {
     "zones": [
@@ -157,18 +157,29 @@
         "id": "hilo_bay",
         "lod": "high",
         "visible": false
+      },
+      {
+        "id": "kahaluu",
+        "lod": "high",
+        "visible": false
+      },
+      {
+        "id": "south_kona_slope",
+        "lod": "medium",
+        "visible": false
       }
     ],
-    "placeCount": 31,
+    "placeCount": 37,
     "placeSourceCount": 38,
-    "placeGeocodedCount": 31,
-    "placeUnresolvedCount": 7,
-    "placeCoverageRatio": 0.8157894736842105,
+    "placeGeocodedCount": 37,
+    "placeUnresolvedCount": 1,
+    "placeCoverageRatio": 0.9736842105263158,
+    "athleteServiceCount": 7,
     "coverageTileCount": 169,
     "coverageDebug": {
       "hero": 7,
-      "high": 14,
-      "medium": 8
+      "high": 15,
+      "medium": 9
     }
   },
   "consoleErrors": [],
