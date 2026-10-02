@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#050d15">
 <title>K O N A · Hawaiian Heritage & IRONMAN World Championship 3D</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌺</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,6 +79,18 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:non
 #nav button{font:inherit;color:var(--ink);background:transparent;border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap}
 #nav button:hover{border-color:var(--gold);background:rgba(249,199,79,.1)}
 #nav button.active{background:var(--gold);color:#081420;border-color:var(--gold)}
+
+/* World switcher */
+#worldPanel{position:fixed;top:64px;right:20px;z-index:40;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 10px 32px rgba(0,0,0,.4);min-width:280px;padding:10px}
+#worldPanel[hidden]{display:none}
+.wp-head{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 10px;color:var(--ink);font-size:13px}
+.wp-head button{background:none;border:none;color:var(--mute);font-size:18px;cursor:pointer;padding:0 4px}
+.wp-list{display:flex;flex-direction:column;gap:6px}
+.wp-item{display:flex;flex-direction:column;gap:2px;text-align:left;background:rgba(255,255,255,.04);border:1px solid var(--glass-border);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--ink);font:inherit;transition:.2s}
+.wp-item b{font-size:13px}
+.wp-item span{font-size:11px;color:var(--mute)}
+.wp-item:hover{background:rgba(255,255,255,.1);border-color:var(--gold)}
+.wp-item.active{border-color:var(--gold);background:rgba(249,199,79,.08)}
 
 /* Walking crosshair & hint */
 #crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:5px;height:5px;background:rgba(255,255,255,0.7);border-radius:50%;pointer-events:none;display:none;z-index:15}
@@ -199,9 +214,22 @@ body.walking #mode{display:block}
     <span id="modeIcon">🚶</span>
     <span id="modeLabel">Walk</span>
   </button>
+  <button type="button" class="btn-top" id="btnWorld" title="Other places in this world">
+    <span>🌐</span><span id="worldLabel">World</span>
+  </button>
   <div class="time-box">
     <span class="time-label" id="clock">07:15 HST</span>
     <input id="hour" type="range" min="5.8" max="19" step=".05" value="7.25" aria-label="Time of day">
+  </div>
+</div>
+
+<!-- World switcher panel -->
+<div id="worldPanel" hidden>
+  <div class="wp-head"><strong>Places in this world</strong><button id="wpClose" aria-label="Close">×</button></div>
+  <div class="wp-list">
+    <button class="wp-item active" data-place="kona"><b>🌺 Kailua-Kona</b><span>IRONMAN World Championship · 10 Oct 2026</span></button>
+    <button class="wp-item" data-place="vegas"><b>🎰 Las Vegas Strip</b><span>Bellagio + Luxor · 30 Oct 2022 · opens its own app</span></button>
+    <button class="wp-item" data-place="stgeorge"><b>🏜 St. George, Utah</b><span>IRONMAN 70.3 Worlds · 29 Oct 2022 · geo anchor</span></button>
   </div>
 </div>
 
