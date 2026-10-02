@@ -177,80 +177,102 @@ export const PIER_HERITAGE_BIKES = [
   },
   {
     year: '2019',
-    name: 'Jan Frodeno Canyon Speedmax CF SLX',
-    category: 'The Masterpiece (7:51:13)',
+    name: 'Jan Frodeno · Canyon Speedmax (XL)',
+    category: 'Course record 7:51:13',
     proAthlete: 'Jan Frodeno',
-    splitTime: '7:51:13 (Course Record)',
-    bikeTime: '4:16:03',
+    splitTime: '7:51:13 (course record at the time)',
+    bikeTime: '4:16:02',
     modelFile: 'speedmax_2019_slx.glb',
     brand: 'Canyon Bicycles',
     colorPreset: '#0a101d',
     finish: 'matte',
-    summary: 'The definitive Kona performance. Jan Frodeno rode a flawless 4:16:03 solo into the crosswinds on his custom Frodeno Edition Canyon Speedmax CF SLX.',
+    frameSize: 'XL',
+    rearWheel: 'spoked',
+    confidence: 'sourced',
+    summary: 'Frodeno swam 47:31, rode 4:16:02 and ran 2:42:43 to win his third world title with a new course record. He raced a size-XL Speedmax with Zipp 858 wheels front and rear, not a disc.',
     specs: {
-      frame: 'Canyon Speedmax CF SLX High Modulus Carbon',
-      drivetrain: 'SRAM Red eTap AXS 1x 12-Speed (54T Aero Chainring)',
-      wheels: 'Zipp Super-9 Disc Rear / Zipp 858 NSW Front',
-      aerobars: 'Monocoque Integrated Cockpit with Internal Bladder System',
-      weight: '8.1 kg'
+      frame: 'Canyon Speedmax, size XL',
+      drivetrain: 'SRAM Red eTap AXS 1x, Quarq power meter',
+      wheels: 'Zipp 858 NSW front and rear',
+      tyres: 'Continental Grand Prix 5000 TL',
+      aerobars: 'Canyon custom cockpit',
+      weight: 'not published'
     },
+    sources: [
+      'https://www.slowtwitch.com/news/kona-2019-top-15-men-bike-gear/',
+      'https://en.wikipedia.org/wiki/2019_Ironman_World_Championship'
+    ],
     proWinner: {
-      male: { name: 'Jan Frodeno', country: 'GER', time: '7:51:13' },
-      female: { name: 'Anne Haug', country: 'GER', time: '8:40:10' }
+      male: { name: 'Jan Frodeno', country: 'GER', time: '7:51:13', race: 'Kona' },
+      female: { name: 'Anne Haug', country: 'GER', time: '8:40:10', race: 'Kona' }
     }
   },
   {
     year: '2023',
-    name: 'Lucy Charles-Barclay Speedmax CFR Platform',
-    category: 'Wire-to-Wire Champion',
-    proAthlete: 'Lucy Charles-Barclay',
-    splitTime: '8:24:31 (Course Record)',
-    bikeTime: '4:32:29',
+    name: 'Speedmax CFR · 2023 platform',
+    category: 'Kona hosted the women’s race only',
+    proAthlete: null,
+    splitTime: null,
+    bikeTime: null,
     modelFile: 'speedmax_2027_cfr.glb',
     brand: 'Canyon Bicycles CFR',
     colorPreset: '#00d2ff',
     finish: 'gloss',
-    summary: 'From Dig Me Beach to the Aliʻi finish line, Lucy Charles-Barclay never looked back, setting a new women’s benchmark of 8:24:31.',
+    rearWheel: 'spoked',
+    confidence: 'partial',
+    summary: 'In 2023 the world championship split: the women raced in Kona and the men in Nice. Lucy Charles-Barclay won Kona in a course-record 8:24:31 with the fastest bike split (4:32:29) — on a CUBE Aerium C:68X, not a Canyon. She belongs in the Bikes of Kona hall, not the Canyon wing.',
     specs: {
-      frame: 'Canyon Speedmax CFR Toray M40X Carbon',
-      drivetrain: 'Shimano Dura-Ace Di2 12-Speed with CeramicSpeed OSPW',
-      wheels: 'DT Swiss ARC 1100 Dicut Disc Rear / 80mm Front',
-      aerobars: 'Custom Ergon Ergonomic Forearm Wings & Integrated Hydration',
-      weight: '8.3 kg'
+      frame: 'Canyon Speedmax CFR (platform shown for reference)',
+      drivetrain: 'varies by athlete',
+      wheels: 'varies by athlete',
+      aerobars: 'varies by athlete',
+      weight: 'not published'
     },
+    sources: [
+      'https://www.triathlete.com/gallery/2023-hawaii-ironman-world-championship-bike-lucy-charles-barclays-cube-aerium-c68x/'
+    ],
     proWinner: {
-      male: { name: 'Sam Laidlow', country: 'FRA', time: '8:06:22' },
-      female: { name: 'Lucy Charles-Barclay', country: 'GBR', time: '8:24:31' }
+      female: { name: 'Lucy Charles-Barclay', country: 'GBR', time: '8:24:31', race: 'Kona', bike: 'CUBE Aerium C:68X (not Canyon)' }
     }
   },
   {
-    year: '2024-2027',
-    name: 'Canyon Speedmax CFR AXS (Next-Gen)',
-    category: 'Current Flagship World Champion',
-    proAthlete: 'Patrick Lange (7:35:53) & Canyon Pro Team',
-    splitTime: '7:35:53 (All-Time Record)',
+    year: '2024',
+    name: 'Patrick Lange · Canyon Speedmax CFR (S)',
+    category: 'Course record 7:35:53',
+    proAthlete: 'Patrick Lange',
+    splitTime: '7:35:53 (course record)',
     bikeTime: '4:06:22',
     modelFile: 'speedmax_2027_cfr.glb',
     brand: 'Canyon Bicycles CFR',
     colorPreset: '#ffcc33',
     finish: 'matte',
-    summary: 'The pinnacle of aerodynamic science. CFD-refined in Swiss Side wind tunnels, featuring integrated hydration, bento box, and disc brakes.',
+    frameSize: 'S',
+    rearWheel: 'spoked',
+    confidence: 'partial',
+    summary: 'Lange was 13th off the bike, 9:06 down, then ran 2:37:34 to take his third title in a course-record 7:35:53. His race bike used a prototype monocoque Canyon cockpit, so the consumer CFR model shown here is a stand-in until that cockpit is reconstructed.',
     specs: {
-      frame: 'Toray M40X High-Tensile Carbon Monocoque',
-      drivetrain: 'SRAM Red AXS Power Meter 12-Speed TT',
-      wheels: 'DT Swiss ARC 1100 DICUT 80 Carbon Tubeless',
-      aerobars: 'Canyon CP0019 Fully Adjustable Tri-Cockpit',
-      weight: '8.05 kg'
+      frame: 'Canyon Speedmax CFR, size S, custom paint',
+      drivetrain: 'Shimano Dura-Ace Di2 12-speed, SRM PM9 165 mm with a single 60T ring, 11-30, CeramicSpeed OSPW',
+      wheels: 'Swiss Side Hadron Ultimate 800 front and rear',
+      tyres: 'Schwalbe Pro One Aero, 26 mm front / 28 mm rear',
+      aerobars: 'Prototype Canyon monocoque cockpit (pro-only)',
+      weight: 'not published'
     },
+    sources: [
+      'https://www.triathlete.com/ironman-world-championship-2024-kona/patrick-lange-ironman-kona-bike-2024/',
+      'https://www.triathlete.com/ironman-world-championship-2024-kona/patrick-lange-wins-ironman-world-championship-kona-2024-course-record/'
+    ],
     proWinner: {
-      male: { name: 'Patrick Lange', country: 'GER', time: '7:35:53' },
-      female: { name: 'Laura Philipp', country: 'GER', time: '8:45:15' }
+      male: { name: 'Patrick Lange', country: 'GER', time: '7:35:53', race: 'Kona' }
     }
   }
 ];
 
 export function createPierMuseumStudio(ctx) {
-  const { scene, camera, W, heightAt } = ctx;
+  const { scene, camera, W, heightAt, toast } = ctx;
+  const prog = () => (ctx.progress ? ctx.progress() : null);
+  const bikeOpen = b => !prog() || prog().isBikeUnlocked(b);
+  const silhouetteMat = new THREE.MeshStandardMaterial({ color: 0x0b0f14, roughness: 0.9, metalness: 0 });
 
   let activeBikeIndex = 7; // Jan Frodeno 2019 default
   let studioScene, studioCamera, studioRenderer, studioControls;
@@ -506,6 +528,11 @@ export function createPierMuseumStudio(ctx) {
     // Color Swatches
     modal.querySelectorAll('.canyon-swatch').forEach(dot => {
       dot.onclick = () => {
+        const p = prog();
+        if (p && !p.isColourUnlocked(dot.dataset.col)) {
+          toast && toast(`🔒 ${dot.title}: ${p.colourHint(dot.dataset.col)}`);
+          return;
+        }
         modal.querySelectorAll('.canyon-swatch').forEach(d => d.classList.remove('active'));
         dot.classList.add('active');
         applyFrameColor(dot.dataset.col);
@@ -539,8 +566,9 @@ export function createPierMuseumStudio(ctx) {
     if (!bar) return;
 
     bar.innerHTML = PIER_HERITAGE_BIKES.map((b, i) => `
-      <button type="button" class="canyon-year-chip ${i === activeBikeIndex ? 'active' : ''}" data-idx="${i}">
-        ${b.year}
+      <button type="button" class="canyon-year-chip ${i === activeBikeIndex ? 'active' : ''} ${bikeOpen(b) ? '' : 'locked'}" data-idx="${i}"
+        title="${bikeOpen(b) ? b.name : 'Locked · ' + (prog() ? prog().bikeHint(b) : '')}">
+        ${bikeOpen(b) ? '' : '🔒 '}${b.year}
       </button>
     `).join('');
 
@@ -681,25 +709,34 @@ export function createPierMuseumStudio(ctx) {
     }
 
     const proTag = document.querySelector('#studioProTag');
-    if (proTag) proTag.textContent = `${bike.category} · Athlete: ${bike.proAthlete} · Split: ${bike.splitTime}`;
+    if (proTag) proTag.textContent = [bike.category, bike.proAthlete && `Athlete: ${bike.proAthlete}`, bike.splitTime && `Finish: ${bike.splitTime}`].filter(Boolean).join(' · ');
 
     // Update Athlete Card
     const athName = document.querySelector('#studioAthleteName');
     const athSplit = document.querySelector('#studioAthleteSplit');
-    if (athName) athName.textContent = bike.proAthlete;
-    if (athSplit) athSplit.textContent = `Kona Split: ${bike.splitTime}`;
+    if (athName) athName.textContent = bike.proAthlete || 'No Canyon champion at Kona';
+    if (athSplit) athSplit.textContent = bike.splitTime ? `Kona finish: ${bike.splitTime}` : '';
 
     // Update Stats Grid
     const stW = document.querySelector('#statWeight');
     const stB = document.querySelector('#statBikeTime');
     const stT = document.querySelector('#statTotalTime');
     if (stW) stW.textContent = bike.specs?.weight || '8.2 kg';
-    if (stB) stB.textContent = bike.bikeTime || '4:16:03';
-    if (stT) stT.textContent = bike.splitTime.split(' ')[0] || '7:51:13';
+    if (stB) stB.textContent = bike.bikeTime || '—';
+    if (stT) stT.textContent = bike.splitTime ? bike.splitTime.split(' ')[0] : '—';
 
     // Update Story
     const storyBox = document.querySelector('#studioStoryBox');
-    if (storyBox) storyBox.textContent = bike.summary;
+    if (storyBox) {
+      storyBox.textContent = bike.summary;
+      const conf = { sourced: 'Sourced', partial: 'Partly sourced', unverified: 'Not yet verified' }[bike.confidence || 'unverified'];
+      const meta = document.createElement('small');
+      meta.className = 'canyon-source-note';
+      meta.style.cssText = 'display:block;margin-top:8px;opacity:.7';
+      meta.textContent = conf + (bike.sources && bike.sources.length ? ` · ${bike.sources.length} source${bike.sources.length > 1 ? 's' : ''}` : '');
+      if (bike.sources) meta.title = bike.sources.join('\n');
+      storyBox.appendChild(meta);
+    }
 
     // Update Quick Specs & Full Specs
     const quickSpecs = document.querySelector('#studioQuickSpecs');
@@ -716,22 +753,15 @@ export function createPierMuseumStudio(ctx) {
     // Update Champions
     const proCard = document.querySelector('#studioProWinnersCard');
     if (proCard && bike.proWinner) {
-      proCard.innerHTML = `
+      const card = (w, label) => w ? `
         <div class="canyon-athlete-card">
           <div class="canyon-athlete-avatar">🥇</div>
           <div class="canyon-athlete-info">
-            <b>${bike.proWinner.male.name} (${bike.proWinner.male.country})</b>
-            <small>Men’s Champion · ${bike.proWinner.male.time}</small>
+            <b>${w.name} (${w.country})</b>
+            <small>${label} · ${w.race || 'Kona'} · ${w.time}${w.bike ? ` · ${w.bike}` : ''}</small>
           </div>
-        </div>
-        <div class="canyon-athlete-card">
-          <div class="canyon-athlete-avatar">🥇</div>
-          <div class="canyon-athlete-info">
-            <b>${bike.proWinner.female.name} (${bike.proWinner.female.country})</b>
-            <small>Women’s Champion · ${bike.proWinner.female.time}</small>
-          </div>
-        </div>
-      `;
+        </div>` : '';
+      proCard.innerHTML = card(bike.proWinner.male, 'Men’s Kona champion') + card(bike.proWinner.female, 'Women’s Kona champion');
     }
 
     // Update Timeline Chips
@@ -1008,7 +1038,7 @@ export function createPierMuseumStudio(ctx) {
       if (rearWheelNode) {
         currentDiscGroup = buildDiscMesh();
         rearWheelNode.add(currentDiscGroup);
-        const wantsDisc = bike.year >= '2018';
+        const wantsDisc = bike.rearWheel === 'disc';   // explicit per exhibit; never inferred from year
         currentDiscGroup.visible = wantsDisc;
         const discBtn = document.querySelector('.canyon-toggle-btn[data-wheel="disc"]');
         const dualBtn = document.querySelector('.canyon-toggle-btn[data-wheel="dual80"]');
@@ -1021,9 +1051,15 @@ export function createPierMuseumStudio(ctx) {
       studioScene.add(currentStudioMesh);
       setCameraPreset('hero');
 
-      if (bike.colorPreset) {
+      if (!bikeOpen(bike)) {
+        // Not yet lived through: show the outline only, and how to earn it.
+        currentStudioMesh.traverse(o => { if (o.isMesh) o.material = silhouetteMat; });
+        const storyBox = document.querySelector('#studioStoryBox');
+        if (storyBox) storyBox.textContent = `🔒 This exhibit opens when you ${prog().bikeHint(bike).replace(/^./, c => c.toLowerCase())}.`;
+      } else if (bike.colorPreset) {
         applyFrameColor(bike.colorPreset);
       }
+      refreshSwatchLocks();
     });
   }
 
@@ -1049,7 +1085,22 @@ export function createPierMuseumStudio(ctx) {
     }
   }
 
-  function openStudio(index = 7) {
+  function refreshSwatchLocks() {
+    const p = prog();
+    document.querySelectorAll('.canyon-swatch').forEach(d => {
+      const locked = p && !p.isColourUnlocked(d.dataset.col);
+      d.classList.toggle('locked', !!locked);
+      d.setAttribute('aria-label', locked ? `${d.title} (locked)` : d.title);
+    });
+  }
+
+  function latestUnlockedIndex() {
+    for (let i = PIER_HERITAGE_BIKES.length - 1; i >= 0; i--) if (bikeOpen(PIER_HERITAGE_BIKES[i])) return i;
+    return PIER_HERITAGE_BIKES.length - 1;
+  }
+
+  function openStudio(index) {
+    if (index === undefined || index === null) index = latestUnlockedIndex();
     const modal = document.querySelector('#canyonStudioModal');
     if (!modal) return;
     modal.classList.add('active');

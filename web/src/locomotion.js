@@ -1,9 +1,22 @@
 // Advanced Locomotion & Physics Engine for Kona 3D World
 import * as THREE from 'three';
 import { playFootstep, playWaterSplash, playJump } from './audio.js';
+const DEBUG_BOOST = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 
 export function createLocomotion(ctx) {
-  const { camera, renderer, scene, W, grounds, heightAt, toast } = ctx;
+  const { camera, renderer, scene, W, grounds, heightAt, toast, onModeRequest } = ctx;
+
+  // ---- Bike model constants (Speedmax CFR AXS, rider + bike ~ 89 kg)
+  const MASS = 89, G = 9.81, RHO = 1.18, CRR = 0.0035, WHEEL_R = 0.3395, WHEELBASE = 1.013;
+  const RINGS = [50, 37], COGS = [10, 11, 12, 13, 14, 15, 17, 19, 21, 24, 28, 33];
+  // Kona trade winds blow from the ENE; they build north along the Queen K toward Kohala/Hāwī.
+  function windAt(x, z, t) {
+    const north = -z;
+    const base = 4.5 + 7 * THREE.MathUtils.smoothstep(north, 2000, 45000);
+    const gust = 1 + 0.28 * Math.sin(t * 0.7 + x * 0.0013) + 0.18 * Math.sin(t * 1.9 + north * 0.002);
+    const m = base * gust;
+    return new THREE.Vector3(-0.9 * m, 0, 0.44 * m); // blowing toward WSW (three: west = -x, south = +z)
+  }
 
   const state = {
     active: false,
@@ -42,16 +55,16 @@ export function createLocomotion(ctx) {
   // Keyboard events
   window.addEventListener('keydown', e => {
     keys[e.code] = true;
-    if (e.code === 'Space' && state.active && state.isGrounded && !state.isSwimming) {
+    if (e.code === 'Space' && state.active && state.isGrounded && !state.isSwimming && state.mode !== 'bike') {
       state.verticalVelocity = state.mode === 'bike' ? 4.2 : 5.6;
       state.isGrounded = false;
       playJump();
     }
     if (e.code === 'KeyB' && state.active && !state.isSwimming) {
-      state.mode = state.mode === 'walk' ? 'bike' : 'walk';
-      if (toast) {
-        toast(state.mode === 'bike' ? '🚴 Mounted Speedmax CFR: Aero Cruise (Shift to Sprint)' : '🚶 Dismounted: Walking on foot');
-      }
+      const next = state.mode === 'walk' ? 'bike' : 'walk';
+      // Single source of truth: let the app switch modes so the HUD/buttons stay in sync.
+      if (onModeRequest) onModeRequest(next);
+      else state.mode = next;
     }
   });
 
@@ -279,7 +292,7 @@ export function createLocomotion(ctx) {
     },
 
     jump() {
-      if (state.active && state.isGrounded && !state.isSwimming) {
+      if (state.active && state.isGrounded && !state.isSwimming && state.mode !== 'bike') {
         state.verticalVelocity = 5.6;
         state.isGrounded = false;
         playJump();
@@ -302,7 +315,7 @@ export function createLocomotion(ctx) {
       }
 
       state.isSprinting = !!(keys.ShiftLeft || keys.ShiftRight);
-      const boost = keys.KeyQ ? 4.5 : 1.0;
+      const boost = (DEBUG_BOOST && keys.KeyQ) ? 4.5 : 1.0;   // dev-only: ?debug=1
 
       // 2. Ground elevation & Swimming check
       const currentGround = getGroundHeight(camera.position.x, camera.position.z, camera.position.y);
@@ -311,44 +324,90 @@ export function createLocomotion(ctx) {
       const onPier = (surveyX >= -58 && surveyX <= 28 && surveyY >= -48 && surveyY <= 72);
       state.isSwimming = (currentGround < 0.1 && !onPier && surveyX < 45 && surveyY > -45);
 
-      let speed = 2.4;
-      if (state.isSwimming) {
-        speed = 2.0;
-      } else if (state.mode === 'bike') {
-        speed = state.isSprinting ? 18.5 : 12.0;
-      } else {
-        speed = state.isSprinting ? 5.2 : 2.4;
-      }
-      speed *= boost;
-
-      state.speedKmh = Math.round(speed * 3.6);
-      state.cadenceRpm = Math.round(state.speedKmh * 2.2);
-
-      // 3. Horizontal movement
+      let speed = 0, bikeRollTarget = 0;
       const fwd = new THREE.Vector3(-Math.sin(state.yaw), 0, -Math.cos(state.yaw));
       const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
-      const move = fwd.multiplyScalar(f).add(right.multiplyScalar(r));
 
-      if (move.lengthSq() > 0.001) {
-        move.normalize();
-        camera.position.addScaledVector(move, speed * dt);
-
-        state.stepTimer += dt;
-        const interval = state.isSwimming ? 0.6 : (state.mode === 'bike' ? 0.35 : (state.isSprinting ? 0.26 : 0.4));
-        if (state.stepTimer >= interval) {
-          state.stepTimer = 0;
-          if (state.isSwimming) {
-            playWaterSplash();
-          } else if (state.isGrounded && state.mode === 'walk') {
-            playFootstep(state.isSprinting);
-          }
+      if (state.mode === 'bike' && !state.isSwimming) {
+        // ---- Bicycle dynamics: power in, aero + rolling + gravity + brakes out; steer, don't strafe.
+        const b = state.bike || (state.bike = { v: 0, steer: 0, power: 0, ring: 50, cog: 14, t: 0 });
+        b.t += dt;
+        const pedal = Math.max(0, f), brake = Math.max(0, -f);
+        const targetP = pedal * (state.isSprinting ? 420 : 250) * boost;
+        b.power += (targetP - b.power) * Math.min(1, dt * 3);
+        const wind = windAt(camera.position.x, camera.position.z, b.t);
+        const headW = wind.dot(fwd), crossW = wind.dot(right);
+        const va = b.v - headW;                                   // airspeed along heading
+        const CdA = state.isSprinting ? 0.215 : 0.245;            // tucked vs. relaxed aero position
+        const hA = getGroundHeight(camera.position.x + fwd.x * 1.5, camera.position.z + fwd.z * 1.5, camera.position.y);
+        const hB = getGroundHeight(camera.position.x - fwd.x * 1.5, camera.position.z - fwd.z * 1.5, camera.position.y);
+        const rawSlope = THREE.MathUtils.clamp((hA - hB) / 3, -0.2, 0.2);
+        b.slope = (b.slope || 0) + (rawSlope - (b.slope || 0)) * Math.min(1, dt * 2.5);   // smooth DEM/pier-edge spikes
+        const slope = b.slope;
+        // standing start: riders get out of the saddle below ~30 km/h, so allow extra torque at low speed
+        const launch = 1 + 1.6 * Math.max(0, 1 - b.v / 8.5);
+        const Fdrive = b.power * launch / Math.max(b.v, 1.5);
+        const Faero = 0.5 * RHO * CdA * va * Math.abs(va);
+        const Froll = b.v > 0.05 ? CRR * MASS * G : 0;
+        const Fgrav = MASS * G * slope / Math.sqrt(1 + slope * slope);
+        const Fbrake = brake * 0.6 * MASS * G;
+        b.v = Math.max(0, b.v + (Fdrive - Faero - Froll - Fgrav - Fbrake * Math.sign(b.v || 0)) / MASS * dt);
+        // steering: lock shrinks with speed; bicycle yaw-rate model
+        const maxSteer = 0.5 / (1 + b.v / 5);
+        b.steer += (-r * maxSteer - b.steer) * Math.min(1, dt * 6);
+        const yawRate = b.v / WHEELBASE * Math.tan(b.steer);
+        state.yaw += yawRate * dt;
+        // crosswinds nudge the bars and push the rider sideways (strongest toward Hāwī)
+        state.yaw += -crossW * 0.0022 * Math.min(b.v, 12) * dt;
+        camera.position.addScaledVector(fwd, b.v * dt).addScaledVector(right, crossW * 0.015 * dt);
+        speed = b.v;
+        // lean into the turn and against the wind
+        bikeRollTarget = THREE.MathUtils.clamp(Math.atan(b.v * yawRate / G) + crossW * 0.008, -0.35, 0.35);
+        // gearing: pick the ring/cog that keeps cadence nearest 88 rpm
+        const wheelRpm = b.v / (2 * Math.PI * WHEEL_R) * 60;
+        let best = null;
+        for (const ring of RINGS) for (const cog of COGS) {
+          const cad = wheelRpm * cog / ring;
+          const cost = Math.abs(cad - 88) + (ring === 37 && b.v > 9 ? 25 : 0);
+          if (!best || cost < best.cost) best = { cost, ring, cog, cad };
+        }
+        b.ring = best.ring; b.cog = best.cog;
+        state.cadenceRpm = b.power > 5 ? Math.round(best.cad) : 0;
+        state.powerW = Math.round(b.power);
+        state.crossWind = crossW;
+        state.gradePct = Math.round(slope * 1000) / 10;
+        if (b.v > 0.3) {
+          state.stepTimer += dt;
+          if (state.stepTimer >= 0.35) state.stepTimer = 0;
         }
       } else {
-        state.stepTimer = 0;
+        // ---- On foot / swimming: realistic human speeds
+        if (state.isSwimming) speed = 1.3;                        // ~1:17 per 100 m, strong age-grouper
+        else speed = state.isSprinting ? 4.2 : 1.7;               // run / walk
+        speed *= boost;
+        if (state.bike) state.bike.v = 0;
+        state.cadenceRpm = 0;
+        const move = fwd.clone().multiplyScalar(f).add(right.clone().multiplyScalar(r));
+        if (move.lengthSq() > 0.001) {
+          move.normalize();
+          camera.position.addScaledVector(move, speed * dt);
+
+          state.stepTimer += dt;
+          const interval = state.isSwimming ? 0.6 : (state.isSprinting ? 0.3 : 0.52);
+          if (state.stepTimer >= interval) {
+            state.stepTimer = 0;
+            if (state.isSwimming) playWaterSplash();
+            else if (state.isGrounded) playFootstep(state.isSprinting);
+          }
+        } else {
+          state.stepTimer = 0;
+          speed = 0;
+        }
       }
+      state.speedKmh = Math.round(speed * 3.6);
 
       // Roll angle banking in bike mode
-      const targetRoll = (state.mode === 'bike' && !state.isSwimming) ? THREE.MathUtils.clamp(-r * 0.12, -0.22, 0.22) : 0;
+      const targetRoll = (state.mode === 'bike' && !state.isSwimming) ? bikeRollTarget : 0;
       state.roll = THREE.MathUtils.lerp(state.roll, targetRoll, Math.min(1, dt * 9));
 
       // 4. Vertical physics
@@ -394,11 +453,11 @@ export function createLocomotion(ctx) {
         if (state.isSwimming) {
           modeEl.textContent = '🏊 Swimming in Kailua Bay';
         } else if (state.mode === 'bike') {
-          const kmh = Math.round(speed * 3.6);
-          const rpm = Math.round(kmh * 2.2);
-          modeEl.textContent = state.isSprinting
-            ? `⚡ Aero Sprint · ${kmh} km/h · ${rpm} RPM · 54x11`
-            : `🚴 Speedmax Ride · ${kmh} km/h · ${rpm} RPM · 54x14`;
+          const b = state.bike || { ring: 50, cog: 14 };
+          const cw = state.crossWind || 0;
+          const wind = Math.abs(cw) < 1 ? '' : ` · ${cw > 0 ? '→' : '←'} crosswind ${Math.abs(cw * 3.6).toFixed(0)} km/h`;
+          const grade = state.gradePct ? ` · ${state.gradePct > 0 ? '+' : ''}${state.gradePct}%` : '';
+          modeEl.textContent = `${state.isSprinting ? '⚡ Aero tuck' : '🚴 Speedmax'} · ${state.speedKmh} km/h · ${state.cadenceRpm} rpm · ${b.ring}×${b.cog} · ${state.powerW || 0} W${grade}${wind}`;
         } else {
           modeEl.textContent = state.isSprinting ? '⚡ Sprinting' : '🚶 Athlete Walking';
         }
