@@ -87,6 +87,25 @@ export class PlaceWorld {
       material:this.matFor(p)
     });
   }
+  unloadGeometry(item){
+    if(!item?.built) return;
+    const sharedValues=new Set(Object.values(this.shared));
+    item.group.traverse(o=>{
+      if(o===item.group) return;
+      if(o.geometry && !sharedValues.has(o.geometry)) o.geometry.dispose?.();
+      const mats=Array.isArray(o.material)?o.material:[o.material];
+      for(const m of mats){
+        if(m && !sharedValues.has(m)){
+          if(m.map && !sharedValues.has(m.map)) m.map.dispose?.();
+          m.dispose?.();
+        }
+      }
+    });
+    item.group.clear();
+    delete item.group.userData.visualEvidence;
+    item.built=false;
+    item.building=false;
+  }
   setVisited(id){
     const s=this.state[id]||(this.state[id]={});
     s.visited=true; s.lastVisited=new Date().toISOString(); saveState(this.state);
@@ -111,6 +130,7 @@ export class PlaceWorld {
         item.building=false;
       }
       item.group.visible=shouldShow&&item.built;
+      if(!shouldShow&&item.built&&d>item.radius*2.5) this.unloadGeometry(item);
       if(d<nd){nd=d;nearest=item;}
       if(d<55&&!this.state[item.p.id]?.visited) this.setVisited(item.p.id);
     }
