@@ -1,0 +1,670 @@
+[
+  {
+    "year": "1978",
+    "v": "Oahu",
+    "men": {
+      "n": "Gordon Haller",
+      "c": "USA",
+      "t": "11:46:58"
+    },
+    "women": null
+  },
+  {
+    "year": "1979",
+    "v": "Oahu",
+    "men": {
+      "n": "Tom Warren",
+      "c": "USA",
+      "t": "11:15:56"
+    },
+    "women": {
+      "n": "Lyn Lemaire",
+      "c": "USA",
+      "t": "12:55:38"
+    }
+  },
+  {
+    "year": "1980",
+    "v": "Oahu",
+    "men": {
+      "n": "Dave Scott",
+      "c": "USA",
+      "t": "9:24:33"
+    },
+    "women": {
+      "n": "Robin Beck",
+      "c": "USA",
+      "t": "11:21:24"
+    }
+  },
+  {
+    "year": "1981",
+    "v": "Kona",
+    "men": {
+      "n": "John Howard",
+      "c": "USA",
+      "t": "9:38:29"
+    },
+    "women": {
+      "n": "Linda Sweeney",
+      "c": "USA",
+      "t": "12:02:32"
+    }
+  },
+  {
+    "year": "1982 Feb",
+    "v": "Kona",
+    "men": {
+      "n": "Scott Tinley",
+      "c": "USA",
+      "t": "9:19:41"
+    },
+    "women": {
+      "n": "Kathleen McCartney",
+      "c": "USA",
+      "t": "11:09:40"
+    }
+  },
+  {
+    "year": "1982 Oct",
+    "v": "Kona",
+    "men": {
+      "n": "Dave Scott",
+      "c": "USA",
+      "t": "9:08:23"
+    },
+    "women": {
+      "n": "Julie Leach",
+      "c": "USA",
+      "t": "10:54:08"
+    }
+  },
+  {
+    "year": "1983",
+    "v": "Kona",
+    "men": {
+      "n": "Dave Scott",
+      "c": "USA",
+      "t": "9:05:57"
+    },
+    "women": {
+      "n": "Sylviane Puntous",
+      "c": "CAN",
+      "t": "10:43:36"
+    }
+  },
+  {
+    "year": "1984",
+    "v": "Kona",
+    "men": {
+      "n": "Dave Scott",
+      "c": "USA",
+      "t": "8:54:20"
+    },
+    "women": {
+      "n": "Sylviane Puntous",
+      "c": "CAN",
+      "t": "10:25:13"
+    }
+  },
+  {
+    "year": "1985",
+    "v": "Kona",
+    "men": {
+      "n": "Scott Tinley",
+      "c": "USA",
+      "t": "8:50:54"
+    },
+    "women": {
+      "n": "Joanne Ernst",
+      "c": "USA",
+      "t": "10:25:22"
+    }
+  },
+  {
+    "year": "1986",
+    "v": "Kona",
+    "men": {
+      "n": "Dave Scott",
+      "c": "USA",
+      "t": "8:28:37"
+    },
+    "women": {
+      "n": "Paula Newby-Fraser",
+      "c": "ZIM",
+      "t": "9:49:14"
+    }
+  },
+  {
+    "year": "1987",
+    "v": "Kona",
+    "men": {
+      "n": "Dave Scott",
+      "c": "USA",
+      "t": "8:34:13"
+    },
+    "women": {
+      "n": "Erin Baker",
+      "c": "NZL",
+      "t": "9:35:25"
+    }
+  },
+  {
+    "year": "1988",
+    "v": "Kona",
+    "men": {
+      "n": "Scott Molina",
+      "c": "USA",
+      "t": "8:31:00"
+    },
+    "women": {
+      "n": "Paula Newby-Fraser",
+      "c": "ZIM",
+      "t": "9:01:01"
+    }
+  },
+  {
+    "year": "1989",
+    "v": "Kona",
+    "men": {
+      "n": "Mark Allen",
+      "c": "USA",
+      "t": "8:09:14"
+    },
+    "women": {
+      "n": "Paula Newby-Fraser",
+      "c": "ZIM",
+      "t": "9:00:56"
+    }
+  },
+  {
+    "year": "1990",
+    "v": "Kona",
+    "men": {
+      "n": "Mark Allen",
+      "c": "USA",
+      "t": "8:28:17"
+    },
+    "women": {
+      "n": "Erin Baker",
+      "c": "NZL",
+      "t": "9:13:42"
+    }
+  },
+  {
+    "year": "1991",
+    "v": "Kona",
+    "men": {
+      "n": "Mark Allen",
+      "c": "USA",
+      "t": "8:18:32"
+    },
+    "women": {
+      "n": "Paula Newby-Fraser",
+      "c": "ZIM",
+      "t": "9:07:52"
+    }
+  },
+  {
+    "year": "1992",
+    "v": "Kona",
+    "men": {
+      "n": "Mark Allen",
+      "c": "USA",
+      "t": "8:09:08"
+    },
+    "women": {
+      "n": "Paula Newby-Fraser",
+      "c": "ZIM",
+      "t": "8:55:28"
+    }
+  },
+  {
+    "year": "1993",
+    "v": "Kona",
+    "men": {
+      "n": "Mark Allen",
+      "c": "USA",
+      "t": "8:07:45"
+    },
+    "women": {
+      "n": "Paula Newby-Fraser",
+      "c": "ZIM",
+      "t": "8:58:23"
+    }
+  },
+  {
+    "year": "1994",
+    "v": "Kona",
+    "men": {
+      "n": "Greg Welch",
+      "c": "AUS",
+      "t": "8:20:27"
+    },
+    "women": {
+      "n": "Paula Newby-Fraser",
+      "c": "ZIM",
+      "t": "9:20:14"
+    }
+  },
+  {
+    "year": "1995",
+    "v": "Kona",
+    "men": {
+      "n": "Mark Allen",
+      "c": "USA",
+      "t": "8:20:34"
+    },
+    "women": {
+      "n": "Karen Smyers",
+      "c": "USA",
+      "t": "9:16:46"
+    }
+  },
+  {
+    "year": "1996",
+    "v": "Kona",
+    "men": {
+      "n": "Luc Van Lierde",
+      "c": "BEL",
+      "t": "8:04:08"
+    },
+    "women": {
+      "n": "Paula Newby-Fraser",
+      "c": "USA",
+      "t": "9:06:49"
+    }
+  },
+  {
+    "year": "1997",
+    "v": "Kona",
+    "men": {
+      "n": "Thomas Hellriegel",
+      "c": "GER",
+      "t": "8:33:01"
+    },
+    "women": {
+      "n": "Heather Fuhr",
+      "c": "CAN",
+      "t": "9:31:43"
+    }
+  },
+  {
+    "year": "1998",
+    "v": "Kona",
+    "men": {
+      "n": "Peter Reid",
+      "c": "CAN",
+      "t": "8:24:20"
+    },
+    "women": {
+      "n": "Natascha Badmann",
+      "c": "SUI",
+      "t": "9:24:16"
+    }
+  },
+  {
+    "year": "1999",
+    "v": "Kona",
+    "men": {
+      "n": "Luc Van Lierde",
+      "c": "BEL",
+      "t": "8:17:17"
+    },
+    "women": {
+      "n": "Lori Bowden",
+      "c": "CAN",
+      "t": "9:13:02"
+    }
+  },
+  {
+    "year": "2000",
+    "v": "Kona",
+    "men": {
+      "n": "Peter Reid",
+      "c": "CAN",
+      "t": "8:21:01"
+    },
+    "women": {
+      "n": "Natascha Badmann",
+      "c": "SUI",
+      "t": "9:26:17"
+    }
+  },
+  {
+    "year": "2001",
+    "v": "Kona",
+    "men": {
+      "n": "Tim DeBoom",
+      "c": "USA",
+      "t": "8:31:18"
+    },
+    "women": {
+      "n": "Natascha Badmann",
+      "c": "SUI",
+      "t": "9:28:37"
+    }
+  },
+  {
+    "year": "2002",
+    "v": "Kona",
+    "men": {
+      "n": "Tim DeBoom",
+      "c": "USA",
+      "t": "8:29:56"
+    },
+    "women": {
+      "n": "Natascha Badmann",
+      "c": "SUI",
+      "t": "9:07:54"
+    }
+  },
+  {
+    "year": "2003",
+    "v": "Kona",
+    "men": {
+      "n": "Peter Reid",
+      "c": "CAN",
+      "t": "8:22:35"
+    },
+    "women": {
+      "n": "Lori Bowden",
+      "c": "CAN",
+      "t": "9:11:55"
+    }
+  },
+  {
+    "year": "2004",
+    "v": "Kona",
+    "men": {
+      "n": "Normann Stadler",
+      "c": "GER",
+      "t": "8:33:29"
+    },
+    "women": {
+      "n": "Natascha Badmann",
+      "c": "SUI",
+      "t": "9:50:04"
+    }
+  },
+  {
+    "year": "2005",
+    "v": "Kona",
+    "men": {
+      "n": "Faris Al-Sultan",
+      "c": "GER",
+      "t": "8:14:17"
+    },
+    "women": {
+      "n": "Natascha Badmann",
+      "c": "SUI",
+      "t": "9:09:30"
+    }
+  },
+  {
+    "year": "2006",
+    "v": "Kona",
+    "men": {
+      "n": "Normann Stadler",
+      "c": "GER",
+      "t": "8:11:58"
+    },
+    "women": {
+      "n": "Michellie Jones",
+      "c": "AUS",
+      "t": "9:18:31"
+    }
+  },
+  {
+    "year": "2007",
+    "v": "Kona",
+    "men": {
+      "n": "Chris McCormack",
+      "c": "AUS",
+      "t": "8:15:34"
+    },
+    "women": {
+      "n": "Chrissie Wellington",
+      "c": "GBR",
+      "t": "9:08:45"
+    }
+  },
+  {
+    "year": "2008",
+    "v": "Kona",
+    "men": {
+      "n": "Craig Alexander",
+      "c": "AUS",
+      "t": "8:17:45"
+    },
+    "women": {
+      "n": "Chrissie Wellington",
+      "c": "GBR",
+      "t": "9:06:23"
+    }
+  },
+  {
+    "year": "2009",
+    "v": "Kona",
+    "men": {
+      "n": "Craig Alexander",
+      "c": "AUS",
+      "t": "8:20:21"
+    },
+    "women": {
+      "n": "Chrissie Wellington",
+      "c": "GBR",
+      "t": "8:54:02"
+    }
+  },
+  {
+    "year": "2010",
+    "v": "Kona",
+    "men": {
+      "n": "Chris McCormack",
+      "c": "AUS",
+      "t": "8:10:37"
+    },
+    "women": {
+      "n": "Mirinda Carfrae",
+      "c": "AUS",
+      "t": "8:58:36"
+    }
+  },
+  {
+    "year": "2011",
+    "v": "Kona",
+    "men": {
+      "n": "Craig Alexander",
+      "c": "AUS",
+      "t": "8:03:56"
+    },
+    "women": {
+      "n": "Chrissie Wellington",
+      "c": "GBR",
+      "t": "8:55:08"
+    }
+  },
+  {
+    "year": "2012",
+    "v": "Kona",
+    "men": {
+      "n": "Pete Jacobs",
+      "c": "AUS",
+      "t": "8:18:37"
+    },
+    "women": {
+      "n": "Leanda Cave",
+      "c": "GBR",
+      "t": "9:15:54"
+    }
+  },
+  {
+    "year": "2013",
+    "v": "Kona",
+    "men": {
+      "n": "Frederik Van Lierde",
+      "c": "BEL",
+      "t": "8:12:29"
+    },
+    "women": {
+      "n": "Mirinda Carfrae",
+      "c": "AUS",
+      "t": "8:52:14"
+    }
+  },
+  {
+    "year": "2014",
+    "v": "Kona",
+    "men": {
+      "n": "Sebastian Kienle",
+      "c": "GER",
+      "t": "8:14:18"
+    },
+    "women": {
+      "n": "Mirinda Carfrae",
+      "c": "AUS",
+      "t": "9:00:55"
+    }
+  },
+  {
+    "year": "2015",
+    "v": "Kona",
+    "men": {
+      "n": "Jan Frodeno",
+      "c": "GER",
+      "t": "8:14:40"
+    },
+    "women": {
+      "n": "Daniela Ryf",
+      "c": "SUI",
+      "t": "8:57:57"
+    }
+  },
+  {
+    "year": "2016",
+    "v": "Kona",
+    "men": {
+      "n": "Jan Frodeno",
+      "c": "GER",
+      "t": "8:06:30"
+    },
+    "women": {
+      "n": "Daniela Ryf",
+      "c": "SUI",
+      "t": "8:46:46"
+    }
+  },
+  {
+    "year": "2017",
+    "v": "Kona",
+    "men": {
+      "n": "Patrick Lange",
+      "c": "GER",
+      "t": "8:01:40"
+    },
+    "women": {
+      "n": "Daniela Ryf",
+      "c": "SUI",
+      "t": "8:50:47"
+    }
+  },
+  {
+    "year": "2018",
+    "v": "Kona",
+    "men": {
+      "n": "Patrick Lange",
+      "c": "GER",
+      "t": "7:52:39"
+    },
+    "women": {
+      "n": "Daniela Ryf",
+      "c": "SUI",
+      "t": "8:26:18"
+    }
+  },
+  {
+    "year": "2019",
+    "v": "Kona",
+    "men": {
+      "n": "Jan Frodeno",
+      "c": "GER",
+      "t": "7:51:13"
+    },
+    "women": {
+      "n": "Anne Haug",
+      "c": "GER",
+      "t": "8:40:10"
+    }
+  },
+  {
+    "year": "2021",
+    "v": "St. George",
+    "men": {
+      "n": "Kristian Blummenfelt",
+      "c": "NOR",
+      "t": "7:49:16"
+    },
+    "women": {
+      "n": "Daniela Ryf",
+      "c": "SUI",
+      "t": "8:34:59"
+    }
+  },
+  {
+    "year": "2022",
+    "v": "Kona",
+    "men": {
+      "n": "Gustav Iden",
+      "c": "NOR",
+      "t": "7:40:24"
+    },
+    "women": {
+      "n": "Chelsea Sodaro",
+      "c": "USA",
+      "t": "8:33:46"
+    }
+  },
+  {
+    "year": "2023",
+    "v": "Nice",
+    "men": {
+      "n": "Sam Laidlow",
+      "c": "FRA",
+      "t": "8:06:22"
+    },
+    "women": {
+      "n": "Lucy Charles-Barclay",
+      "c": "GBR",
+      "t": "8:24:31"
+    }
+  },
+  {
+    "year": "2024",
+    "v": "Kona",
+    "men": {
+      "n": "Patrick Lange",
+      "c": "GER",
+      "t": "7:35:53"
+    },
+    "women": {
+      "n": "Laura Philipp",
+      "c": "GER",
+      "t": "8:45:15"
+    }
+  },
+  {
+    "year": "2025",
+    "v": "Nice",
+    "men": {
+      "n": "Casper Stornes",
+      "c": "NOR",
+      "t": "7:51:39"
+    },
+    "women": {
+      "n": "Solveig Løvseth",
+      "c": "NOR",
+      "t": "8:28:27"
+    }
+  }
+]

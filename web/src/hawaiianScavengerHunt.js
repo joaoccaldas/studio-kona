@@ -20,6 +20,7 @@ export const HAWAIIAN_HERITAGE_DISCOVERIES = [
     quote: '“He aliʻi ka ʻāina; he kauwā ke kanaka.” — The land is a chief; man is its servant.',
     story: 'The Island of Hawaiʻi was born over a deep mantle volcanic hotspot. Over hundreds of thousands of years, basaltic lava welled up from the abyssal plain. Hualālai, the volcano rising directly behind Kailua-Kona, shaped this leeward shoreline with black pāhoehoe (smooth ropey) and ʻaʻā (rough jagged) lava flows. Ancient Hawaiians recognized the living presence of Madame Pele in every volcanic fissure.',
     archaeology: 'Volcanic basalt provided the foundational toolset for Hawaiian civilization: dense adze blades (koʻi) for carving voyaging canoes, porous lava stone for building agricultural terraces, and natural subterranean lava tubes that provided freshwater catchment and royal shelter.',
+    sacred: true,
     badge: 'Flame of Pele',
     badgeIcon: '🔥',
     modelType: 'basalt'
@@ -60,6 +61,7 @@ export const HAWAIIAN_HERITAGE_DISCOVERIES = [
     quote: '“E mālama i ka ʻāina, a e mālama ka ʻāina iā ʻoe.” — Care for the land, and the land will care for you.',
     story: 'The Hawaiian Ahupuaʻa was an extraordinary model of sustainable watershed stewardship. Each wedge-shaped district stretched from the upland mountain cloud-forest (wao akua), through fertile stone-walled farming zones (kula), to coastal reef fisheries (kai), ensuring self-sufficiency for all community members without depletion.',
     archaeology: 'The Kona Field System (Kaluulu) was an intensive stone-terraced dryland breadfruit and sweet potato belt spanning over 60 square kilometers across the lower slopes of Hualālai.',
+    sacred: true,
     badge: 'Guardian of the Watershed',
     badgeIcon: '🌱',
     modelType: 'stone'
@@ -80,6 +82,7 @@ export const HAWAIIAN_HERITAGE_DISCOVERIES = [
     quote: '“Imua e nā pōkiʻi a inu i ka wai ʻawaʻawa.” — Forward, my brothers, and drink the bitter waters; there is no turning back.',
     story: 'After uniting all eight Hawaiian islands in 1810, King Kamehameha I returned to Kamakahonu to spend his final golden years. Here he governed with wisdom, promoted farming, and gathered his high council. Restored hand-carved Kiʻi wooden temple images stand watch over the tranquil bay.',
     archaeology: 'Ahuʻena Heiau is a National Historic Landmark, restored in the 1970s using native ʻōhiʻa timber, sacred basalt boulders, and traditional loulu palm leaf thatching.',
+    sacred: true,
     badge: 'Royal Heiau Guardian',
     badgeIcon: '👑',
     modelType: 'heiau'
@@ -236,8 +239,8 @@ export const HAWAIIAN_HERITAGE_DISCOVERIES = [
     icon: '⚡',
     color: '#00f5d4',
     beaconColor: 0x00f5d4,
-    riddle: 'Return to the center of Kailua Pier where the fastest human in history stopped the clock at 7 hours, 35 minutes, and 53 seconds on his Canyon Speedmax CFR superbike.',
-    quote: '“It’s about the spirit that breathes through this sacred island.” — Patrick Lange.',
+    riddle: 'The pier is where the 2024 men’s race ended in 7:35:53.',
+    quote: 'Course record 7:35:53. The race bike used a prototype cockpit, so any model here is a stand-in, not a replica.',
     story: 'In October 2024, Patrick Lange combined a 4:06:22 bike split with a blistering 2:37:34 marathon to establish the current world championship record of 7:35:53 on his custom Canyon Speedmax CFR superbike.',
     archaeology: 'This superbike represents 45 years of continuous aerodynamic and material evolution, from 1982 lugged steel to monocoque Toray carbon fiber and wireless AXS electronics.',
     badge: 'Superbike Master',
@@ -804,13 +807,17 @@ export function createHawaiianScavengerHunt(ctx) {
   function stopStudioLoop() {}
 
   function updateProgressHUD() {
-    const count = discoveredIds.size;
-    const total = HAWAIIAN_HERITAGE_DISCOVERIES.length;
+    const count = [...discoveredIds].filter(id => !HAWAIIAN_HERITAGE_DISCOVERIES.find(d => d.id === id && d.sacred)).length;
+    const total = HAWAIIAN_HERITAGE_DISCOVERIES.filter(d => !d.sacred).length;
     const badge = document.querySelector('#topHeritageBadge');
     if (badge) badge.textContent = `${count} / ${total}`;
   }
 
   function unlockDiscovery(d) {
+    if (d.sacred) {
+      toast(`${d.title}. This place is not a prize.`);
+      return;
+    }
     if (discoveredIds.has(d.id)) return;
     discoveredIds.add(d.id);
     saveProgress();
@@ -827,6 +834,8 @@ export function createHawaiianScavengerHunt(ctx) {
       b.orb.material.emissiveIntensity = 1.4;
     }
   }
+
+  updateProgressHUD();
 
   return {
     beacons,

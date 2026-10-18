@@ -1,0 +1,103 @@
+// Headless gameplay smoke test. Needs the local server (npm run serve) and Google Chrome.
+// Usage: node tools/smoke_game.mjs [outDir]
+import puppeteer from 'puppeteer-core';
+const OUT = process.argv[2] || 'renders/review';
+const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const URL = process.env.KONA_URL || 'http://127.0.0.1:8791/';
+const fails = [];
+const check = (ok, msg) => { console.log((ok ? 'PASS ' : 'FAIL ') + msg); if (!ok) fails.push(msg); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] });
+const p = await b.newPage();
+await p.setViewport({ width: 1440, height: 900 });
+const errors = [];
+p.on('pageerror', e => errors.push(e.message));
+p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+const loaded = new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('load timeout')), 240000); p.on('console', m => { if (/Load completed/.test(m.text())) { clearTimeout(t); res(); } }); });
+await p.goto(URL, { waitUntil: 'load' });
+await loaded; await sleep(3000);
+await p.evaluate(() => localStorage.clear());
+
+// 1. terrain
+const dem = await p.evaluate(() => { let best = 0, up = 0, n = 0; window.__kona.scene.traverse(o => { if (o.isMesh && o.geometry.attributes.position.count > 400000) { o.geometry.computeBoundingBox(); best = Math.max(best, o.geometry.boundingBox.max.y); const nr = o.geometry.attributes.normal; for (let i = 0; i < nr.count; i += 997) { n++; if (nr.getY(i) > 0) up++; } } }); return { best, up, n }; });
+check(dem.best > 3500, `island DEM loaded (peak ${Math.round(dem.best)} m)`);
+check(dem.n > 0 && dem.up / dem.n > 0.99, `island faces point up (${dem.up}/${dem.n})`);
+
+// 2. quest: proximity must not auto-complete; E completes
+const s0 = await p.evaluate(() => window.__kona.currentStep.id);
+await p.evaluate(() => document.querySelector('#btnTeleportStep').click());
+await sleep(2500);
+const s1 = await p.evaluate(() => ({ id: window.__kona.currentStep.id, prompt: document.querySelector('#actionPrompt').classList.contains('on') }));
+check(s1.id === s0, `arriving does not auto-complete (${s0})`);
+check(s1.prompt, 'action prompt shown at objective');
+await p.keyboard.press('KeyE'); await sleep(800);
+const s2 = await p.evaluate(() => window.__kona.currentStep.id);
+check(s2 !== s0, `E completes the objective (${s0} -> ${s2})`);
+
+// 3. bike: B mounts via app (UI in sync), W accelerates realistically, coasting decays, no jump
+// ride on land: Aliʻi Drive south of the finish, heading south along the road
+await p.evaluate(() => { const L = window.__kona.locomotion; L.teleport(175, 6, 55, Math.PI, 0); });
+await sleep(600);
+await p.keyboard.press('KeyB'); await sleep(400);
+const label = await p.evaluate(() => document.querySelector('#modeLabel')?.textContent);
+check(/bike/i.test(label || ''), `B syncs UI mode label (${label})`);
+await p.keyboard.down('KeyW');
+const v = [];
+for (let i = 0; i < 10; i++) { await sleep(1000); v.push(await p.evaluate(() => window.__kona.locomotion.getState().speedKmh)); }
+const hud = await p.evaluate(() => document.querySelector('#mode').textContent);
+const vPeak = await p.evaluate(() => window.__kona.locomotion.getState().bike.v);
+await p.keyboard.up('KeyW');
+check(v[0] > 0 && v[0] < 25, `bike accelerates gradually (1 s: ${v[0]} km/h)`);
+check(v[9] > 28 && v[9] < 50, `bike reaches race speed at 250 W, not instantly (10 s: ${v[9]} km/h)`);
+check(/rpm/.test(hud) && /×/.test(hud) && /W/.test(hud), `ride HUD shows cadence/gear/power (${hud})`);
+await sleep(5000);
+const coast = await p.evaluate(() => window.__kona.locomotion.getState().bike.v);
+check(coast > 0.7 * vPeak && coast < 1.25 * vPeak, `coasting carries momentum, no instant stop or runaway (${(vPeak * 3.6).toFixed(1)} -> ${(coast * 3.6).toFixed(1)} km/h in 5 s)`);
+await p.keyboard.down('KeyS'); await sleep(1500);
+const braked = await p.evaluate(() => window.__kona.locomotion.getState().bike.v);
+await p.keyboard.up('KeyS');
+check(braked < 1, `brakes stop the bike (${(braked * 3.6).toFixed(1)} km/h after 1.5 s)`);
+await p.keyboard.press('Space'); await sleep(150);
+const airborne = await p.evaluate(() => !window.__kona.locomotion.getState().isGrounded);
+check(!airborne, 'no jumping on the bike');
+await p.screenshot({ path: `${OUT}/smoke_bike.png` });
+
+// 4. walk speed
+await p.keyboard.press('KeyB'); await sleep(400);
+await p.keyboard.down('KeyW'); await sleep(1500);
+const walk = await p.evaluate(() => window.__kona.locomotion.getState().speedKmh);
+await p.keyboard.up('KeyW');
+check(walk >= 5 && walk <= 7, `walking speed is human (${walk} km/h)`);
+
+// 5. progression: museum gating, memories unlock exhibits, challenges track real movement
+await p.evaluate(() => localStorage.clear());
+await p.reload({ waitUntil: 'load' });
+await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('reload timeout')), 240000); p.on('console', m => { if (/Load completed/.test(m.text())) { clearTimeout(t); res(); } }); });
+await sleep(2500);
+const gate0 = await p.evaluate(() => { const k = window.__kona; const b = k.pierMuseumStudio.getBikes(); return b.filter(x => k.progress.isBikeUnlocked(x)).map(x => x.year); });
+check(gate0.length === 1 && gate0[0] === '2024', `only today's bike is open at the start (${gate0.join(',')})`);
+const ch0 = await p.evaluate(() => document.querySelector('#questChallenge').innerText.replace(/\n/g, ' '));
+check(/Daily challenge/i.test(ch0), `daily challenge shown in the day card (${ch0.slice(0, 80)})`);
+await p.keyboard.down('KeyW'); await sleep(6000); await p.keyboard.up('KeyW');
+const walked = await p.evaluate(() => window.__kona.progress.challengeFor('day1').value);
+check(walked > 5, `walking counts toward the day-1 challenge (${walked.toFixed(1)} m)`);
+for (let i = 0; i < 3; i++) {
+  await p.evaluate(() => document.querySelector('#btnTeleportStep').click()); await sleep(1800);
+  await p.keyboard.press('KeyE'); await sleep(1500);
+}
+const gate1 = await p.evaluate(() => { const k = window.__kona; return { mem: k.saveData.discoveredMemories, open: k.pierMuseumStudio.getBikes().filter(x => k.progress.isBikeUnlocked(x)).map(x => x.year), day: k.currentDay.id }; });
+check(gate1.mem.includes('1982') && gate1.open.includes('1982'), `living the 1982 memory unlocks its exhibit (${gate1.open.join(',')})`);
+check(gate1.day === 'day2', `day 1 completes and day 2 begins (${gate1.day})`);
+await sleep(2500);
+await p.screenshot({ path: `${OUT}/smoke_museum_1982.png` });
+await p.evaluate(() => { document.querySelector('#canyonStudioModal')?.classList.remove('active'); window.__kona.openMyKona(); });
+await sleep(900);
+const drawerTxt = await p.evaluate(() => document.querySelector('#museumDrawer').innerText);
+check(/heritage/i.test(drawerTxt) && /challenges/i.test(drawerTxt) && /explored/i.test(drawerTxt), 'My Kona shows memories, heritage, challenges and distance explored');
+await p.screenshot({ path: `${OUT}/smoke_my_kona.png` });
+
+check(errors.length === 0, `no page errors (${errors.slice(0, 3).join(' | ')})`);
+await b.close();
+console.log(fails.length ? `\n${fails.length} FAILED` : '\nALL PASSED');
+process.exit(fails.length ? 1 : 0);
