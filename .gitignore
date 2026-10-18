@@ -14,3 +14,6 @@ __pycache__/
 # Local server logs
 *.log
 .system_generated/
+
+# Local runtime caches
+web/.koa-day.json

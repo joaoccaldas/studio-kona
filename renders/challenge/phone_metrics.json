@@ -1,0 +1,49 @@
+{
+ "loadS": 0.674,
+ "fps": 2.5,
+ "run1": {
+  "penalties": 4,
+  "arena": {
+   "transition_tangle": {
+    "best": 43.2,
+    "bestMedal": null,
+    "runs": 1,
+    "finishes": 1,
+    "firstAt": 1790604821564,
+    "last": {
+     "score": 43.2,
+     "medal": null,
+     "at": 1790604821564,
+     "mistakes": 4
+    }
+   }
+  },
+  "credits": 60,
+  "claimed": [
+   "ch:transition_tangle:first"
+  ]
+ },
+ "run2": {
+  "arena": {
+   "transition_tangle": {
+    "best": 20.34,
+    "bestMedal": "bronze",
+    "runs": 2,
+    "finishes": 2,
+    "firstAt": 1790604821564,
+    "last": {
+     "score": 20.34,
+     "medal": "bronze",
+     "at": 1790604840606,
+     "mistakes": 1
+    }
+   }
+  },
+  "credits": 70,
+  "claimed": [
+   "ch:transition_tangle:first",
+   "ch:transition_tangle:medal:bronze"
+  ]
+ },
+ "errors": []
+}

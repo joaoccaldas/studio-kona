@@ -1,16 +1,18 @@
 """Ring 1 tile packs: 500 m tiles around the hand-built core, streamed by the browser.
 
 Per tile t_<i>_<j>.json: terrain heights (decimetres, 5 m grid, crisp OSM coastline), buildings (OSM footprint,
-height (tag or type-inferred), roof colour sampled from imagery), trees. Imagery img_<i>_<j>.jpg (ESRI z18, 0.56 m/px).
+height (tag or type-inferred), roof colour sampled from imagery), trees. Imagery img_<i>_<j>.jpg (z18, 0.56 m/px) from tools/imagery.py: NAIP (public domain) by default.
 Evidence: M (OSM, imagery, DEM); building heights without tags are I (inferred by type).
 """
 import os, sys, json, io, math, base64, time, urllib.request
+from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..', 'blender'))
 from ingest import to_geo, tile_xy, UA
+import imagery as IMG
 import survey as S
 
 OUT = os.path.join(HERE, '..', 'web', 'public', 'assets', 'tiles')
@@ -39,11 +41,11 @@ def imagery(x0, y0, x1, y1, z=18, px=1024):
     fx1, fy0 = tile_xy(la1, lo1, z)
     tx0, tx1, ty0, ty1 = int(fx0), int(fx1), int(fy0), int(fy1)
     mos = Image.new('RGB', ((tx1 - tx0 + 1) * 256, (ty1 - ty0 + 1) * 256))
-    for tx in range(tx0, tx1 + 1):
-        for ty in range(ty0, ty1 + 1):
-            b = fetch(f'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{ty}/{tx}')
-            if b:
-                mos.paste(Image.open(io.BytesIO(b)).convert('RGB'), ((tx - tx0) * 256, (ty - ty0) * 256))
+    cells = [(tx, ty) for tx in range(tx0, tx1 + 1) for ty in range(ty0, ty1 + 1)]
+    with ThreadPoolExecutor(8) as ex:
+        for (tx, ty), im in zip(cells, ex.map(lambda c: IMG.tile(z, *c), cells)):
+            if im:
+                mos.paste(im, ((tx - tx0) * 256, (ty - ty0) * 256))
     box = ((fx0 - tx0) * 256, (fy0 - ty0) * 256, (fx1 - tx0) * 256, (fy1 - ty0) * 256)
     return mos.crop(tuple(int(round(v)) for v in box)).resize((px, px), Image.LANCZOS)
 
@@ -103,7 +105,7 @@ def main():
             json.dump(pack, open(os.path.join(OUT, f't_{key}.json'), 'w'), separators=(',', ':'))
             index.append({'k': key, 'x0': x0, 'y0': y0, 'land': round(land_frac, 2), 'nb': len(out_b)})
             print(key, f'land {land_frac:.2f}', len(out_b), 'bldg', round(time.time() - t0), 's', flush=True)
-    json.dump({'size': T, 'ring': RING, 'core': CORE, 'tiles': index}, open(os.path.join(OUT, 'index.json'), 'w'))
+    json.dump({'size': T, 'ring': RING, 'core': CORE, 'imagery': IMG.credits(), 'tiles': index}, open(os.path.join(OUT, 'index.json'), 'w'))
     print('TILES', len(index))
 
 

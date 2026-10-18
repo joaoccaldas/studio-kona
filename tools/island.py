@@ -1,10 +1,11 @@
-"""Whole-island base layer (Ring 3): Hawaiʻi Island DEM (terrarium z11) + imagery (ESRI z11) in the local frame.
+"""Whole-island base layer (Ring 3): Hawaiʻi Island DEM (terrarium z11) + imagery (tools/imagery.py, public domain) in the local frame.
 Outputs web/public/assets/island_height.png (16-bit elevation packed in RG: (h+11000)*? see meta) + island_color.jpg + island.json"""
 import sys, os, io, json, math, urllib.request, time
 import numpy as np
 from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ingest import to_local, to_geo, tile_xy, UA, DATA
+import imagery as IMG
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'web', 'public', 'assets')
 LAT0, LAT1, LON0, LON1 = 18.86, 20.30, -156.10, -154.78          # whole island + Alenuihāhā channel margin
 Z_DEM, Z_IMG = 11, 11
@@ -28,9 +29,11 @@ def mosaic(z, kind):
     img = Image.new('RGB', (W, H))
     for tx in range(tx0, tx1 + 1):
         for ty in range(ty0, ty1 + 1):
-            url = (f'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{tx}/{ty}.png' if kind == 'dem'
-                   else f'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{ty}/{tx}')
-            img.paste(Image.open(io.BytesIO(fetch(url))).convert('RGB'), ((tx - tx0) * 256, (ty - ty0) * 256))
+            if kind == 'dem':
+                im = Image.open(io.BytesIO(fetch(f'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{tx}/{ty}.png'))).convert('RGB')
+            else:
+                im = IMG.tile(z, tx, ty) or Image.new('RGB', (256, 256), IMG.OCEAN)
+            img.paste(im, ((tx - tx0) * 256, (ty - ty0) * 256))
     return img, (tx0, ty0)
 
 
@@ -76,6 +79,6 @@ if __name__ == '__main__':
     col = sample(col_img, o2, Z_IMG, LAT, LON)
     Image.fromarray(np.clip(col, 0, 255).astype(np.uint8)).save(os.path.join(OUT, 'island_color.jpg'), quality=86)
     meta = {'x0': X0, 'y0': Y0, 'size': size, 'n': N, 'enc': 'h = (R*256+G)/6 - 6000', 'hmin': float(h.min()), 'hmax': float(h.max()),
-            'sources': ['AWS Terrain Tiles (terrarium) z11', 'ESRI World Imagery z11 (dev only; licence needed for launch)']}
+            'sources': ['AWS Terrain Tiles (terrarium) z11', *[c + ' z11' for c in IMG.credits()]]}
     json.dump(meta, open(os.path.join(OUT, 'island.json'), 'w'))
     print('ISLAND', round(size / 1000, 1), 'km square', f"h {h.min():.0f}..{h.max():.0f} m")

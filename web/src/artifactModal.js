@@ -55,6 +55,15 @@ export function initArtifactModal(onSaveCallback) {
 
   // Initialize dedicated 3D viewer inside modal
   const canvas = document.querySelector('#artifactCanvas');
+  if (canvas && !document.querySelector('#artifactPlaceholder')) {
+    const ph = document.createElement('div');
+    ph.id = 'artifactPlaceholder';
+    ph.style.cssText = 'display:none;position:absolute;inset:0;place-items:center;text-align:center;pointer-events:none;color:rgba(255,255,255,.72);font:500 12px/1.6 system-ui;letter-spacing:.18em;text-transform:uppercase';
+    ph.innerHTML = '<div><div style="width:120px;height:120px;margin:0 auto 14px;border:1px dashed rgba(255,255,255,.35);border-radius:50%"></div>3D reconstruction in progress<br><span style="opacity:.6;letter-spacing:.08em;text-transform:none">This object is recorded in the archive but not yet modelled faithfully.</span></div>';
+    const host = canvas.parentElement;
+    if (host && getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    host && host.appendChild(ph);
+  }
   viewerRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   viewerRenderer.outputColorSpace = THREE.SRGBColorSpace;
   viewerRenderer.toneMapping = THREE.AgXToneMapping;
@@ -144,7 +153,14 @@ export function initArtifactModal(onSaveCallback) {
         currentLoadedMesh = null;
       }
 
-      const modelPath = 'assets/bikes/' + (artifact.modelFile || 'speedmax_2019_slx.glb');
+      const ph = document.querySelector('#artifactPlaceholder');
+      if (!artifact.modelFile) {
+        // Wrong geometry is worse than no geometry: show an archival placeholder instead of a stand-in bike.
+        if (ph) ph.style.display = 'grid';
+        return;
+      }
+      if (ph) ph.style.display = 'none';
+      const modelPath = 'assets/bikes/' + artifact.modelFile;
       new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load(modelPath, gltf => {
         currentLoadedMesh = gltf.scene;
 

@@ -1,7 +1,7 @@
 """Kona evidence ingest -> data/.  Public GET sources only.
 
   OSM  (ODbL, © OpenStreetMap contributors): data/osm_kailua.osm  -> data/osm_index.json (local metres)
-  ESRI World Imagery export: data/sat_core.jpg (1.6 km), data/sat_bay.jpg (6 km)
+  Aerial imagery (tools/imagery.py: NAIP + USGS, public domain): data/sat_core.jpg (1.8 km, z18), data/sat_bay.jpg (6 km, z15)
   AWS Terrain Tiles (terrarium, public dataset, includes bathymetry): data/dem.npy (+ dem_meta.json)
 
 Local frame: origin = Kailua Pier (OSM node search), +X east, +Y north, metres (local tangent plane).
@@ -90,18 +90,6 @@ def ingest_osm():
 
 
 # ------------------------------------------------------------------ imagery
-def esri(name, cx, cy, half, px):
-    la0, lo0 = to_geo(cx - half, cy - half)
-    la1, lo1 = to_geo(cx + half, cy + half)
-    url = (f"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox={lo0},{la0},{lo1},{la1}"
-           f"&bboxSR=4326&imageSR=3857&size={px},{px}&format=jpg&f=image")
-    b = urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=120).read()
-    open(os.path.join(DATA, name + '.jpg'), 'wb').write(b)
-    meta = {'center': [cx, cy], 'half': half, 'px': px, 'mpp': 2 * half / px, 'url': url}
-    json.dump(meta, open(os.path.join(DATA, name + '.json'), 'w'))
-    print('IMG', name, f'{2 * half:.0f} m @ {2 * half / px:.3f} m/px')
-
-
 # ------------------------------------------------------------------ terrain + bathymetry
 def tile_xy(lat, lon, z):
     n = 2 ** z
@@ -143,19 +131,10 @@ def dem(half=6000.0, z=13, res=10.0):
     print('DEM', n, 'x', n, f'min {grid.min():.0f} m max {grid.max():.0f} m', len(cache), 'tiles')
 
 
-if __name__ == '__main__':
-    what = sys.argv[1:] or ['osm', 'img', 'dem']
-    if 'osm' in what:
-        ingest_osm()
-    if 'img' in what:
-        esri('sat_core', -250.0, -600.0, 900.0, 4096)       # pier, transition, Dig Me Beach, the whole swim course
-        esri('sat_bay', 0.0, -1500.0, 3000.0, 2048)          # Kailua Bay + town context
-    if 'dem' in what:
-        dem()
-
-
-def esri_tiles(name, cx, cy, half, z):
-    """Stitch ESRI World Imagery tiles (web mercator) covering the square, then resample to the local frame."""
+def ortho(name, cx, cy, half, z):
+    """Stitch imagery tiles (web mercator, tools/imagery.py) covering the square, then crop to the local frame."""
+    import imagery as IMG
+    from concurrent.futures import ThreadPoolExecutor
     la0, lo0 = to_geo(cx - half, cy - half)
     la1, lo1 = to_geo(cx + half, cy + half)
     fx0, fy1 = tile_xy(la0, lo0, z)
@@ -163,26 +142,27 @@ def esri_tiles(name, cx, cy, half, z):
     tx0, tx1, ty0, ty1 = int(fx0), int(fx1), int(fy0), int(fy1)
     W, H = (tx1 - tx0 + 1) * 256, (ty1 - ty0 + 1) * 256
     mosaic = Image.new('RGB', (W, H))
-    for tx in range(tx0, tx1 + 1):
-        for ty in range(ty0, ty1 + 1):
-            url = f'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{ty}/{tx}'
-            for attempt in range(4):
-                try:
-                    b = urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=40).read()
-                    mosaic.paste(Image.open(io.BytesIO(b)).convert('RGB'), ((tx - tx0) * 256, (ty - ty0) * 256))
-                    break
-                except Exception:
-                    time.sleep(1 + attempt)
+    cells = [(tx, ty) for tx in range(tx0, tx1 + 1) for ty in range(ty0, ty1 + 1)]
+    with ThreadPoolExecutor(8) as ex:
+        for (tx, ty), im in zip(cells, ex.map(lambda c: IMG.tile(z, *c), cells)):
+            if im:
+                mosaic.paste(im, ((tx - tx0) * 256, (ty - ty0) * 256))
     # crop to the exact square (mercator is locally conformal; tiny N-S scale variance over 2 km is < 0.1%)
     px = lambda f, t0: (f - t0) * 256
     box = (px(fx0, tx0), px(fy0, ty0), px(fx1, tx0), px(fy1, ty0))
     img = mosaic.crop(tuple(int(round(v)) for v in box))
     img.save(os.path.join(DATA, name + '.jpg'), quality=92)
-    meta = {'center': [cx, cy], 'half': half, 'px': img.size[0], 'mpp': 2 * half / img.size[0], 'zoom': z, 'source': 'ESRI World Imagery tiles'}
+    meta = {'center': [cx, cy], 'half': half, 'px': img.size[0], 'mpp': 2 * half / img.size[0], 'zoom': z, 'source': '; '.join(IMG.credits())}
     json.dump(meta, open(os.path.join(DATA, name + '.json'), 'w'))
     print('IMG', name, img.size, f"{meta['mpp']:.3f} m/px")
 
 
-if __name__ == '__main__' and 'tiles' in sys.argv:
-    esri_tiles('sat_core', -250.0, -600.0, 900.0, 18)
-    esri_tiles('sat_bay', 0.0, -1500.0, 3000.0, 15)
+if __name__ == '__main__':
+    what = sys.argv[1:] or ['osm', 'img', 'dem']
+    if 'osm' in what:
+        ingest_osm()
+    if 'img' in what:
+        ortho('sat_core', -250.0, -600.0, 900.0, 18)        # pier, transition, Dig Me Beach, the whole swim course
+        ortho('sat_bay', 0.0, -1500.0, 3000.0, 15)           # Kailua Bay + town context
+    if 'dem' in what:
+        dem()

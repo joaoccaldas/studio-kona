@@ -1,0 +1,20 @@
+{
+ "apartmentReadyS": 0.091,
+ "apartmentFps": 60.4,
+ "flightToArrivalS": 4.542,
+ "konaFps": 60.4,
+ "arrival": {
+  "toast": "On the bike. Pedal with W. Shift is the tuck.",
+  "cap": "KOAEllison Onizuka Kona International Airport. Ride toward K",
+  "welcome": true
+ },
+ "lastBeforeWalk": {
+  "x": -4770.668953339146,
+  "y": 10958.60736793474
+ },
+ "rewardsAfterReload": {
+  "xp": 500,
+  "credits": 160
+ },
+ "errors": []
+}

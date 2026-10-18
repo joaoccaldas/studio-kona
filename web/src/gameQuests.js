@@ -1,3 +1,4 @@
+import { readSection, writeSection } from './save.js';
 // Kona Race-Week Campaign & Memory Quest Engine
 export const RACE_WEEK_QUESTS = [
   {
@@ -11,6 +12,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day1_pier',
+        action: 'Check in at the pier',
         text: 'Walk to Kailua Pier entrance',
         target: [2, 8],
         radius: 14,
@@ -19,6 +21,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day1_swim',
+        action: 'Start the shakeout swim',
         text: 'Shakeout swim in Kamakahonu Bay',
         target: [-30, -22],
         radius: 16,
@@ -27,6 +30,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day1_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 1982: The Crawl',
         target: [48, -55],
         radius: 12,
@@ -41,7 +45,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Julie Moss / Early Era Pioneers',
           year: '1982',
           split: '11:10:09 (Epic Finish)',
-          modelFile: 'speedmax_2027_cfr.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             frame: 'Lugged Columbus SL Steel Tube',
             drivetrain: 'Campagnolo Super Record 6-speed down-tube shifters',
@@ -66,6 +71,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day2_palani',
+        action: 'Take on Palani climb',
         text: 'Climb Palani Road towards the Queen K',
         target: [120, 25],
         radius: 20,
@@ -74,6 +80,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day2_crosswinds',
+        action: 'Face the crosswind',
         text: 'Reach Queen K Highway crosswind sector',
         target: [280, 50],
         radius: 28,
@@ -82,6 +89,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day2_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 1989: The Iron War',
         target: [219, 8],
         radius: 16,
@@ -96,7 +104,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Dave Scott & Mark Allen',
           year: '1989',
           split: '8:09:15 Course Record',
-          modelFile: 'trek_equinox_2004.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             frame: 'Custom TIG-Welded Prestige Cromo / Aluminum Hybrid',
             drivetrain: 'Shimano Dura-Ace 7400 7-Speed SIS',
@@ -121,6 +130,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day3_bay',
+        action: 'Swim the reef line',
         text: 'Swim past the Dig Me Beach reef',
         target: [60, -90],
         radius: 22,
@@ -129,6 +139,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day3_coffee',
+        action: 'Grab a coffee',
         text: 'Reach the floating Coffee Boat',
         target: [120, -180],
         radius: 18,
@@ -137,6 +148,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day3_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 2023: Wire-to-Wire Record',
         target: [160, -220],
         radius: 16,
@@ -151,7 +163,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Lucy Charles-Barclay',
           year: '2023',
           split: '8:24:31 Course Record',
-          modelFile: 'speedmax_2027_cfr.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             swimSplit: '49:36 (Fastest Pro Female Swim)',
             bikeSplit: '4:32:29',
@@ -176,6 +189,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day4_underpants',
+        action: 'Join the Underpants Run',
         text: 'Run the festive Underpants Run on Aliʻi Drive',
         target: [320, -90],
         radius: 35,
@@ -184,6 +198,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day4_village',
+        action: 'Enter IRONMAN Village',
         text: 'Visit IRONMAN Village at Hale Hālāwai',
         target: [219, 8],
         radius: 20,
@@ -192,6 +207,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day4_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 2018: Sub-8 Barrier Broken',
         target: [160, -40],
         radius: 16,
@@ -206,7 +222,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Patrick Lange',
           year: '2018',
           split: '7:52:39 (First Sub-8 in Kona History)',
-          modelFile: 'speedmax_2019_slx.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             marathonSplit: '2:41:27 (Course Run Record)',
             shoeType: 'Custom lightweight carbon racing flat',
@@ -230,6 +247,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day5_pier_gate',
+        action: 'Scan your wristband',
         text: 'Enter the transition gate on Kailua Pier',
         target: [-18, 30],
         radius: 14,
@@ -238,6 +256,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day5_rack',
+        action: 'Rack your bike',
         text: 'Rack your machine in Row 1',
         target: [0, 10],
         radius: 12,
@@ -246,6 +265,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day5_echo',
+        action: 'Enter the memory',
         text: 'Discover Memory Echo 2019: Frodeno’s Canyon Speedmax',
         target: [12, 6],
         radius: 10,
@@ -256,20 +276,21 @@ export const RACE_WEEK_QUESTS = [
         artifact: {
           id: 'frodeno_speedmax_2019',
           type: 'bike',
-          name: 'Jan Frodeno’s 2019 Canyon Speedmax CF SLX',
+          name: 'Jan Frodeno’s 2019 Canyon Speedmax (XL)',
           athlete: 'Jan Frodeno',
           year: '2019',
           split: '7:51:13 World Championship Record',
           modelFile: 'speedmax_2019_slx.glb',
           specs: {
-            frame: 'Canyon Speedmax CF SLX Carbon with Aero Aeroshield',
-            groupset: 'SRAM Red eTap AXS Wireless / 50-37T chainrings with 10-33T',
-            cockpit: 'Custom Ergonomic Carbon 3D Mono-extension cockpit with integrated straw',
-            wheels: 'DT Swiss ARC 1100 Dicut 85mm Rear / 85mm Front Carbon',
-            tires: 'Continental Grand Prix 5000 TT TR (28mm rear, 25mm front)',
-            weight: '9.1 kg race setup'
+            frame: 'Canyon Speedmax, size XL',
+            groupset: 'SRAM Red eTap AXS 1x, Quarq power meter',
+            cockpit: 'Canyon custom cockpit',
+            wheels: 'Zipp 858 NSW front and rear',
+            tires: 'Continental Grand Prix 5000 TL',
+            weight: 'not published'
           },
-          story: 'Jan Frodeno put together the most complete athletic performance ever seen in triathlon: a 47:31 swim, 4:16:03 bike split on this very Canyon Speedmax, and a 2:42:21 marathon to establish an immortal 7:51:13 course record.',
+          story: 'Jan Frodeno swam 47:31, rode 4:16:02 on this Canyon Speedmax and ran 2:42:43 to win his third world title in a course-record 7:51:13.',
+          sources: ['https://www.slowtwitch.com/news/kona-2019-top-15-men-bike-gear/', 'https://en.wikipedia.org/wiki/2019_Ironman_World_Championship'],
           portalUrl: 'https://triatlas.com/champions/jan-frodeno'
         }
       }
@@ -286,6 +307,7 @@ export const RACE_WEEK_QUESTS = [
     steps: [
       {
         id: 'day6_cannon',
+        action: 'Line up for the cannon',
         text: 'Stand at Dig Me Beach for the 06:25 cannon blast',
         target: [48, -55],
         radius: 18,
@@ -294,6 +316,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day6_turn',
+        action: 'Round the turn boats',
         text: 'Reach the Turn Boats at 1,840m',
         target: [631, -1778],
         radius: 45,
@@ -302,6 +325,7 @@ export const RACE_WEEK_QUESTS = [
       },
       {
         id: 'day6_finish',
+        action: 'Cross the finish line',
         text: 'Cross the finish line on Aliʻi Drive: YOU ARE AN IRONMAN!',
         target: [160, -40],
         radius: 16,
@@ -316,7 +340,8 @@ export const RACE_WEEK_QUESTS = [
           athlete: 'Kona Finisher',
           year: '2026',
           split: 'Official Finisher',
-          modelFile: 'speedmax_2027_cfr.glb',
+          modelFile: null,   // no faithful 3D reconstruction yet — never show a stand-in model
+          reconstruction: 'in-progress',
           specs: {
             title: 'Kona World Championship Finisher',
             swim: '3.8 km Kailua Bay',
@@ -332,25 +357,12 @@ export const RACE_WEEK_QUESTS = [
   }
 ];
 
-const STORAGE_KEY = 'kona.game.save.v1';
-
+// Campaign progress lives in the versioned save (save.js), validated on every read.
 export function loadGameSave() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
-
-  return {
-    currentDayIndex: 0,
-    currentStepIndex: 0,
-    completedDays: [],
-    unlockedArtifacts: [],
-    discoveredMemories: []
-  };
+  return readSection('campaign');
 }
 
 export function saveGameProgress(saveData) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
-  } catch (e) {}
+  const clean = writeSection('campaign', saveData);
+  Object.assign(saveData, clean);             // callers keep their object; invalid values are corrected in place
 }
