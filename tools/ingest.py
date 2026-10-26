@@ -16,7 +16,7 @@ DATA = os.path.join(HERE, '..', 'data')
 LAT0, LON0 = 19.6391620, -155.9968082          # Kailua Pier (Nominatim, OSM)
 KX = 111320.0 * math.cos(math.radians(LAT0))
 KY = 110574.0
-UA = {'User-Agent': 'caldas-world-research/1.0 (joaoccaldas@gmail.com)'}
+UA = {'User-Agent': 'studio-kona/1.0'}
 
 
 def to_local(lat, lon):
