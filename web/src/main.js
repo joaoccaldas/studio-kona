@@ -12,6 +12,7 @@ import { createEchoMarkers } from './echoMarkers.js';
 import { createPierMuseumStudio } from './pierMuseumStudio.js';
 import { createHawaiianScavengerHunt } from './hawaiianScavengerHunt.js';
 import { playMemoryChime, playUnlockFanfare } from './audio.js';
+import { createStGeorge } from './stgeorge.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -22,7 +23,7 @@ const W = (x, y, z = 0) => new THREE.Vector3(x, z, -y); // survey (x east, y nor
 const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
 
 // ------------------------------------------------------------------ Renderer
-const renderer = new THREE.WebGLRenderer({ canvas: $('#c'), antialias: !coarse, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ canvas: $('#c'), antialias: !coarse, powerPreference: 'high-performance', logarithmicDepthBuffer: true });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.AgXToneMapping;
 renderer.toneMappingExposure = 1.0;
@@ -30,7 +31,7 @@ renderer.xr.enabled = false;
 let dpr = Math.min(devicePixelRatio, coarse ? 1.25 : 1.75);
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.4, 420000);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.4, 250000);
 const rig = new THREE.Group();
 rig.add(camera);
 scene.add(rig);
@@ -203,6 +204,7 @@ let currentStep = currentDay.steps[0];
 let pierBikesMesh = null;
 let streamer = null;
 let man = null;
+const konaRoots = [];              // top-level Kona meshes: toggled off when switching world places
 
 // ------------------------------------------------------------------ Load Assets
 async function load() {
@@ -231,6 +233,7 @@ async function load() {
     if (o.name.startsWith('PROTO_')) { protos[o.name.slice(6)] = o; o.visible = false; }
   });
   scene.add(gltf.scene);
+  konaRoots.push(gltf.scene);
 
   // Racked bikes on Kailua Pier (all 580 transition bikes)
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
@@ -274,6 +277,7 @@ async function load() {
   console.log('[Kona] Loading routes and pois...');
   routes();
   pois();
+  island();
 
   gltf.scene.traverse(o => {
     if (o.isMesh && /KONA_(terrain|pier|heiau_platform|breakwater)/.test(o.name)) addGround(o);
@@ -686,9 +690,9 @@ async function island() {
   const t = tex.load(A + 'island_color.jpg');
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
-  const m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.9, metalness: 0.05 });
-  const mesh = new THREE.Mesh(g, m);
-  scene.add(mesh);
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, roughness: 0.9, metalness: 0.05 }));
+  konaRoots.push(m);
+  scene.add(m);
 }
 
 // ------------------------------------------------------------------ Race courses
@@ -884,6 +888,60 @@ $('#nav').appendChild(sb);
 
 $('#hour').oninput = e => setHour(+e.target.value);
 
+// St. George, Utah (29 Oct 2022 IRONMAN 70.3 Worlds) & Las Vegas (BELLAGIO_source app, 30 Oct 2022).
+// Each place is its own local frame (per WORLD/manifesto): travel is a transition, not world-distance geometry.
+const WORLD = {
+  stgeorge: { lat: 37.0965, lon: -113.5684 },
+  vegas: { url: 'http://localhost:8793/' },
+};
+const PLACE_ORIGIN = new THREE.Vector3();       // every place renders at its own local origin
+let currentPlace = 'kona';
+let stgPlace = null;
+async function initStGeorge() {
+  if (!man || stgPlace) return;
+  stgPlace = await createStGeorge({ scene, W, stgOffset: PLACE_ORIGIN.clone(), coarse });
+}
+function setPlaceVisible(place) {
+  currentPlace = place;
+  for (const r of konaRoots) r.visible = place === 'kona';
+  if (typeof ocean !== 'undefined' && ocean) ocean.visible = place === 'kona';
+  stgPlace?.setEnabled(place === 'stgeorge');
+}
+
+(function worldUI() {
+  const panel = $('#worldPanel'), btn = $('#btnWorld');
+  if (!panel || !btn) return;
+  btn.onclick = () => { panel.hidden = !panel.hidden; };
+  $('#wpClose').onclick = () => { panel.hidden = true; };
+  panel.querySelectorAll('.wp-item').forEach(el => {
+    el.onclick = async () => {
+      const p = el.dataset.place;
+      if (p === 'vegas') { window.open(WORLD.vegas.url, '_blank'); return; }
+      panel.querySelector('.wp-item.active')?.classList.remove('active');
+      el.classList.add('active');
+      if (p === 'stgeorge') {
+        toast('🏜 St. George, Utah — loading evidence (DEM + OSM massing, 29 Oct 2022)…');
+        try { await initStGeorge(); } catch (e) { console.warn('stg init', e); }
+        setPlaceVisible('stgeorge');
+        // St. George local frame: place the camera south of the downtown anchor, looking north
+        // toward Snow Canyon (bike climb 37.194,-113.644 ≈ 7 km N, 6.7 km W of the anchor).
+        setLocomotionMode('fly');
+        camera.position.set(0, 3200, 9500);
+        controls.target.set(0, 0, 0);
+        $('#cap').innerHTML = `<b>🏜 St. George, Utah — IRONMAN 70.3 World Championship · 29 Oct 2022</b>
+          <span>Red-sandstone high desert (anchor 37.0965, −113.5684). AWS-terrarium terrain + OSM building massing as it stood race weekend; the course climbs Snow Canyon (Sand Hollow swim → Snow Canyon bike → downtown finish). 180.5 km NE of the Bellagio, 4,534 km from Kailua Pier — a separate local frame, travelled to by great-circle.</span>`;
+        toast('🏜 St. George terrain & massing live — Snow Canyon to the north-west.');
+      } else {
+        setPlaceVisible('kona');
+        setLocomotionMode('fly');
+        camera.position.set(60, 25, -180);
+        controls.target.set(4, 2, 12);
+        $('#cap').innerHTML = `<b>🌺 Kailua-Kona</b><span>IRONMAN World Championship · 10 Oct 2026</span>`;
+      }
+    };
+  });
+})();
+
 function toast(t) {
   const el = $('#toast');
   if (!el) return;
@@ -938,6 +996,7 @@ renderer.setAnimationLoop(() => {
 
   // Tile streamer update
   streamer?.update(dt, camera);
+  stgPlace?.update(dt, camera);
 
   // Hawaiian Heritage Scavenger Hunt beacons update
   hawaiianHunt?.update(dt, camera);
@@ -946,9 +1005,13 @@ renderer.setAnimationLoop(() => {
   pierMuseumStudio?.update(dt, camera);
 
   // Fog & depth scaling
-  scene.fog.density = 0.00011 / (1 + Math.max(0, camera.position.y) / 150);
+  // Fog & depth scaling — desert-clear in St. George, humid Kona at the pier
+  const targetFog = currentPlace === 'stgeorge'
+    ? 0.0000045 / (1 + Math.max(0, camera.position.y) / 250)   // red-desert visibility, ~ 40+ km
+    : 0.000045 * (1 + Math.max(0, camera.position.y) / 150);   // Kona trade-wind haze
+  scene.fog.density += (targetFog - scene.fog.density) * Math.min(1, dt * 3); // ease between places
   const alt = Math.abs(camera.position.y) + 1;
-  const nearWanted = THREE.MathUtils.clamp(alt * 0.004, 0.15, 80);
+  const nearWanted = THREE.MathUtils.clamp(alt * 0.008, 0.3, 120);
   if (Math.abs(camera.near - nearWanted) > camera.near * 0.2) {
     camera.near = nearWanted;
     camera.updateProjectionMatrix();

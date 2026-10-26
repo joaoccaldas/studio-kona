@@ -72,7 +72,8 @@ export class TileStreamer {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx);
     g.computeVertexNormals();
-    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    tex.premultiplyAlpha = false;
     const m = new THREE.MeshStandardMaterial({ map: tex, roughness: .92 });
     m.onBeforeCompile = sh => {       // below sea level the imagery shows water: turn it into sand / basalt / algae seabed
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vH;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvH = position.y;');
@@ -90,7 +91,7 @@ export class TileStreamer {
       const pts = b.p.map(([x, y]) => [p.x0 + x, p.y0 + y]);
       let area = 0; for (let i = 0; i < pts.length; i++) { const a = pts[i], c = pts[(i + 1) % pts.length]; area += a[0] * c[1] - c[0] * a[1]; }
       if (area < 0) pts.reverse();
-      const base = .3, top = base + b.h, wc = wallC[Math.abs(Math.round(pts[0][0] * 7)) % 4];
+      const base = .42, top = base + b.h, wc = wallC[Math.abs(Math.round(pts[0][0] * 7)) % 4];
       for (let i = 0; i < pts.length; i++) {
         const a = pts[i], c = pts[(i + 1) % pts.length];
         const A = this.W(a[0], a[1], base), B = this.W(c[0], c[1], base), C = this.W(c[0], c[1], top), D = this.W(a[0], a[1], top);
