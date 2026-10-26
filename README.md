@@ -65,10 +65,11 @@ Uncover the island’s rich history beyond triathlon through the **Hawaiian Heri
 git clone https://github.com/joaoccaldas/studio-kona.git
 cd studio-kona
 
-# Install dependencies
-npm install
+# Install exact, locked dependencies (three 0.186.1, three-mesh-bvh 0.9.15, esbuild 0.25.12)
+npm ci
+# If your npm blocks install scripts, esbuild's binary needs: npm rebuild esbuild
 
-# Build client bundle
+# Build client bundle (-> web/public/index.html)
 npm run build
 
 # Start local server

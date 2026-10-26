@@ -12,6 +12,9 @@ import { createEchoMarkers } from './echoMarkers.js';
 import { createPierMuseumStudio } from './pierMuseumStudio.js';
 import { createHawaiianScavengerHunt } from './hawaiianScavengerHunt.js';
 import { playMemoryChime, playUnlockFanfare } from './audio.js';
+import { createProgress } from './progress.js';
+import { initMuseumDrawer } from './museumDrawer.js';
+import { initArtifactModal } from './artifactModal.js';
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
@@ -197,6 +200,7 @@ let locomotion = null;
 let echoMarkers = null;
 let pierMuseumStudio = null;
 let hawaiianHunt = null;
+let progress = null, drawer = null, artifactViewer = null;
 let saveData = loadGameSave();
 let currentDay = RACE_WEEK_QUESTS[0];
 let currentStep = currentDay.steps[0];
@@ -271,6 +275,9 @@ async function load() {
       o.renderOrder = -1;
     }
   });
+  // Whole-island DEM must exist before anything samples heightAt (routes, POIs, locomotion, markers).
+  console.log('[Kona] Loading island DEM...');
+  await island().catch(e => console.warn('Island DEM load error; terrain falls back to sea level:', e));
   console.log('[Kona] Loading routes and pois...');
   routes();
   pois();
@@ -296,10 +303,13 @@ async function load() {
   setHour(hour);
 
   // Initialize Locomotion, Echo Markers, Canyon Studio Pier Museum & Hawaiian Heritage Hunt
-  locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast });
+  locomotion = createLocomotion({ camera, renderer, scene, W, grounds, heightAt, toast, onModeRequest: m => setLocomotionMode(m) });
   echoMarkers = createEchoMarkers({ scene, W, heightAt });
-  pierMuseumStudio = createPierMuseumStudio({ scene, camera, W, heightAt });
+  pierMuseumStudio = createPierMuseumStudio({ scene, camera, W, heightAt, toast, progress: () => progress });
   hawaiianHunt = createHawaiianScavengerHunt({ scene, camera, W, heightAt, toast });
+  progress = createProgress(saveData, { heritage: () => hawaiianHunt?.progress, save: () => saveGameProgress(saveData), toast, quests: RACE_WEEK_QUESTS });
+  artifactViewer = initArtifactModal(() => saveGameProgress(saveData));
+  drawer = initMuseumDrawer(art => artifactViewer.show(art, false), idx => jumpToDay(idx));
 
   console.log('[Kona] Initializing game loop...');
   initGameLoop();
@@ -352,9 +362,12 @@ function initGameLoop() {
   const musBtn = $('#topMuseumBtn');
   if (musBtn) {
     musBtn.onclick = () => {
-      if (pierMuseumStudio) pierMuseumStudio.open(7); // Open with Frodeno 2019
+      if (pierMuseumStudio) pierMuseumStudio.open(); // opens on the latest bike you have unlocked
     };
   }
+
+  const myBtn = $('#topMyKonaBtn');
+  if (myBtn) myBtn.onclick = () => openMyKona();
 
   // Top Heritage Button -> Opens Hawaiian Scavenger Hunt Lore Codex
   const herBtn = $('#topHeritageBtn');
@@ -364,16 +377,14 @@ function initGameLoop() {
     };
   }
 
-  // Key E handler for opening museum when near a pedestal
+  // INTERACT: one semantic action for keyboard (E) and touch (the on-screen action button).
   window.addEventListener('keydown', e => {
-    if (e.code === 'KeyE') {
-      if (locomotion && pierMuseumStudio) {
-        pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
-          pierMuseumStudio.open(idx);
-        });
-      }
-    }
+    if (e.code !== 'KeyE' || e.repeat) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '')) return;
+    runInteraction();
   });
+  const actBtn = $('#actionPrompt');
+  if (actBtn) actBtn.onclick = () => runInteraction();
 
   // Jump Button (Mobile)
   const jumpBtn = $('#jumpBtn');
@@ -455,7 +466,9 @@ function setupActiveStep() {
   $('#questProgressFill').style.width = `${pct}%`;
   $('#compassLabel').textContent = currentStep.text;
 
+  progress?.beginDay(currentDay.id);
   renderChecklist();
+  renderChallenge();
 }
 
 function renderChecklist() {
@@ -505,7 +518,7 @@ function teleportToActiveStep() {
     camera.position.set(wPos.x - 12, wPos.y + 6, wPos.z + 12);
     controls.target.copy(wPos);
   }
-  toast(`Teleported to: ${currentStep.text}`);
+  toast(`📍 ${currentStep.text}. Take it in, then press [E] when you're ready.`);
 }
 
 function completeCurrentStep() {
@@ -531,24 +544,66 @@ function completeCurrentStep() {
 
     if (pierMuseumStudio) {
       const yearIdx = pierMuseumStudio.getBikes().findIndex(b => b.year.includes(currentStep.echoYear));
-      pierMuseumStudio.open(yearIdx >= 0 ? yearIdx : 7);
+      // A memory reveals its exhibit if the museum has one; otherwise its artifact in the viewer.
+      if (yearIdx >= 0) pierMuseumStudio.open(yearIdx);
+      else if (artifactViewer) artifactViewer.show(currentStep.artifact, true);
     }
 
     saveGameProgress(saveData);
-    advanceToNextDayOrFinish();
+    advanceStep();
   } else {
     playUnlockFanfare();
     toast(`✓ Objective Complete: ${currentStep.text}`);
 
-    let nextStepIdx = (saveData.currentStepIndex || 0) + 1;
-    if (nextStepIdx < currentDay.steps.length) {
-      saveData.currentStepIndex = nextStepIdx;
-      currentStep = currentDay.steps[nextStepIdx];
-      saveGameProgress(saveData);
-      setupActiveStep();
-      updateHUD();
-    }
+    advanceStep();
   }
+}
+
+// Next step within the day, or the next day when this was the last step (echo or not).
+function advanceStep() {
+  const nextStepIdx = (saveData.currentStepIndex || 0) + 1;
+  if (nextStepIdx < currentDay.steps.length) {
+    saveData.currentStepIndex = nextStepIdx;
+    currentStep = currentDay.steps[nextStepIdx];
+    saveGameProgress(saveData);
+    setupActiveStep();
+    updateHUD();
+  } else {
+    advanceToNextDayOrFinish();
+  }
+}
+
+// ------------------------------------------------------------------ Interactions
+// Arriving means "you found something", never "done": the player chooses to act.
+let currentInteraction = null;
+function stepVerb(st) {
+  if (st.action) return st.action;
+  return st.isEcho ? 'Enter the memory' : 'Interact';
+}
+function refreshInteraction(questReached) {
+  let it = null;
+  if (questReached && currentStep) {
+    it = { key: 'quest:' + currentStep.id, label: stepVerb(currentStep), sub: currentStep.text, run: () => completeCurrentStep() };
+  } else if (locomotion?.getState().active && pierMuseumStudio) {
+    pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
+      it = { key: 'bike:' + idx, label: 'Inspect bike', sub: `${bike.year} · ${bike.name}`, run: () => pierMuseumStudio.open(idx) };
+    });
+  }
+  const el = $('#actionPrompt');
+  if ((it && it.key) !== (currentInteraction && currentInteraction.key) && el) {
+    if (it) {
+      el.innerHTML = `<kbd>E</kbd><b>${it.label}</b><small>${it.sub}</small>`;
+      el.classList.add('on');
+    } else el.classList.remove('on');
+  }
+  currentInteraction = it;
+}
+function runInteraction() {
+  if (!currentInteraction) return;
+  const it = currentInteraction;
+  currentInteraction = null;
+  $('#actionPrompt')?.classList.remove('on');
+  it.run();
 }
 
 function advanceToNextDayOrFinish() {
@@ -594,6 +649,34 @@ function jumpToDay(dayIdx) {
 
 function updateHUD() {
   renderChecklist();
+  renderChallenge();
+}
+
+function renderChallenge() {
+  const el = $('#questChallenge');
+  if (!el || !progress || !currentDay) return;
+  const c = progress.challengeFor(currentDay.id);
+  if (!c) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const unit = c.metric === 'heritage' ? '' : ' m';
+  const pct = Math.round(c.value / c.target * 100);
+  el.classList.toggle('done', c.done);
+  el.innerHTML = `<div class="qc-top"><span>${c.done ? '✓ Daily challenge' : '✦ Daily challenge'}</span><em>${Math.round(c.value)}${unit} / ${c.target}${unit}</em></div>
+    <div class="qc-text">${c.text}</div><div class="qc-bar"><i style="width:${pct}%"></i></div><div class="qc-reward">Unlocks ${c.reward}</div>`;
+}
+
+function openMyKona() {
+  if (!drawer) return;
+  drawer.open(saveData, RACE_WEEK_QUESTS);
+  const sm = progress.summary();
+  const bikes = pierMuseumStudio ? pierMuseumStudio.getBikes() : [];
+  const unlocked = bikes.filter(b => progress.isBikeUnlocked(b)).length;
+  $('#statMemories').textContent = `${sm.memories} / ${sm.totalMemories}`;
+  $('#statBikes').textContent = `${unlocked} / ${bikes.length}`;
+  const extra = $('#drawerExtraStats') || (() => { const d = document.createElement('div'); d.id = 'drawerExtraStats'; d.className = 'drawer-stats'; $('#museumDrawer .drawer-stats').after(d); return d; })();
+  extra.innerHTML = `<div class="stat-pill"><b>${sm.heritage} / ${sm.totalHeritage}</b><span>Heritage</span></div>
+    <div class="stat-pill"><b>${sm.challenges} / ${sm.totalChallenges}</b><span>Challenges</span></div>
+    <div class="stat-pill"><b>${((sm.stats.walk_m + sm.stats.ride_m + sm.stats.swim_m) / 1000).toFixed(1)} km</b><span>Explored</span></div>`;
 }
 
 // ------------------------------------------------------------------ Coffee Boat
@@ -667,20 +750,31 @@ async function island() {
   };
 
   const G = coarse ? 400 : 800, [tx0, ty0, tx1, ty1] = man.tile;
+  // The whole-island mesh is a ~200 m far-field backdrop. Near Kailua the detailed core tile and the 500 m
+  // streamed ring must always win, so sink the backdrop under that whole zone with a smooth ramp. A hard
+  // clamp at one edge left a vertical cliff (visible from Aliʻi Drive) that poked through the detail.
+  let rects = [[tx0, ty0, tx1, ty1]];
+  try {
+    const ti = await (await fetch(A + 'tiles/index.json')).json();
+    rects = rects.concat(ti.tiles.map(t => [t.x0, t.y0, t.x0 + ti.size, t.y0 + ti.size]));
+  } catch (_) { }
+  const distToDetail = (x, y) => {
+    let d = Infinity;
+    for (const [a, b, c, e] of rects) d = Math.min(d, Math.hypot(Math.max(a - x, 0, x - c), Math.max(b - y, 0, y - e)));
+    return d;
+  };
+  const SINK = 22, RAMP = 700;
   const g = new THREE.PlaneGeometry(1, 1, G, G), p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) {
     const u = uv.getX(i), v = uv.getY(i), x = isl.x0 + u * isl.size, y = isl.y0 + v * isl.size;
     let h = heightAt(x, y);
-    if (x > tx0 + 30 && x < tx1 - 30 && y > ty0 + 30 && y < ty1 - 30) h = Math.min(h, -80);
+    const d = distToDetail(x, y);
+    if (d < RAMP) { const k = Math.min(1, d / RAMP); h -= SINK * (1 - k * k * (3 - 2 * k)); }
     const w = W(x, y, h);
     p.setXYZ(i, w.x, w.y, w.z);
   }
-  const ix = g.index.array;
-  for (let i = 0; i < ix.length; i += 3) {
-    const a = ix[i + 1];
-    ix[i + 1] = ix[i + 2];
-    ix[i + 2] = a;
-  }
+  // PlaneGeometry winding is already correct after W() (x, y, z) -> (x, z, -y); the old index swap
+  // flipped every face so all normals pointed down (inverted lighting, invisible from above).
   g.computeVertexNormals();
 
   const t = tex.load(A + 'island_color.jpg');
@@ -800,16 +894,16 @@ const PLACES = {
   bay: () => ({ pos: W(40, -450, 220), look: W(30, 20, 0), ground: W(22, 10, 2.2), name: 'Kailua Bay', note: 'The swim course runs 1,840 m out along the Aliʻi Drive coast.' }),
   pier: () => ({ pos: W(18, -45, 14), look: W(0, 10, 2.2), ground: W(4, 10, 2.2), name: 'Kailua Pier · Transition', note: 'The spiritual heart of Ironman. All 580 bikes racked here.' }),
   start: () => ({ pos: W(-45, -35, 4), look: W(50, -220, 1), ground: W(-45, -35, 1.2), name: 'Dig Me Beach · Swim Start', note: '6:25 AM cannon blast echoes across the volcanic amphitheater.' }),
-  finish: () => ({ pos: W(175, -55, 12), look: W(125, -20, 2), ground: W(175, -55, 3.5), name: 'Finish line · Aliʻi Drive', note: 'The most famous finish line in endurance sport.' }),
+  finish: () => ({ pos: W(40, -190, 70), look: W(125, -20, 4), ground: W(175, -55, 3.5), name: 'Finish line · Aliʻi Drive', note: 'The most famous finish line in endurance sport.' }),
   hawi: () => {
     const xy = toLocal(20.0545, -155.8306);
-    return { pos: W(xy[0] - 600, xy[1] - 800, 450), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), name: 'Hāwī Turnaround', note: 'Mile 56 turnaround in the Kohala mountain crosswinds.' };
+    return { aerial: true, pos: W(xy[0] - 600, xy[1] - 800, 450), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0] - 70, xy[1] - 90, 0), name: 'Hāwī Turnaround', note: 'Mile 56 turnaround in the Kohala mountain crosswinds.' };
   },
   energylab: () => {
     const xy = toLocal(19.7042, -156.0392);
-    return { pos: W(xy[0] - 350, xy[1] - 400, 180), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), name: 'Natural Energy Lab (NELHA)', note: 'Crushing heat and total isolation on the marathon.' };
+    return { aerial: true, pos: W(xy[0] - 350, xy[1] - 400, 180), look: W(xy[0], xy[1], Math.max(heightAt(xy[0], xy[1]), 0)), ground: W(xy[0] + 40, xy[1] - 120, 0), name: 'Natural Energy Lab (NELHA)', note: 'Crushing heat and total isolation on the marathon.' };
   },
-  island: () => ({ pos: W(24000, 18000, 24000), look: W(-2000, 4000, 1200), ground: W(4, 10, 2.2), name: 'Island of Hawaiʻi', note: '159 km from south to north, dominated by Mauna Kea and Mauna Loa.' }),
+  island: () => ({ aerial: true, pos: W(24000, 18000, 24000), look: W(-2000, 4000, 1200), ground: W(4, 10, 2.2), name: 'Island of Hawaiʻi', note: '159 km from south to north, dominated by Mauna Kea and Mauna Loa.' }),
 };
 
 let tween = null;
@@ -817,12 +911,18 @@ function go(k, dur = 2.5) {
   const p = PLACES[k]();
   ride = null;
 
-  if (locomotion && locomotion.getState().active) {
-    // Player is walking or riding a bike on the ground: teleport them to ground level at this landmark!
+  if (locomotion && locomotion.getState().active && p.aerial) {
+    // Aerial-only viewpoints (whole island) make no sense on foot: lift off into fly mode, then glide there.
+    setLocomotionMode('fly');
+  } else if (locomotion && locomotion.getState().active) {
+    // Player is walking or riding a bike on the ground: teleport them to ground level at this landmark,
+    // facing the thing the viewpoint is about (was always yaw 0, e.g. staring out to sea at Energy Lab).
     const target = p.ground || p.look;
     const targetGround = heightAt ? heightAt(target.x, -target.z) : 2.0;
     const groundY = Math.max(targetGround, 1.8);
-    locomotion.teleport(target.x, groundY, target.z, 0, 0);
+    const dx = p.look.x - target.x, dz = p.look.z - target.z;
+    const yaw = (Math.abs(dx) + Math.abs(dz) > 1) ? Math.atan2(-dx, -dz) : 0;
+    locomotion.teleport(target.x, groundY, target.z, yaw, 0);
     toast(`📍 Arrived at ${p.name}: ${p.note}`);
     $('#cap').innerHTML = `<b>${p.name}</b><span>${p.note}</span>`;
     $$('#nav button').forEach(b => b.classList.toggle('active', b.dataset.k === k));
@@ -896,6 +996,22 @@ function toast(t) {
 // ------------------------------------------------------------------ Main Animation Loop
 let fpsT = 0, frames = 0;
 let lastReachCheck = 0;
+const lastPos = new THREE.Vector3(); let hasLastPos = false, challengeUiT = 0;
+// Distance you actually travel (on foot, by bike, swimming) counts toward the day's challenge.
+function trackExploration(dt) {
+  if (!progress || !currentDay) return;
+  const st = locomotion.getState();
+  const p = camera.position;
+  if (st.active && hasLastPos) {
+    const d = Math.hypot(p.x - lastPos.x, p.z - lastPos.z);
+    if (d < 40 * Math.max(dt, 0.016)) {                   // ignore teleports / "Take me there"
+      progress.track(st.isSwimming ? 'swim_m' : (st.mode === 'bike' ? 'ride_m' : 'walk_m'), d, currentDay.id);
+    }
+  }
+  lastPos.copy(p); hasLastPos = st.active;
+  challengeUiT += dt;
+  if (challengeUiT > 0.5) { challengeUiT = 0; progress.checkHeritage(currentDay.id); renderChallenge(); }
+}
 let lastPedestalPrompt = 0;
 let lastFrameTime = performance.now();
 
@@ -930,6 +1046,7 @@ renderer.setAnimationLoop(() => {
   // Locomotion update
   if (locomotion) {
     locomotion.update(dt);
+    trackExploration(dt);
   }
 
   if (!locomotion?.getState().active && !tween && !ride) {
@@ -971,18 +1088,10 @@ renderer.setAnimationLoop(() => {
       distEl.textContent = navState.distance < 9000 ? `${Math.round(navState.distance)} m` : '-- m';
     }
 
-    if (navState.reached && Date.now() - lastReachCheck > 3000) {
+    if (Date.now() - lastReachCheck > 150) {
       lastReachCheck = Date.now();
-      completeCurrentStep();
+      refreshInteraction(navState.reached);
     }
-  }
-
-  // Check proximity to Pier Heritage Pedestals while walking
-  if (locomotion?.getState().active && pierMuseumStudio && Date.now() - lastPedestalPrompt > 2500) {
-    pierMuseumStudio.checkProximity(camera.position, (idx, bike) => {
-      lastPedestalPrompt = Date.now();
-      toast(`🚲 ${bike.year} ${bike.name}: Press [E] or Click to Enter 3D Studio`);
-    });
   }
 
   renderer.render(scene, camera);
@@ -1009,11 +1118,13 @@ window.__kona = {
   scene,
   camera,
   THREE,
-  locomotion,
-  echoMarkers,
-  pierMuseumStudio,
-  hawaiianHunt,
+  get locomotion() { return locomotion; },
+  get echoMarkers() { return echoMarkers; },
+  get pierMuseumStudio() { return pierMuseumStudio; },
+  get hawaiianHunt() { return hawaiianHunt; },
   saveData,
+  get progress() { return progress; },
+  openMyKona: () => openMyKona(),
   get currentDay() { return currentDay; },
   get currentStep() { return currentStep; },
   get pierBikes() { return man?.bikes; },
